@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Create Placeholder</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="300"></canvas>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Fill background
+      ctx.fillStyle = "#f3f4f6";
+      ctx.fillRect(0, 0, 400, 300);
+
+      // Add text
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "16px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Product Image", 200, 150);
+
+      // Convert to blob and download
+      canvas.toBlob(function (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "placeholder-product.jpg";
+        a.click();
+      }, "image/jpeg");
+    </script>
+  </body>
+</html>
