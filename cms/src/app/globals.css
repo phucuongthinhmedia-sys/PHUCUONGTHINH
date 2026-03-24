@@ -1,7 +1,15 @@
+/*
+ * CMS globals — base styles come from the shared package.
+ * The CSS variable tokens (--background, --primary, etc.) are defined in
+ * packages/shared-components/src/styles/globals.css and must be present here
+ * so Tailwind's semantic colour utilities resolve correctly.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design tokens (kept in sync with shared globals.css) ──────────────── */
 @layer base {
   :root {
     --background: 0 0% 100%;

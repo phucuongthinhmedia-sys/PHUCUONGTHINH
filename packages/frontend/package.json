@@ -11,6 +11,8 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@repo/shared-utils": "workspace:*",
+    "@tanstack/react-query": "^5.0.0",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
     "framer-motion": "^11.18.2",
@@ -20,6 +22,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@repo/tailwind-config": "workspace:*",
     "@testing-library/jest-dom": "^6.1.0",
     "@testing-library/react": "^14.1.0",
     "@types/jest": "^29.5.0",

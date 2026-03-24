@@ -1,0 +1,11 @@
+{
+  "name": "@repo/tailwind-config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared Tailwind CSS configuration for the Digital Showroom monorepo",
+  "main": "./index.js",
+  "scripts": {},
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

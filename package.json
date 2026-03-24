@@ -1,0 +1,27 @@
+{
+  "name": "digital-showroom-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Digital Showroom Monorepo - Backend, Frontend, and Shared Packages",
+  "scripts": {
+    "dev": "pnpm --parallel --stream dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter digital-showroom dev",
+    "build": "pnpm --recursive build",
+    "build:backend": "pnpm --filter backend build",
+    "build:frontend": "pnpm --filter digital-showroom build",
+    "build:shared": "pnpm --filter \"@repo/*\" build",
+    "test": "pnpm --recursive test",
+    "lint": "pnpm --recursive lint",
+    "clean": "pnpm --recursive clean && rm -rf node_modules",
+    "install:all": "pnpm install"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
