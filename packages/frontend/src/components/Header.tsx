@@ -50,7 +50,41 @@ export function Header() {
 
   if (isProductsPage || isProductDetailPage) {
     return (
-      <div className="fixed top-4 right-4 z-50">
+      <>
+        {/* Admin toolbar cho trang products */}
+        {isAuthenticated && (
+          <div className="fixed top-0 left-0 right-0 z-[60] bg-[#0a192f] text-white text-xs flex items-center justify-between px-4 h-8">
+            <div className="flex items-center gap-3">
+              <span className="text-gray-400">Chế độ Admin</span>
+              <span className="text-gray-500">·</span>
+              <span className="text-emerald-400 font-medium">{user?.email}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-1.5 px-3 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+              >
+                <LayoutDashboard size={12} />
+                Dashboard
+              </Link>
+              <Link
+                href="/admin/products"
+                className="flex items-center gap-1.5 px-3 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+              >
+                <Settings size={12} />
+                Quản lý SP
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-3 py-1 rounded hover:bg-red-500/20 transition-colors text-gray-400 hover:text-red-400"
+              >
+                <LogOut size={12} />
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        )}
+        <div className={`fixed right-4 z-50 ${isAuthenticated ? "top-12" : "top-4"}`}
         <div className="bg-brand-secondary rounded-xl shadow-lg border border-brand-paper p-4 flex items-center gap-3">
           <Link
             href="/"
@@ -113,6 +147,7 @@ export function Header() {
           </a>
         </div>
       </div>
+      </>
     );
   }
 
