@@ -193,6 +193,27 @@ const GACH_FIELDS: SpecField[] = [
     group: "Kho",
     options: ["in_stock", "pre_order", "coming_soon", "out_of_stock"],
   },
+  {
+    key: "warehouse_location",
+    label: "Vị trí trong kho",
+    type: "text",
+    placeholder: "VD: Kệ A3, Hàng 2",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_name",
+    label: "Tên nhà cung cấp",
+    type: "text",
+    placeholder: "VD: Công ty TNHH ABC",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_phone",
+    label: "SĐT nhà cung cấp",
+    type: "text",
+    placeholder: "VD: 0901234567",
+    group: "Nội bộ",
+  },
 ];
 
 const TBVS_FIELDS: SpecField[] = [
@@ -381,6 +402,27 @@ const TBVS_FIELDS: SpecField[] = [
     required: true,
     group: "Kho",
     options: ["in_stock", "pre_order", "coming_soon", "out_of_stock"],
+  },
+  {
+    key: "warehouse_location",
+    label: "Vị trí trong kho",
+    type: "text",
+    placeholder: "VD: Kệ A3, Hàng 2",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_name",
+    label: "Tên nhà cung cấp",
+    type: "text",
+    placeholder: "VD: Công ty TNHH ABC",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_phone",
+    label: "SĐT nhà cung cấp",
+    type: "text",
+    placeholder: "VD: 0901234567",
+    group: "Nội bộ",
   },
 ];
 
@@ -588,6 +630,27 @@ const BEP_FIELDS: SpecField[] = [
     group: "Kho",
     options: ["in_stock", "pre_order", "coming_soon", "out_of_stock"],
   },
+  {
+    key: "warehouse_location",
+    label: "Vị trí trong kho",
+    type: "text",
+    placeholder: "VD: Kệ A3, Hàng 2",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_name",
+    label: "Tên nhà cung cấp",
+    type: "text",
+    placeholder: "VD: Công ty TNHH ABC",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_phone",
+    label: "SĐT nhà cung cấp",
+    type: "text",
+    placeholder: "VD: 0901234567",
+    group: "Nội bộ",
+  },
 ];
 
 const PHU_TRO_FIELDS: SpecField[] = [
@@ -629,6 +692,27 @@ const PHU_TRO_FIELDS: SpecField[] = [
     required: true,
     group: "Kho",
     options: ["in_stock", "pre_order", "coming_soon", "out_of_stock"],
+  },
+  {
+    key: "warehouse_location",
+    label: "Vị trí trong kho",
+    type: "text",
+    placeholder: "VD: Kệ A3, Hàng 2",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_name",
+    label: "Tên nhà cung cấp",
+    type: "text",
+    placeholder: "VD: Công ty TNHH ABC",
+    group: "Nội bộ",
+  },
+  {
+    key: "supplier_phone",
+    label: "SĐT nhà cung cấp",
+    type: "text",
+    placeholder: "VD: 0901234567",
+    group: "Nội bộ",
   },
 ];
 
