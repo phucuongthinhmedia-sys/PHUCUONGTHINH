@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
+import { PublicShell } from "@/components/PublicShell";
 
 export const metadata: Metadata = {
   title: "Phúc Cường Thịnh - Tiên phong Big Slab & Kiến trúc xanh",
@@ -24,9 +23,7 @@ export default function RootLayout({
     <html lang="vi">
       <body className="relative">
         <Providers>
-          <Header />
-          {children}
-          <Footer />
+          <PublicShell>{children}</PublicShell>
         </Providers>
       </body>
     </html>

@@ -219,6 +219,12 @@ export function Footer() {
             >
               Chính sách vận chuyển
             </Link>
+            <Link
+              href="/admin/login"
+              className="hover:text-gray-300 transition-colors opacity-40 hover:opacity-100"
+            >
+              Admin
+            </Link>
           </div>
         </div>
       </div>

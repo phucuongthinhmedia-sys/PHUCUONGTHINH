@@ -33,6 +33,7 @@ import {
 } from "@/components/ProductSpecs";
 import { MediaShowcase } from "@/components/MediaShowcase";
 import { Product } from "@/types";
+import { useAuth } from "@repo/shared-utils";
 
 const ZALO_URL = "https://zalo.me/0901234567";
 const TRUST_BADGES = [
@@ -225,6 +226,7 @@ export default function ProductDetailPage({
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!params.id) return;
@@ -487,6 +489,87 @@ export default function ProductDetailPage({
                 <p className="text-gray-600 leading-relaxed text-sm line-clamp-2">
                   {product.description}
                 </p>
+              )}
+
+              {/* Panel nội bộ — chỉ hiện khi đã đăng nhập */}
+              {isAuthenticated && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+                      🔒 Thông tin nội bộ
+                    </span>
+                    <a
+                      href={`/admin/products/${product.id}`}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors"
+                    >
+                      ✏️ Chỉnh sửa
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {specs["gia_ban_le"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Giá bán lẻ
+                        </p>
+                        <p className="font-bold text-gray-900">
+                          {Number(specs["gia_ban_le"]).toLocaleString("vi-VN")}đ
+                        </p>
+                      </div>
+                    )}
+                    {specs["gia_dai_ly"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Giá đại lý
+                        </p>
+                        <p className="font-bold text-emerald-700">
+                          {Number(specs["gia_dai_ly"]).toLocaleString("vi-VN")}đ
+                        </p>
+                      </div>
+                    )}
+                    {specs["nha_cung_cap"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Nhà cung cấp
+                        </p>
+                        <p className="font-semibold text-gray-800">
+                          {specs["nha_cung_cap"]}
+                        </p>
+                      </div>
+                    )}
+                    {specs["xuat_xu"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">Xuất xứ</p>
+                        <p className="font-semibold text-gray-800">
+                          {specs["xuat_xu"]}
+                        </p>
+                      </div>
+                    )}
+                    {specs["thuong_hieu"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">
+                          Thương hiệu
+                        </p>
+                        <p className="font-semibold text-gray-800">
+                          {specs["thuong_hieu"]}
+                        </p>
+                      </div>
+                    )}
+                    {specs["bao_hanh"] && (
+                      <div className="bg-white rounded-lg p-2.5 border border-amber-100">
+                        <p className="text-xs text-gray-500 mb-0.5">Bảo hành</p>
+                        <p className="font-semibold text-gray-800">
+                          {specs["bao_hanh"]}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {!specs["gia_ban_le"] && !specs["gia_dai_ly"] && (
+                    <p className="text-xs text-amber-600 italic">
+                      Chưa có thông tin giá. Cập nhật trong phần chỉnh sửa sản
+                      phẩm.
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Block 2: Box Thông số kỹ thuật (Đưa lên trước) */}

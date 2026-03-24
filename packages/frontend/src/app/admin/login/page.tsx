@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@repo/shared-utils";
 import { authService } from "@/lib/auth-service";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +22,9 @@ export default function AdminLoginPage() {
     try {
       const response = await authService.login({ email, password });
       login({ email, password }, response);
-      router.push("/admin/dashboard");
+      // Redirect về trang trước đó, hoặc /products nếu không có
+      const returnTo = searchParams.get("returnTo") || "/products";
+      router.push(returnTo);
     } catch (err: any) {
       setError(
         err.response?.data?.error?.message ||
@@ -94,6 +97,14 @@ export default function AdminLoginPage() {
             >
               {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
+          </div>
+          <div className="text-center">
+            <a
+              href="/admin/dashboard"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Vào CMS Dashboard →
+            </a>
           </div>
         </form>
       </div>
