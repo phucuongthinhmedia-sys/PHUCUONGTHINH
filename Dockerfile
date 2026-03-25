@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo \
     libgif7 \
     librsvg2-2 \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
