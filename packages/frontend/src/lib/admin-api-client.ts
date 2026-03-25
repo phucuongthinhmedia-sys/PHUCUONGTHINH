@@ -20,8 +20,10 @@ function onUnauthorized(): void {
 }
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
-// v3
+  typeof window !== "undefined"
+    ? "/api/backend"
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+// v4 - use relative URL via rewrites
 
 export const adminApiClient: ApiClient = createApiClient({
   baseURL: API_URL,
