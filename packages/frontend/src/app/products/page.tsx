@@ -169,6 +169,19 @@ export default function ProductsPage() {
   const sliderRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
   const [viewMode, setViewMode] = useState<"customer" | "admin">("customer");
+
+  const switchToAdmin = () => {
+    setViewMode("admin");
+    setFilters((prev) => ({ ...prev, published: "all" as any, page: 1 }));
+  };
+
+  const switchToCustomer = () => {
+    setViewMode("customer");
+    setFilters((prev) => {
+      const { published, ...rest } = prev as any;
+      return { ...rest, page: 1 };
+    });
+  };
   const scrollSlider = (direction: "left" | "right") => {
     if (sliderRef.current) {
       const scrollAmount = 350;
@@ -290,6 +303,7 @@ export default function ProductsPage() {
           </div>
 
           <select
+            value={(filters as any).published || "all"}
             onChange={(e) =>
               setFilters((prev) => ({
                 ...prev,
@@ -310,7 +324,7 @@ export default function ProductsPage() {
             </span>
             <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
               <button
-                onClick={() => setViewMode("customer")}
+                onClick={switchToCustomer}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-gray-500 hover:text-gray-700 transition-all"
               >
                 <LayoutGrid size={12} /> Khách
@@ -446,7 +460,7 @@ export default function ProductsPage() {
                 <LayoutGrid size={12} /> Khách
               </button>
               <button
-                onClick={() => setViewMode("admin")}
+                onClick={switchToAdmin}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-gray-500 hover:text-gray-700 transition-all"
               >
                 <List size={12} /> Admin
