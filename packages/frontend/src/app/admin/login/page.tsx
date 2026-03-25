@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@repo/shared-utils";
 import { authService } from "@/lib/auth-service";
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
@@ -22,7 +22,6 @@ export default function AdminLoginPage() {
     try {
       const response = await authService.login({ email, password });
       login({ email, password }, response);
-      // Quay lại trang trước đó, hoặc trang chủ
       const returnTo = searchParams.get("returnTo") || "/";
       router.push(returnTo);
     } catch (err: any) {
@@ -97,5 +96,19 @@ export default function AdminLoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
