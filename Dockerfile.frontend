@@ -26,8 +26,8 @@ COPY packages/shared-utils ./packages/shared-utils
 COPY packages/tailwind-config ./packages/tailwind-config
 COPY packages/shared-types ./packages/shared-types
 
-RUN pnpm --filter @repo/shared-types build || true && \
-    pnpm --filter @repo/shared-utils build || true && \
+RUN pnpm --filter @repo/shared-types build; \
+    pnpm --filter @repo/shared-utils build; \
     pnpm --filter digital-showroom build
 
 # Production
