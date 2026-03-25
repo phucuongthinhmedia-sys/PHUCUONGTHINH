@@ -202,7 +202,9 @@ export class CategoriesService {
       data: {
         ...(name && { name }),
         ...(name && { slug }),
-        ...(parent_id !== undefined && { parent_id }),
+        ...(parent_id !== undefined && {
+          parent_id: parent_id && parent_id.trim() !== '' ? parent_id : null,
+        }),
       },
       include: {
         parent: true,

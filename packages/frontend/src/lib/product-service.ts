@@ -1,4 +1,5 @@
 import { apiClient, rawApiClient } from "./admin-api-client";
+import { cleanPayload } from "./constants";
 
 export interface Product {
   id: string;
@@ -131,14 +132,14 @@ class ProductService {
   }
 
   async createProduct(data: CreateProductRequest): Promise<Product> {
-    return apiClient.post<Product>("/products", data);
+    return apiClient.post<Product>("/products", cleanPayload(data));
   }
 
   async updateProduct(
     id: string,
     data: UpdateProductRequest,
   ): Promise<Product> {
-    return apiClient.put<Product>(`/products/${id}`, data);
+    return apiClient.put<Product>(`/products/${id}`, cleanPayload(data));
   }
 
   async deleteProduct(id: string): Promise<void> {

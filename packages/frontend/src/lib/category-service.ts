@@ -1,4 +1,5 @@
 import { apiClient } from "./admin-api-client";
+import { cleanPayload } from "./constants";
 
 export interface Category {
   id: string;
@@ -31,14 +32,14 @@ class CategoryService {
   }
 
   async createCategory(data: CreateCategoryRequest): Promise<Category> {
-    return apiClient.post<Category>("/categories", data);
+    return apiClient.post<Category>("/categories", cleanPayload(data));
   }
 
   async updateCategory(
     id: string,
     data: UpdateCategoryRequest,
   ): Promise<Category> {
-    return apiClient.put<Category>(`/categories/${id}`, data);
+    return apiClient.put<Category>(`/categories/${id}`, cleanPayload(data));
   }
 
   async deleteCategory(id: string): Promise<void> {

@@ -30,23 +30,11 @@ async function bootstrap() {
   const cmsUrl =
     configService.get<string>('app.frontend.cmsUrl') || 'http://localhost:3002';
 
-  // Enable CORS for frontend domains
-  const corsConfig = securityHeadersService.getCorsConfiguration();
   app.enableCors({
-    origin: [
-      'http://localhost:3000', // Next.js development server
-      'http://localhost:3001', // Frontend development server
-      'http://localhost:3002', // CMS development server
-      'http://localhost:3003',
-      'http://localhost:3004',
-      'http://localhost:3005',
-      frontendUrl,
-      cmsUrl,
-      ...corsConfig.origin,
-    ],
+    origin: true, // Allow all origins - can restrict later
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: corsConfig.credentials,
+    credentials: true,
   });
 
   // Apply security headers middleware
