@@ -1,53 +1,35 @@
-FROM node:22.12-slim AS base
+FROM node:22.12-slim
 RUN npm install -g pnpm@9.0.0
 
-# Install dependencies
-FROM base AS deps
 WORKDIR /app
 
+# Copy workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/frontend/package.json ./packages/frontend/
 COPY packages/shared-utils/package.json ./packages/shared-utils/
-COPY packages/tailwind-config/package.json ./packages/tailwind-config/
 COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/tailwind-config/package.json ./packages/tailwind-config/
 
+# Install dependencies
 RUN pnpm install --no-frozen-lockfile
 
-# Build
-FROM base AS builder
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy source
 COPY packages/frontend ./packages/frontend
 COPY packages/shared-utils ./packages/shared-utils
-COPY packages/tailwind-config ./packages/tailwind-config
 COPY packages/shared-types ./packages/shared-types
+COPY packages/tailwind-config ./packages/tailwind-config
 
+# Build shared packages then frontend
 RUN pnpm --filter @repo/shared-types build; \
     pnpm --filter @repo/shared-utils build; \
     pnpm --filter digital-showroom build
 
-# Production
-FROM node:22.12-slim AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# standalone output includes everything needed
-COPY --from=builder --chown=nextjs:nodejs /app/packages/frontend/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/packages/frontend/.next/static ./packages/frontend/.next/static
-COPY --from=builder /app/packages/frontend/public ./packages/frontend/public
-
-USER nextjs
+WORKDIR /app/packages/frontend
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+CMD ["pnpm", "start"]
