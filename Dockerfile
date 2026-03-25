@@ -14,14 +14,21 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY packages/backend/package*.json packages/backend/.npmrc ./
+# Copy package files and install dependencies
+COPY packages/backend/package*.json ./
+COPY packages/backend/.npmrc ./
 COPY packages/backend/prisma ./prisma/
 
-RUN npm install --legacy-peer-deps && npx prisma generate
+RUN npm install --legacy-peer-deps
+RUN npx prisma generate
 
-COPY packages/backend/ .
+# Copy source code
+COPY packages/backend/src ./src/
+COPY packages/backend/nest-cli.json ./
+COPY packages/backend/tsconfig*.json ./
 
-RUN npm run build
+# Build the application
+RUN npm run build && ls -la dist/
 
 EXPOSE 3001
 
