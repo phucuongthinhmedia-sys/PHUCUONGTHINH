@@ -45,7 +45,12 @@ export default function AdminCategoriesPage() {
       if (editingId) {
         await categoryService.updateCategory(editingId, formData);
       } else {
-        await categoryService.createCategory(formData as CreateCategoryRequest);
+        const payload: CreateCategoryRequest = {
+          name: formData.name,
+          slug: formData.slug,
+          ...(formData.parent_id ? { parent_id: formData.parent_id } : {}),
+        };
+        await categoryService.createCategory(payload);
       }
       setFormData({ name: "", slug: "", parent_id: "" });
       setEditingId(null);
