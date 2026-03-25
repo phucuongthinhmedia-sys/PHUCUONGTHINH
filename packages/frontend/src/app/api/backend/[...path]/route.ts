@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const BACKEND_URL =
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
@@ -19,7 +21,7 @@ export async function GET(
   const auth = request.headers.get("authorization");
   if (auth) headers["authorization"] = auth;
 
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers, cache: "no-store" });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
