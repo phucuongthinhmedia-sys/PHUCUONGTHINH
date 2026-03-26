@@ -8,42 +8,11 @@ import { API_URL } from "@/lib/constants";
  * Calls `onEvent` whenever a product is created, updated, or deleted.
  * If `productId` is provided, only fires when that specific product changes.
  * Auto-reconnects on disconnect.
+ *
+ * DISABLED: SSE not working through Next.js API proxy
  */
 export function useProductEvents(onEvent: () => void, productId?: string) {
-  const onEventRef = useRef(onEvent);
-  onEventRef.current = onEvent;
-
-  useEffect(() => {
-    let es: EventSource;
-    let retryTimeout: ReturnType<typeof setTimeout>;
-
-    const connect = () => {
-      es = new EventSource(`${API_URL}/products/events`);
-
-      es.onmessage = (e) => {
-        if (productId) {
-          try {
-            const event = JSON.parse(e.data);
-            if (event.productId === productId) onEventRef.current();
-          } catch {
-            onEventRef.current();
-          }
-        } else {
-          onEventRef.current();
-        }
-      };
-
-      es.onerror = () => {
-        es.close();
-        retryTimeout = setTimeout(connect, 3000);
-      };
-    };
-
-    connect();
-
-    return () => {
-      es?.close();
-      clearTimeout(retryTimeout);
-    };
-  }, [productId]);
+  // Temporarily disabled - SSE causes timeout through Next.js proxy
+  // TODO: Use direct backend connection or WebSocket instead
+  return;
 }
