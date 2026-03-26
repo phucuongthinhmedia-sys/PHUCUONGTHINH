@@ -28,35 +28,55 @@ import { RedisCacheService } from '../common/services/redis-cache.service';
     {
       provide: CacheService,
       useFactory: (redisCache: RedisCacheService) => {
+        console.log('🔧 Creating CacheService adapter with Redis');
         // Adapter to make RedisCacheService compatible with CacheService interface
         return {
-          get: (key: string) => redisCache.get(key),
-          set: (key: string, data: any, options?: any) => {
-            const ttl = options?.ttl || 300;
-            return redisCache.set(key, data, ttl);
+          get: async (key: string) => {
+            console.log(`📖 Cache GET: ${key}`);
+            return await redisCache.get(key);
           },
-          delete: (key: string) => redisCache.delete(key),
-          clear: () => redisCache.clear(),
-          has: (key: string) => redisCache.has(key),
+          set: async (key: string, data: any, options?: any) => {
+            const ttl = options?.ttl || 300;
+            console.log(`💾 Cache SET: ${key} (TTL: ${ttl}s)`);
+            await redisCache.set(key, data, ttl);
+          },
+          delete: async (key: string) => {
+            console.log(`🗑️  Cache DELETE: ${key}`);
+            return await redisCache.delete(key);
+          },
+          clear: async () => {
+            console.log('🧹 Cache CLEAR ALL');
+            await redisCache.clear();
+          },
+          has: async (key: string) => {
+            return await redisCache.has(key);
+          },
           // Additional methods for compatibility
           cached: async (
             key: string,
             factory: () => Promise<any>,
             ttl = 300,
           ) => {
-            return redisCache.getOrSet(key, factory, ttl);
+            console.log(`🔍 Cache LOOKUP: ${key}`);
+            const result = await redisCache.getOrSet(key, factory, ttl);
+            console.log(`${result ? '✅ HIT' : '❌ MISS'}: ${key}`);
+            return result;
           },
           generateFilterCacheKey: (filters: any) => {
             return `filters:${JSON.stringify(filters)}`;
           },
-          invalidateProductCache: (productId?: string) => {
+          invalidateProductCache: async (productId?: string) => {
             if (productId) {
-              return redisCache.invalidatePattern(`product:${productId}*`);
+              console.log(`🗑️  Invalidating cache for product: ${productId}`);
+              return await redisCache.invalidatePattern(
+                `product:${productId}*`,
+              );
             }
-            return redisCache.invalidatePattern('product:*');
+            console.log('🗑️  Invalidating all product caches');
+            return await redisCache.invalidatePattern('product:*');
           },
           getStats: () => {
-            return { message: 'Using Redis cache' };
+            return { message: 'Using Redis cache', type: 'redis' };
           },
         };
       },
