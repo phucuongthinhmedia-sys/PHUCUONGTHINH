@@ -25,6 +25,7 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:prod": "node scripts/seed-production.js",
     "db:reset:prod": "node scripts/reset-and-seed.js",
+    "db:setup:prod": "node scripts/production-setup.js",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
     "db:reset:sqlite": "prisma migrate reset --force --schema=prisma/schema.sqlite.prisma",
