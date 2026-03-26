@@ -64,4 +64,4 @@ RUN echo "Production stage, checking files:" && ls -la && ls -la dist/
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma db push && node scripts/seed-admin.js && node dist/src/main"]
+CMD ["sh", "-c", "node scripts/production-setup.js && node dist/main"]
