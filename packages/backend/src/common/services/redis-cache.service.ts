@@ -1,21 +1,24 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 
 /**
  * Redis-based cache service for production
  * Falls back to in-memory cache if Redis is not available
  */
 @Injectable()
-export class RedisCacheService implements OnModuleDestroy {
-  private redis: any = null;
+export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
+  private redis: Redis | null = null;
   private fallbackCache = new Map<
     string,
     { value: any; expiresAt: number | null }
   >();
   private useRedis = false;
 
-  constructor(private configService: ConfigService) {
-    this.initializeRedis();
+  constructor(private configService: ConfigService) {}
+
+  async onModuleInit() {
+    await this.initializeRedis();
   }
 
   private async initializeRedis() {
@@ -27,8 +30,6 @@ export class RedisCacheService implements OnModuleDestroy {
     }
 
     try {
-      // Dynamic import to avoid bundling issues
-      const { default: Redis } = await import('ioredis');
       this.redis = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
         retryStrategy: (times: number) => {
