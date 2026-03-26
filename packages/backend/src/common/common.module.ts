@@ -15,6 +15,7 @@ import { PerformanceController } from './controllers/performance.controller';
 import { SecurityController } from './controllers/security.controller';
 import { QueryPerformanceController } from './controllers/query-performance.controller';
 import { RedisStatusController } from './controllers/redis-status.controller';
+import { PerformanceTestController } from './controllers/performance-test.controller';
 import { SecurityHeadersMiddleware } from './middleware/security-headers.middleware';
 import { RateLimitMiddleware } from './middleware/rate-limit.middleware';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -27,6 +28,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     SecurityController,
     QueryPerformanceController,
     RedisStatusController,
+    PerformanceTestController,
   ],
   providers: [
     LoggerService,
