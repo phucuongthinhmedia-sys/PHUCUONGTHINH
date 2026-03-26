@@ -273,11 +273,25 @@ export function Header() {
 
               <span className="w-px h-4 bg-brand-paper mx-0.5" />
 
+              {/* Nút đăng nhập - chỉ hiện khi chưa đăng nhập */}
+              {!isAuthenticated && (
+                <>
+                  <Link
+                    href="/admin/login"
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-brand-primary/70 hover:text-brand-primary border border-brand-primary/20 hover:border-brand-primary/40 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <LogOut size={14} className="rotate-180" />
+                    Đăng nhập
+                  </Link>
+                  <span className="hidden sm:block w-px h-4 bg-brand-paper mx-0.5" />
+                </>
+              )}
+
               <a
                 href="https://zalo.me"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-1 flex items-center gap-1.5 bg-brand-primary text-brand-secondary text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-[#6e2411] transition-colors whitespace-nowrap"
+                className="ml-1 hidden sm:flex items-center gap-1.5 bg-brand-primary text-brand-secondary text-[13px] font-bold px-4 py-2 rounded-lg hover:bg-[#6e2411] transition-colors whitespace-nowrap"
               >
                 <CalendarCheck size={14} />
                 Đặt Lịch Trải Nghiệm Showroom
@@ -338,11 +352,24 @@ export function Header() {
                 {label}
               </Link>
             ))}
+
+            {/* Nút đăng nhập cho mobile */}
+            {!isAuthenticated && (
+              <Link
+                href="/admin/login"
+                onClick={() => setMobileOpen(false)}
+                className="mt-3 flex items-center justify-center gap-2 border-2 border-brand-primary text-brand-primary font-bold px-4 py-3 rounded-lg text-sm hover:bg-brand-primary hover:text-brand-secondary transition-colors"
+              >
+                <LogOut size={16} className="rotate-180" />
+                Đăng nhập
+              </Link>
+            )}
+
             <a
               href="https://zalo.me"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 flex items-center justify-center gap-2 bg-brand-primary text-brand-secondary font-bold px-4 py-3 rounded-lg text-sm hover:bg-[#6e2411] transition-colors"
+              className="mt-3 flex items-center justify-center gap-2 bg-brand-primary text-brand-secondary font-bold px-4 py-3 rounded-lg text-sm hover:bg-[#6e2411] transition-colors"
             >
               <CalendarCheck size={16} />
               Đặt Lịch Trải Nghiệm Showroom
