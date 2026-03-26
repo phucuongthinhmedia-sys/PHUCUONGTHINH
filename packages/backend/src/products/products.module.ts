@@ -11,7 +11,9 @@ import { PaginationService } from './services/pagination.service';
 import { CacheService } from './services/cache.service';
 import { PerformanceService } from './services/performance.service';
 import { ProductsEventService } from './products-events.service';
+import { RedisCacheService } from '../common/services/redis-cache.service';
 
+// Provide RedisCacheService as CacheService for backward compatibility
 @Module({
   imports: [PrismaModule, CategoriesModule],
   controllers: [ProductsController],
@@ -23,7 +25,43 @@ import { ProductsEventService } from './products-events.service';
     CombinedFilterService,
     SearchService,
     PaginationService,
-    CacheService,
+    {
+      provide: CacheService,
+      useFactory: (redisCache: RedisCacheService) => {
+        // Adapter to make RedisCacheService compatible with CacheService interface
+        return {
+          get: (key: string) => redisCache.get(key),
+          set: (key: string, data: any, options?: any) => {
+            const ttl = options?.ttl || 300;
+            return redisCache.set(key, data, ttl);
+          },
+          delete: (key: string) => redisCache.delete(key),
+          clear: () => redisCache.clear(),
+          has: (key: string) => redisCache.has(key),
+          // Additional methods for compatibility
+          cached: async (
+            key: string,
+            factory: () => Promise<any>,
+            ttl = 300,
+          ) => {
+            return redisCache.getOrSet(key, factory, ttl);
+          },
+          generateFilterCacheKey: (filters: any) => {
+            return `filters:${JSON.stringify(filters)}`;
+          },
+          invalidateProductCache: (productId?: string) => {
+            if (productId) {
+              return redisCache.invalidatePattern(`product:${productId}*`);
+            }
+            return redisCache.invalidatePattern('product:*');
+          },
+          getStats: () => {
+            return { message: 'Using Redis cache' };
+          },
+        };
+      },
+      inject: [RedisCacheService],
+    },
     PerformanceService,
   ],
   exports: [ProductsService],
