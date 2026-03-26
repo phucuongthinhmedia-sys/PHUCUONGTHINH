@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { CalendarDays, MessageSquare, FileText } from "lucide-react";
 
-export default function ContactPage() {
+function ContactContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type") || "general";
   const productId = searchParams.get("product");
@@ -48,13 +49,11 @@ export default function ContactPage() {
           <AppointmentForm
             productId={productId || undefined}
             onSuccess={() => {
-              // Redirect or show success message
               window.location.href = "/";
             }}
           />
         </div>
 
-        {/* Contact Info */}
         <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
             Thông tin liên hệ
@@ -88,5 +87,19 @@ export default function ContactPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <ContactContent />
+    </Suspense>
   );
 }
