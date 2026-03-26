@@ -11,6 +11,10 @@ import { Tag } from "@/lib/tag-service";
 import { CategoryPicker } from "@/components/admin/category-picker";
 import { MediaUploader, PendingMedia } from "@/components/admin/media-uploader";
 import { PriceSection, PriceData } from "@/components/admin/price-section";
+import {
+  InternalInfoSection,
+  InternalInfoData,
+} from "@/components/admin/internal-info-section";
 import { SpecTable } from "@/components/admin/spec-table";
 import { ProductType, detectProductType } from "@/lib/spec-templates";
 import {
@@ -374,13 +378,28 @@ export function ProductForm({
     if (!validate()) return;
     setIsSaving(true);
     try {
+      // Extract internal info from technical_specs
+      const internalInfo = {
+        warehouse_location: formData.technical_specs.warehouse_location,
+        supplier_name: formData.technical_specs.supplier_name,
+        supplier_phone: formData.technical_specs.supplier_phone,
+      };
+
+      // Remove internal fields from technical_specs before saving product
+      const {
+        warehouse_location,
+        supplier_name,
+        supplier_phone,
+        ...publicSpecs
+      } = formData.technical_specs;
+
       const payload: CreateProductRequest | UpdateProductRequest = {
         name: formData.name.trim(),
         sku: formData.sku.trim(),
         description: formData.description.trim() || undefined,
         category_id: formData.category_id,
         technical_specs: {
-          ...formData.technical_specs,
+          ...publicSpecs,
           slug: formData.slug,
           meta_title: formData.meta_title || formData.name,
           meta_description:
@@ -390,10 +409,37 @@ export function ProductForm({
         style_ids: formData.style_ids,
         space_ids: formData.space_ids,
       };
+
       const result = await onSubmit(payload);
-      if (product?.id)
-        await syncMediaForEdit(product.id, originalMediaRef.current);
-      else if (result?.id) await uploadPendingMedia(result.id);
+      const productId = product?.id || result?.id;
+
+      if (productId) {
+        // Upload media
+        if (product?.id)
+          await syncMediaForEdit(product.id, originalMediaRef.current);
+        else if (result?.id) await uploadPendingMedia(result.id);
+
+        // Save internal info if any field is filled
+        const hasInternalInfo =
+          internalInfo.warehouse_location ||
+          internalInfo.supplier_name ||
+          internalInfo.supplier_phone;
+
+        if (hasInternalInfo) {
+          try {
+            const { apiClient } = await import("@/lib/api-client");
+            await apiClient.patch(`/products/${productId}/internal`, {
+              internal_notes: internalInfo.warehouse_location,
+              supplier_name: internalInfo.supplier_name,
+              supplier_contact: internalInfo.supplier_phone,
+            });
+          } catch (err) {
+            console.error("Failed to save internal info:", err);
+            // Non-fatal, don't block success
+          }
+        }
+      }
+
       setToast({ message: "Đã lưu sản phẩm", type: "success" });
     } catch (err: any) {
       const msg =
