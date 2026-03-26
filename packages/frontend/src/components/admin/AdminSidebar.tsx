@@ -118,20 +118,16 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         <Link
           href="/"
           onClick={onClose}
-          className="flex items-center gap-2.5 group"
+          className="flex items-center gap-3 group"
         >
-          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 22 22"
-              fill="none"
-              aria-hidden="true"
-            >
-              <rect width="22" height="22" fill="#8B2E16" />
-              <path d="M4 4h6v3H7v2h3v3H7v6H4V4z" fill="#F5F0E8" />
-              <path d="M12 4h6v14h-3v-5.5h-3V9.5h3V7h-3V4z" fill="#F5F0E8" />
-            </svg>
+          <div className="w-32 h-32 rounded-lg overflow-hidden shrink-0">
+            <img
+              src="/logo.png"
+              alt="Phú Cường Thịnh Logo"
+              width="128"
+              height="128"
+              className="object-contain w-full h-full"
+            />
           </div>
           <div>
             <p className="text-white font-black text-[13px] tracking-tight uppercase leading-none">

@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   title: "Phúc Cường Thịnh - Tiên phong Big Slab & Kiến trúc xanh",
   description:
     "Đơn vị dẫn đầu chuỗi cung ứng vật liệu xây dựng B2B. Tổng kho phân phối Gạch khổ lớn (Big Slab) và giải pháp Gạch kháng khuẩn công nghệ cao.",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/favicon.png", sizes: "128x128", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+    apple: [{ url: "/favicon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {

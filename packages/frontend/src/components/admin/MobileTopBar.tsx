@@ -36,17 +36,13 @@ export function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
     <div className="lg:hidden sticky top-0 z-30 bg-[#0a192f] flex items-center gap-3 px-4 h-14 shrink-0">
       {/* Logo mark */}
       <Link href="/" className="shrink-0">
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 22 22"
-          fill="none"
-          aria-hidden="true"
-        >
-          <rect width="22" height="22" fill="#8B2E16" rx="5" />
-          <path d="M4 4h6v3H7v2h3v3H7v6H4V4z" fill="#F5F0E8" />
-          <path d="M12 4h6v14h-3v-5.5h-3V9.5h3V7h-3V4z" fill="#F5F0E8" />
-        </svg>
+        <img
+          src="/logo.png"
+          alt="Phú Cường Thịnh Logo"
+          width="100"
+          height="100"
+          className="object-contain"
+        />
       </Link>
 
       <h1 className="flex-1 text-white font-bold text-base tracking-tight truncate">
