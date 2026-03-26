@@ -1,8 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  // Tối ưu dev mode
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+  // Giảm overhead
+  productionBrowserSourceMaps: false,
   images: {
     remotePatterns: [
       {

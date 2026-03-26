@@ -81,23 +81,44 @@ export function Header() {
         {/* Admin toolbar */}
         {isAuthenticated && (
           <div className="fixed top-0 left-0 right-0 z-[60] bg-[#0a192f] text-white text-xs flex items-center justify-between px-3 md:px-4 h-8 shadow-sm">
-            {/* ... (Giữ nguyên code admin toolbar) ... */}
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline text-gray-400">
                 Chế độ Admin
               </span>
-              <span className="text-emerald-400 font-medium">
+              <span className="hidden sm:inline text-gray-500">·</span>
+              <span className="text-emerald-400 font-medium truncate max-w-[120px] sm:max-w-none">
                 {user?.email}
               </span>
             </div>
-            <div className="flex items-center gap-0.5">{/* ... */}</div>
+            <div className="flex items-center gap-0.5">
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+              >
+                <LayoutDashboard size={12} />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+              <Link
+                href="/admin/products"
+                className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+              >
+                <Settings size={12} />
+                <span className="hidden sm:inline">Quản lý SP</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 px-2 py-1 rounded hover:bg-red-500/20 transition-colors text-gray-400 hover:text-red-400"
+              >
+                <LogOut size={12} />
+                <span className="hidden sm:inline">Đăng xuất</span>
+              </button>
+            </div>
           </div>
         )}
         <div
           className={`fixed right-3 md:right-4 z-50 transition-all duration-300 ${isAuthenticated ? "top-12" : "top-4"} ${isScrolled ? "opacity-90 hover:opacity-100" : ""}`}
         >
           <div className="bg-[#FDF5E6] rounded-full shadow-lg border border-gray-200/50 p-2 pr-3 flex items-center gap-3">
-            {/* ... (Giữ nguyên compact header màu be/nâu vì trang sản phẩm thường có nền trắng/xám) ... */}
             <Link href="/" className="flex items-center gap-1.5 shrink-0 pl-1">
               <div
                 style={{ backgroundColor: palette.brown }}
@@ -127,15 +148,44 @@ export function Header() {
               <button
                 onClick={() => setCompactMenuOpen(!compactMenuOpen)}
                 style={{ color: palette.brown }}
-                className="flex items-center gap-1 text-[12px] font-medium"
+                className="flex items-center gap-1 text-[12px] font-medium transition-colors hover:text-opacity-80"
               >
                 Menu{" "}
                 <ChevronDown
                   size={13}
-                  className={compactMenuOpen ? "rotate-180" : ""}
+                  className={`transition-transform ${compactMenuOpen ? "rotate-180" : ""}`}
                 />
               </button>
+              {compactMenuOpen && (
+                <div className="absolute top-full right-0 mt-2 bg-[#FDF5E6] border border-gray-200/50 rounded-lg shadow-lg py-2 min-w-[140px] z-10">
+                  {compactNavLinks.map(({ href, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setCompactMenuOpen(false)}
+                      style={{ color: palette.brown }}
+                      className="block px-4 py-2 text-[12px] hover:text-opacity-80 transition-colors"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
+            <span
+              style={{ backgroundColor: palette.lightBrown }}
+              className="w-px h-5 opacity-40"
+            />
+            <a
+              href="https://zalo.me"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ backgroundColor: palette.brown }}
+              className="flex items-center gap-1.5 text-white text-[12px] font-bold px-4 py-2 rounded-full hover:bg-opacity-90 transition-colors whitespace-nowrap shadow-sm"
+            >
+              <CalendarCheck size={13} />
+              Đặt lịch
+            </a>
           </div>
         </div>
       </>
@@ -147,8 +197,34 @@ export function Header() {
       {isAuthenticated && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-[#0a192f] text-white text-xs flex items-center justify-between px-3 md:px-4 h-8 shadow-sm">
           <div className="flex items-center gap-2">
-            <span className="text-gray-400">Admin</span>
-            <span className="text-emerald-400 font-medium">{user?.email}</span>
+            <span className="hidden sm:inline text-gray-400">Chế độ Admin</span>
+            <span className="hidden sm:inline text-gray-500">·</span>
+            <span className="text-emerald-400 font-medium truncate max-w-[120px] sm:max-w-none">
+              {user?.email}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5">
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+            >
+              <LayoutDashboard size={12} />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+            <Link
+              href={`/admin/products`}
+              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-white/10 transition-colors text-gray-300 hover:text-white"
+            >
+              <Settings size={12} />
+              <span className="hidden sm:inline">Quản lý SP</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-red-500/20 transition-colors text-gray-400 hover:text-red-400"
+            >
+              <LogOut size={12} />
+              <span className="hidden sm:inline">Đăng xuất</span>
+            </button>
           </div>
         </div>
       )}
@@ -176,13 +252,10 @@ export function Header() {
             <div className="flex-1 flex justify-start">
               <Link href="/" className="flex items-center shrink-0">
                 <img
-                  src="/logo.png"
+                  src={isScrolled ? "/dacuon.png" : "/chuacuon.png"}
                   alt="Phú Cường Thịnh Logo"
-                  /* Dùng CSS filter để làm logo màu trắng khi chưa cuộn (nếu logo gốc màu tối) */
                   className={`object-contain transition-all duration-300 ${
-                    isScrolled
-                      ? "h-[50px] filter-none"
-                      : "h-[60px] brightness-0 invert"
+                    isScrolled ? "h-[50px]" : "h-[60px]"
                   }`}
                 />
               </Link>
@@ -325,7 +398,60 @@ export function Header() {
       {/* Mobile drawer (Giữ nguyên phong cách lơ lửng) */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-4 z-40 bg-[#FDF5E6]/95 backdrop-blur-xl rounded-3xl shadow-2xl pt-[80px] overflow-hidden border border-gray-200/50">
-          {/* ... code mobile menu giống phiên bản trước ... */}
+          <nav className="flex flex-col px-6 pt-6 h-full overflow-y-auto pb-6">
+            <Link
+              href="/products"
+              onClick={() => setMobileOpen(false)}
+              style={{ color: palette.brown, borderColor: palette.lightBrown }}
+              className="flex items-center justify-between py-4 border-b opacity-100 text-sm font-medium"
+            >
+              Sản phẩm
+              <ChevronDown
+                size={14}
+                style={{ color: palette.brown }}
+                className="opacity-40"
+              />
+            </Link>
+            {navLinks.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  color: palette.brown,
+                  borderColor: palette.lightBrown,
+                }}
+                className="flex items-center justify-between py-4 border-b opacity-100 text-sm hover:text-opacity-60 font-medium transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+
+            <div className="mt-8 flex flex-col gap-4">
+              {!isAuthenticated && (
+                <Link
+                  href="/admin/login"
+                  onClick={() => setMobileOpen(false)}
+                  style={{ color: palette.brown, borderColor: palette.brown }}
+                  className="flex items-center justify-center gap-2 border-2 font-bold px-4 py-3.5 rounded-full text-sm hover:bg-black/5 transition-colors"
+                >
+                  <LogOut size={16} className="rotate-180" />
+                  Đăng nhập
+                </Link>
+              )}
+
+              <a
+                href="https://zalo.me"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ backgroundColor: palette.brown }}
+                className="flex items-center justify-center gap-2 text-white font-bold px-4 py-3.5 rounded-full text-sm hover:bg-opacity-90 transition-colors shadow-sm"
+              >
+                <CalendarDays size={16} />
+                Đặt Lịch Trải Nghiệm Showroom
+              </a>
+            </div>
+          </nav>
         </div>
       )}
     </>

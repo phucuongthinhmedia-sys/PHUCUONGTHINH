@@ -21,11 +21,10 @@ const PAGE_TITLES: Record<string, string> = {
 
 function getTitle(pathname: string): string {
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  // Match prefix
   const match = Object.keys(PAGE_TITLES)
     .filter((k) => k !== "/" && pathname.startsWith(k))
     .sort((a, b) => b.length - a.length)[0];
-  return match ? PAGE_TITLES[match] : "Phú Cường Thịnh";
+  return match ? PAGE_TITLES[match] : "Hệ Thống Quản Trị";
 }
 
 export function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
@@ -33,28 +32,28 @@ export function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   const title = getTitle(pathname);
 
   return (
-    <div className="lg:hidden sticky top-0 z-30 bg-[#0a192f] flex items-center gap-3 px-4 h-14 shrink-0">
-      {/* Logo mark */}
-      <Link href="/" className="shrink-0">
-        <img
-          src="/logo.png"
-          alt="Phú Cường Thịnh Logo"
-          width="100"
-          height="100"
-          className="object-contain"
-        />
-      </Link>
-
-      <h1 className="flex-1 text-white font-bold text-base tracking-tight truncate">
-        {title}
-      </h1>
+    <div className="lg:hidden sticky top-0 z-30 bg-[#804000] border-b border-[#D2B48C]/20 flex items-center justify-between px-5 h-16 shrink-0 shadow-sm">
+      <div className="flex items-center gap-3">
+        <Link href="/" className="shrink-0 bg-[#FDF5E6] p-1.5 rounded-xl">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            width="24"
+            height="24"
+            className="object-contain"
+          />
+        </Link>
+        <h1 className="text-[#FDF5E6] font-bold text-base tracking-wide truncate">
+          {title}
+        </h1>
+      </div>
 
       <button
         onClick={onMenuOpen}
-        className="p-2 text-white/60 hover:text-white active:scale-95 transition-all"
+        className="p-2 bg-[#FDF5E6]/10 rounded-xl text-[#FDF5E6] hover:bg-[#FDF5E6]/20 active:scale-95 transition-all"
         aria-label="Mở menu"
       >
-        <Menu size={22} />
+        <Menu size={20} />
       </button>
     </div>
   );

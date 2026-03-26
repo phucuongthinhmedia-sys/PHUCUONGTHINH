@@ -2,231 +2,298 @@ import Link from "next/link";
 import {
   MapPin,
   Phone,
-  Mail,
   Facebook,
   Youtube,
-  Clock,
   Download,
-  ChevronRight,
-  Building2,
+  ArrowRight,
+  Clock,
 } from "lucide-react";
 
 const ZALO_URL = "https://zalo.me/0901234567";
+const TIKTOK_URL = "https://tiktok.com";
+const FB_URL = "https://facebook.com";
+const YT_URL = "https://youtube.com";
+
+// Bảng màu đồng bộ tuyệt đối với Header
+const palette = {
+  be: "#FDF5E6",
+  beDarker: "#F5EAD6",
+  brown: "#804000",
+  lightBrown: "#D2B48C",
+};
 
 export function Footer() {
   return (
-    <footer className="bg-[#0a192f] text-gray-400 pt-12 md:pt-24 pb-8 border-t border-white/10 relative overflow-hidden font-sans mt-auto">
-      {/* ─── Background Elements (DNA Match) ─── */}
-      <div className="absolute top-0 left-0 -translate-y-1/2 -translate-x-1/3 w-[500px] h-[500px] bg-emerald-600/10 rounded-full blur-[80px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 translate-y-1/2 translate-x-1/3 w-[300px] h-[300px] bg-teal-500/10 rounded-full blur-[60px] pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto px-4 relative z-10">
-        {/* ─── Main Footer Content ─── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8 mb-10 md:mb-16">
-          {/* CỘT 1: Thương Hiệu & Triết Lý (4 columns) */}
-          <div className="lg:col-span-4 pr-0 lg:pr-8">
-            <Link href="/" className="inline-block mb-6 group">
-              <span className="text-emerald-400 font-bold tracking-[0.2em] uppercase text-xs mb-2 block flex items-center gap-2">
-                <span className="w-6 h-[2px] bg-emerald-500 inline-block"></span>
-                Vật Liệu Kiến Trúc
-              </span>
-              <h2 className="text-2xl font-black text-white tracking-tight">
-                Phú Cường{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">
-                  Thịnh
-                </span>
-              </h2>
+    <footer
+      style={{
+        backgroundColor: palette.be,
+        borderColor: "rgba(210, 180, 140, 0.3)",
+      }}
+      className="relative overflow-hidden font-sans mt-20 pt-16 md:pt-24 pb-8 rounded-t-[40px] md:rounded-t-[60px] border-t shadow-[0_-20px_60px_rgba(128,64,0,0.03)]"
+    >
+      <div className="max-w-[1920px] mx-auto px-6 lg:px-12 relative z-10">
+        {/* ─── Grid Nội Dung Chính ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-12 lg:gap-8 mb-20">
+          {/* CỘT 1: Thương Hiệu (Chiếm 4 cột) */}
+          <div className="xl:col-span-4 lg:pr-10">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity ml-8"
+            >
+              <img
+                src="/dacuon.png"
+                alt="Phú Cường Thịnh Logo"
+                className="h-28 object-contain"
+              />
             </Link>
-            <p className="text-gray-400 leading-relaxed text-sm mb-8">
-              Kiến tạo đẳng cấp. Dẫn lối kiến trúc xanh. Hơn một thập kỷ tiên
-              phong phân phối gạch khổ lớn (Big Slab) & thiết bị vệ sinh cao cấp
-              cho các đại dự án tại Việt Nam.
+
+            <p
+              style={{ color: palette.brown }}
+              className="leading-relaxed text-[15px] mb-8 opacity-80 font-medium"
+            >
+              Tiên phong phân phối gạch khổ lớn & thiết bị vệ sinh cao cấp. Dẫn
+              lối kiến trúc bền vững cho các đại dự án tại Việt Nam.
             </p>
+
             <a
               href="/ho-so-nang-luc.pdf"
               target="_blank"
-              className="inline-flex items-center gap-2 text-sm font-bold text-white bg-white/5 hover:bg-emerald-600 px-6 py-3.5 rounded-xl transition-all border border-white/10 hover:border-emerald-500 shadow-lg"
+              style={{ color: palette.brown, borderColor: palette.brown }}
+              className="inline-flex items-center gap-2 text-[14px] font-bold px-6 py-3.5 rounded-full border-2 transition-all hover:bg-[#804000] hover:text-white group"
             >
-              <Download size={18} />
-              Tải Hồ Sơ Năng Lực B2B
+              <Download size={16} />
+              Tải Profile B2B
+              <ArrowRight
+                size={16}
+                className="ml-1 group-hover:translate-x-1 transition-transform"
+              />
             </a>
           </div>
 
-          {/* CỘT 2: Menu Điều Hướng (2 columns) */}
-          <div className="lg:col-span-2">
-            <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-6">
+          {/* CỘT 2: Khám Phá (Chiếm 2 cột) */}
+          <div className="xl:col-span-2">
+            <h3
+              style={{ color: palette.brown }}
+              className="font-black text-sm tracking-widest uppercase mb-6 opacity-60"
+            >
               Khám Phá
             </h3>
-            <ul className="space-y-4 text-sm font-medium">
+            <ul className="space-y-2 text-[15px] font-semibold">
               {[
+                { label: "Sản phẩm", href: "/products" },
                 { label: "Về Chúng Tôi", href: "/ve-chung-toi" },
-                { label: "Gạch Big Slab", href: "/products?category=big-slab" },
-                { label: "Thiết Bị Vệ Sinh", href: "/products?category=tbvs" },
                 { label: "Thi Công Lắp Đặt", href: "/thi-cong" },
-                { label: "Thư Viện Kiến Trúc", href: "/thiet-ke" },
                 { label: "Dự Án Tiêu Biểu", href: "/du-an" },
+                { label: "Tin Tức & Kiến Thức", href: "/tin-tuc" },
               ].map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="flex items-center gap-2 text-gray-400 hover:text-emerald-400 transition-colors group"
+                    style={{ color: palette.brown }}
+                    className="inline-flex py-2 px-3 -ml-3 rounded-xl hover:bg-[#804000]/5 transition-colors opacity-80 hover:opacity-100"
                   >
-                    <ChevronRight
-                      size={14}
-                      className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-emerald-400"
-                    />
-                    <span className="group-hover:translate-x-1 transition-transform">
-                      {item.label}
-                    </span>
+                    {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* CỘT 3: Trụ Sở & Liên Hệ (3 columns) */}
-          <div className="lg:col-span-3">
-            <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-6">
-              Liên Hệ
+          {/* CỘT 3: Bento Box Liên Hệ (Chiếm 3 cột) */}
+          <div className="xl:col-span-3">
+            <h3
+              style={{ color: palette.brown }}
+              className="font-black text-sm tracking-widest uppercase mb-6 opacity-60"
+            >
+              Thông Tin Liên Hệ
             </h3>
-            <ul className="space-y-6 text-sm">
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                  <Building2 size={16} className="text-emerald-400" />
+            <div
+              style={{ backgroundColor: palette.beDarker }}
+              className="rounded-3xl p-6 shadow-sm flex flex-col gap-6"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  style={{ color: palette.brown }}
+                  className="mt-0.5 bg-white/50 p-2 rounded-full"
+                >
+                  <MapPin size={18} />
                 </div>
                 <div>
-                  <span className="block text-white font-bold mb-1">
-                    Showroom & Trụ Sở
+                  <span
+                    style={{ color: palette.brown }}
+                    className="block font-bold mb-1"
+                  >
+                    Showroom trưng bày tại
                   </span>
-                  <span className="text-gray-400 leading-relaxed block">
-                    123 Đường Lê Lợi, P. Phú Cường, TP. Thủ Dầu Một, Bình Dương
+                  <span
+                    style={{ color: palette.brown }}
+                    className="text-sm opacity-80 font-medium"
+                  >
+                    603 Đại Lộ Bình Dương, Hiệp Thành, Thủ Dầu Một, TP. HCM
                   </span>
                 </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                  <MapPin size={16} className="text-emerald-400" />
+              </div>
+
+              <div
+                style={{ backgroundColor: palette.lightBrown }}
+                className="h-px w-full opacity-30"
+              />
+
+              <div className="flex items-start gap-4">
+                <div
+                  style={{ color: palette.brown }}
+                  className="mt-0.5 bg-white/50 p-2 rounded-full"
+                >
+                  <Phone size={18} />
                 </div>
                 <div>
-                  <span className="block text-white font-bold mb-1">
-                    Tổng Kho B2B
+                  <span
+                    style={{ color: palette.brown }}
+                    className="block font-bold mb-1"
+                  >
+                    Hotline Dự Án
                   </span>
-                  <span className="text-gray-400 leading-relaxed block">
-                    Khu Công Nghiệp Sóng Thần 2, Dĩ An, Bình Dương
-                  </span>
-                </div>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                  <Phone size={16} className="text-emerald-400" />
-                </div>
-                <div>
                   <a
-                    href="tel:0901234567"
-                    className="text-emerald-400 font-black hover:text-emerald-300 text-lg transition-colors block"
+                    href="tel:0862530979"
+                    style={{ color: palette.brown }}
+                    className="text-xl font-black hover:opacity-70 transition-opacity"
                   >
                     0862.530.979
                   </a>
-                  <span className="text-gray-500 text-xs">
-                    Hotline dự án 24/7
-                  </span>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* CỘT 4: Chăm sóc khách hàng & Kết nối (3 columns) */}
-          <div className="lg:col-span-3">
-            <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-6">
-              Hỗ Trợ
-            </h3>
-
-            {/* Bento box nhỏ cho giờ làm việc */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6 backdrop-blur-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock size={16} className="text-emerald-400" />
-                <span className="text-white font-bold text-sm">
-                  Giờ Làm Việc
-                </span>
-              </div>
-              <div className="space-y-2 text-sm text-gray-400">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <span>Thứ 2 - Thứ 7</span>
-                  <span className="text-white font-medium">07:30 - 17:30</span>
-                </div>
-                <div className="flex justify-between items-center pt-1">
-                  <span>Chủ Nhật</span>
-                  <span className="text-white font-medium">08:00 - 12:00</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center gap-3">
+          {/* CỘT 4: Mạng Xã Hội & Giờ làm việc (Chiếm 3 cột) */}
+          <div className="xl:col-span-3">
+            <h3
+              style={{ color: palette.brown }}
+              className="font-black text-sm tracking-widest uppercase mb-6 opacity-60"
+            >
+              Kết Nối
+            </h3>
+
+            {/* Social Circular Buttons */}
+            <div className="flex items-center gap-3 mb-8">
+              {/* Facebook */}
+              <a
+                href={FB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: palette.brown,
+                  borderColor: palette.lightBrown,
+                }}
+                className="size-12 rounded-full border bg-transparent flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-[#1877F2] hover:text-white hover:border-transparent hover:shadow-lg"
+              >
+                <Facebook size={18} />
+              </a>
+              {/* Zalo (Custom styled) */}
               <a
                 href={ZALO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 bg-[#0068FF] hover:bg-[#0055d4] text-white text-sm font-bold py-3.5 rounded-xl transition-transform hover:-translate-y-1"
+                style={{
+                  color: palette.brown,
+                  borderColor: palette.lightBrown,
+                }}
+                className="size-12 rounded-full border bg-transparent flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-[#0068FF] hover:text-white hover:border-transparent hover:shadow-lg"
               >
-                <span className="font-black bg-white text-[#0068FF] w-5 h-5 flex items-center justify-center rounded text-[12px]">
-                  Z
+                <span className="font-black text-[13px] tracking-tighter">
+                  Zalo
                 </span>
-                Zalo
               </a>
+              {/* TikTok (SVG Icon) */}
               <a
-                href="https://facebook.com"
+                href={TIKTOK_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 md:w-12 md:h-12 bg-white/5 hover:bg-[#1877F2] rounded-xl flex items-center justify-center transition-all border border-white/10 hover:-translate-y-1 hover:border-transparent"
+                style={{
+                  color: palette.brown,
+                  borderColor: palette.lightBrown,
+                }}
+                className="size-12 rounded-full border bg-transparent flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-[#000000] hover:text-white hover:border-transparent hover:shadow-lg"
               >
-                <Facebook size={18} className="text-white" />
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z" />
+                </svg>
               </a>
+              {/* YouTube */}
               <a
-                href="https://youtube.com"
+                href={YT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 md:w-12 md:h-12 bg-white/5 hover:bg-[#FF0000] rounded-xl flex items-center justify-center transition-all border border-white/10 hover:-translate-y-1 hover:border-transparent"
+                style={{
+                  color: palette.brown,
+                  borderColor: palette.lightBrown,
+                }}
+                className="size-12 rounded-full border bg-transparent flex items-center justify-center transition-all hover:-translate-y-1 hover:bg-[#FF0000] hover:text-white hover:border-transparent hover:shadow-lg"
               >
-                <Youtube size={18} className="text-white" />
+                <Youtube size={18} />
               </a>
+            </div>
+
+            <div
+              className="flex items-center gap-3 text-sm font-semibold"
+              style={{ color: palette.brown }}
+            >
+              <Clock size={16} className="opacity-70" />
+              <span>Thứ 2 - Thứ 7 (07:30 - 17:30)</span>
             </div>
           </div>
         </div>
 
         {/* ─── Bottom Footer: Legal & Copyright ─── */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-gray-500 font-medium">
-          <p className="text-center md:text-left">
-            © {new Date().getFullYear()} Công ty TNHH MTV Thương mại Phúc Cường
-            Thịnh. <br className="md:hidden" />
-            <span className="md:ml-2">MST: [Cập nhật MST]</span>
+        <div
+          style={{ borderColor: "rgba(210, 180, 140, 0.3)" }}
+          className="border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] font-medium z-10 relative"
+        >
+          <p
+            style={{ color: palette.brown }}
+            className="text-center md:text-left opacity-70"
+          >
+            © {new Date().getFullYear()} Công ty TNHH MTV TM Phú Cường Thịnh.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <Link
               href="/privacy"
-              className="hover:text-emerald-400 transition-colors"
+              style={{ color: palette.brown }}
+              className="opacity-70 hover:opacity-100 transition-opacity"
             >
               Chính sách bảo mật
             </Link>
             <Link
               href="/terms"
-              className="hover:text-emerald-400 transition-colors"
+              style={{ color: palette.brown }}
+              className="opacity-70 hover:opacity-100 transition-opacity"
             >
-              Điều khoản sử dụng
-            </Link>
-            <Link
-              href="/shipping"
-              className="hover:text-emerald-400 transition-colors"
-            >
-              Chính sách vận chuyển
+              Điều khoản
             </Link>
             <Link
               href="/admin/login"
-              className="hover:text-gray-300 transition-colors opacity-40 hover:opacity-100"
+              style={{ color: palette.brown }}
+              className="opacity-40 hover:opacity-100 transition-opacity"
             >
               Admin
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* ─── Architectural Watermark Typography (Background chìm) ─── */}
+      <div className="absolute bottom-[-5%] left-0 right-0 overflow-hidden pointer-events-none select-none flex justify-center opacity-[0.03]">
+        <span
+          style={{ color: palette.brown }}
+          className="text-[14vw] font-black whitespace-nowrap leading-none tracking-tighter"
+        >
+          PHUCUONGTHINH
+        </span>
       </div>
     </footer>
   );

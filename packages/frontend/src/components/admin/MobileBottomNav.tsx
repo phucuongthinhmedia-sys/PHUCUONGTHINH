@@ -26,42 +26,43 @@ export function MobileBottomNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       : pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#0a192f] border-t border-white/10 safe-area-pb">
-      <div className="flex items-stretch h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#804000] border-t border-[#D2B48C]/20 safe-area-pb shadow-[0_-10px_40px_rgba(128,64,0,0.2)] rounded-t-3xl">
+      <div className="flex items-stretch h-20 px-2 pb-2">
         {TABS.map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact);
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
-                active ? "text-white" : "text-white/40"
+              className={`flex-1 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                active
+                  ? "text-[#FDF5E6] -translate-y-1"
+                  : "text-[#D2B48C]/60 hover:text-[#D2B48C]"
               }`}
             >
               <div
-                className={`p-1.5 rounded-xl transition-all ${active ? "bg-white/15" : ""}`}
+                className={`p-2.5 rounded-2xl transition-all ${active ? "bg-[#FDF5E6]/15 shadow-inner" : ""}`}
               >
-                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
               </div>
               <span
-                className={`text-[10px] font-medium leading-none ${active ? "text-white" : "text-white/40"}`}
+                className={`text-[11px] font-bold leading-none tracking-wide ${active ? "text-[#FDF5E6]" : "text-transparent"}`}
               >
-                {label}
+                {active ? label : "•"}
               </span>
             </Link>
           );
         })}
 
-        {/* Menu button */}
         <button
           onClick={onMenuOpen}
-          className="flex-1 flex flex-col items-center justify-center gap-1 text-white/40 active:scale-95 transition-all"
+          className="flex-1 flex flex-col items-center justify-center gap-1.5 text-[#D2B48C]/60 hover:text-[#D2B48C] active:scale-95 transition-all"
         >
-          <div className="p-1.5 rounded-xl">
-            <Menu size={20} strokeWidth={1.8} />
+          <div className="p-2.5 rounded-2xl">
+            <Menu size={22} strokeWidth={2} />
           </div>
-          <span className="text-[10px] font-medium leading-none text-white/40">
-            Menu
+          <span className="text-[11px] font-bold leading-none text-transparent">
+            •
           </span>
         </button>
       </div>
