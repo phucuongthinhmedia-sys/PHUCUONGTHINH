@@ -23,6 +23,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:sqlite": "prisma migrate dev --schema=prisma/schema.sqlite.prisma",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:seed:prod": "node scripts/seed-production.js",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
     "db:reset:sqlite": "prisma migrate reset --force --schema=prisma/schema.sqlite.prisma",
     "db:studio": "prisma studio",
