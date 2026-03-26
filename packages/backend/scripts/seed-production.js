@@ -4,9 +4,18 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log('🌱 Checking production database...');
+
+  const existingProducts = await prisma.product.count();
+  if (existingProducts > 0) {
+    console.log(
+      `✅ Database already has ${existingProducts} products. Skipping seed.`,
+    );
+    return;
+  }
+
   console.log('🌱 Seeding production database...');
 
-  // Create admin user
   const hashedPassword = await bcrypt.hash('admin123', 10);
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@phucuongthinh.com' },
@@ -19,7 +28,6 @@ async function main() {
   });
   console.log('✅ Created admin user:', adminUser.email);
 
-  // Create categories
   const tilesCategory = await prisma.category.upsert({
     where: { slug: 'gach' },
     update: {},
@@ -36,10 +44,19 @@ async function main() {
     },
   });
 
+  const wallTilesCategory = await prisma.category.upsert({
+    where: { slug: 'gach-op-tuong' },
+    update: {},
+    create: {
+      name: 'Gạch Ốp Tường',
+      slug: 'gach-op-tuong',
+      parent_id: tilesCategory.id,
+    },
+  });
+
   console.log('✅ Created categories');
 
-  // Create styles
-  const styles = ['Hiện đại', 'Tối giản', 'Công nghiệp'];
+  const styles = ['Hiện đại', 'Tối giản', 'Công nghiệp', 'Cổ điển'];
   for (const styleName of styles) {
     await prisma.style.upsert({
       where: { name: styleName },
@@ -49,8 +66,7 @@ async function main() {
   }
   console.log('✅ Created styles');
 
-  // Create spaces
-  const spaces = ['Phòng Khách', 'Phòng Ngủ', 'Nhà Bếp'];
+  const spaces = ['Phòng Khách', 'Phòng Ngủ', 'Nhà Bếp', 'Phòng Tắm'];
   for (const spaceName of spaces) {
     await prisma.space.upsert({
       where: { name: spaceName },
@@ -60,35 +76,61 @@ async function main() {
   }
   console.log('✅ Created spaces');
 
-  // Create sample product
-  const product = await prisma.product.upsert({
-    where: { sku: 'GACH-DEMO-001' },
-    update: {},
-    create: {
+  const products = [
+    {
       name: 'Gạch Porcelain Lát Nền 60x60 - Trắng Sáng',
-      sku: 'GACH-DEMO-001',
+      sku: 'GACH-FLOOR-001',
       description:
         'Gạch porcelain cao cấp với bề mặt bóng sang trọng, độ bền vượt trội.',
       category_id: floorTilesCategory.id,
-      technical_specs: JSON.stringify({
-        kich_thuoc: '600 x 600 x 10 mm',
+      technical_specs: {
+        kich_thuoc: '600x600x10mm',
         chat_lieu: 'Porcelain',
-        mau_sac: 'Trắng sáng',
-        xuat_xu: 'Việt Nam',
-      }),
-      is_published: true,
+        xuat_xu: 'VN',
+      },
     },
-  });
-  console.log('✅ Created sample product:', product.name);
+    {
+      name: 'Gạch Porcelain Giả Gỗ 80x20 - Nâu Ấm',
+      sku: 'GACH-FLOOR-002',
+      description: 'Gạch giả gỗ tự nhiên, ấm cúng, chống trơn tốt.',
+      category_id: floorTilesCategory.id,
+      technical_specs: {
+        kich_thuoc: '800x200x10mm',
+        chat_lieu: 'Porcelain',
+        xuat_xu: 'VN',
+      },
+    },
+    {
+      name: 'Gạch Ốp Tường 30x60 - Trắng',
+      sku: 'GACH-WALL-001',
+      description: 'Gạch ốp tường phòng tắm, chống ẩm mốc.',
+      category_id: wallTilesCategory.id,
+      technical_specs: {
+        kich_thuoc: '300x600x8mm',
+        chat_lieu: 'Ceramic',
+        xuat_xu: 'VN',
+      },
+    },
+  ];
 
-  console.log('🎉 Production seeding completed!');
+  for (const p of products) {
+    await prisma.product.create({
+      data: {
+        ...p,
+        technical_specs: JSON.stringify(p.technical_specs),
+        is_published: true,
+      },
+    });
+  }
+
+  console.log(`✅ Created ${products.length} products`);
+  console.log('🎉 Seeding completed!');
+  console.log('📝 Admin: admin@phucuongthinh.com / admin123');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('❌ Seed failed:', e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());
