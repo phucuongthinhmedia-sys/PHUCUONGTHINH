@@ -495,56 +495,30 @@ export default function ProductDetailPage({
                 </p>
               )}
 
-              {/* Block 2: Tab bar + nội dung tab */}
+              {/* Block 2: Thông số kỹ thuật */}
               <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-                {/* Tab bar — luôn hiện "Thông số", chỉ hiện "Nội bộ" khi authenticated */}
-                <div className="flex border-b border-gray-100">
-                  <button
-                    onClick={() => setActiveTab("specs")}
-                    className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                      activeTab === "specs"
-                        ? "text-emerald-600 border-b-2 border-emerald-500 bg-emerald-50/40"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    Thông số
-                  </button>
-                  {isAuthenticated && (
-                    <button
-                      onClick={() => setActiveTab("internal")}
-                      className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                        activeTab === "internal"
-                          ? "text-amber-600 border-b-2 border-amber-500 bg-amber-50/40"
-                          : "text-gray-500 hover:text-gray-700"
-                      }`}
-                    >
-                      🔒 Nội bộ
-                    </button>
-                  )}
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80">
+                  <h2 className="text-sm font-semibold text-gray-700">
+                    Thông số kỹ thuật
+                  </h2>
                 </div>
 
-                {/* Tab content */}
                 <div className="p-3.5">
-                  {activeTab === "specs" && (
-                    <>
-                      {Object.keys(specs).length > 0 ? (
-                        <>
-                          <h3 className="text-base font-bold text-[#0a192f] mb-2.5">
-                            Thông số kỹ thuật
-                          </h3>
-                          <ProductSpecs specs={specs} />
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic">
-                          Chưa có thông số kỹ thuật
-                        </p>
-                      )}
-                    </>
+                  {Object.keys(specs).length > 0 ? (
+                    <ProductSpecs specs={specs} />
+                  ) : (
+                    <p className="text-sm text-gray-400 italic">
+                      Chưa có thông số kỹ thuật
+                    </p>
                   )}
-                  {activeTab === "internal" && isAuthenticated && (
-                    <QueryClientProvider client={internalQueryClient}>
-                      <InternalProductInfo productId={product.id} />
-                    </QueryClientProvider>
+
+                  {/* Thông tin nội bộ - chỉ hiện khi đã đăng nhập */}
+                  {isAuthenticated && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <QueryClientProvider client={internalQueryClient}>
+                        <InternalProductInfo productId={product.id} />
+                      </QueryClientProvider>
+                    </div>
                   )}
                 </div>
               </div>
