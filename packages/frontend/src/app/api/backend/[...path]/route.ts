@@ -64,6 +64,25 @@ export async function PUT(
   return NextResponse.json(data, { status: res.status });
 }
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { path: string[] } },
+) {
+  const path = params.path.join("/");
+  const url = `${BACKEND_URL}/${path}`;
+  const body = await request.text();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const auth = request.headers.get("authorization");
+  if (auth) headers["authorization"] = auth;
+
+  const res = await fetch(url, { method: "PATCH", headers, body });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { path: string[] } },
