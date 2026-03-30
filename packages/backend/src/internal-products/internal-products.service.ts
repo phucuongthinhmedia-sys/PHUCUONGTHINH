@@ -18,22 +18,28 @@ export class InternalProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    const internal = await this.prisma.productInternal.findUnique({
-      where: { product_id: productId },
-      include: {
-        stock_levels: {
-          include: {
-            warehouse: true,
+    try {
+      const internal = await this.prisma.productInternal.findUnique({
+        where: { product_id: productId },
+        include: {
+          stock_levels: {
+            include: {
+              warehouse: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!internal) {
+      if (!internal) {
+        return null;
+      }
+
+      return internal as InternalProductResponseDto;
+    } catch (error) {
+      // If table doesn't exist or query fails, return null instead of throwing
+      console.error('Error fetching internal product data:', error);
       return null;
     }
-
-    return internal as InternalProductResponseDto;
   }
 
   async upsert(

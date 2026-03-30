@@ -148,21 +148,21 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-xl p-3 flex flex-col gap-0.5 ${accent ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"}`}
+      className={`rounded-lg sm:rounded-xl p-2 sm:p-2.5 md:p-3 flex flex-col gap-0.5 ${accent ? "bg-emerald-50 border border-emerald-200" : "bg-gray-50 border border-gray-100"}`}
     >
       <span
-        className={`text-[10px] font-semibold uppercase tracking-wider ${accent ? "text-emerald-600" : "text-gray-400"}`}
+        className={`text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider ${accent ? "text-emerald-600" : "text-gray-400"}`}
       >
         {label}
       </span>
       <span
-        className={`text-base font-black leading-tight ${accent ? "text-emerald-800" : "text-gray-900"}`}
+        className={`text-sm sm:text-base font-black leading-tight ${accent ? "text-emerald-800" : "text-gray-900"}`}
       >
         {value}
       </span>
       {sub && (
         <span
-          className={`text-[10px] ${accent ? "text-emerald-500" : "text-gray-400"}`}
+          className={`text-[9px] sm:text-[10px] ${accent ? "text-emerald-500" : "text-gray-400"}`}
         >
           {sub}
         </span>
@@ -174,11 +174,11 @@ function StatCard({
 /** Row dạng 2 cột nhỏ gọn */
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start gap-2 py-1.5 border-b border-gray-50 last:border-0">
-      <span className="w-[45%] text-xs text-gray-400 shrink-0 leading-relaxed">
+    <div className="flex flex-col sm:flex-row sm:items-start gap-0.5 sm:gap-2 py-1.5 border-b border-gray-50 last:border-0">
+      <span className="w-full sm:w-[45%] text-[10px] sm:text-xs text-gray-400 shrink-0 leading-relaxed">
         {label}
       </span>
-      <span className="flex-1 text-xs font-semibold text-gray-800 leading-relaxed">
+      <span className="flex-1 text-[10px] sm:text-xs font-semibold text-gray-800 leading-relaxed">
         {value}
       </span>
     </div>
@@ -222,18 +222,18 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
+    <div className="border border-gray-100 rounded-lg sm:rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3.5 py-2.5 bg-gray-50/80 hover:bg-gray-100/60 transition-colors"
+        className="w-full flex items-center justify-between px-2.5 sm:px-3 md:px-3.5 py-2 sm:py-2.5 bg-gray-50/80 hover:bg-gray-100/60 transition-colors"
       >
-        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+        <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">
           {title}
         </span>
         <ChevronDown
-          size={14}
-          className={`text-gray-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          size={12}
+          className={`text-gray-400 transition-transform duration-200 sm:w-[14px] sm:h-[14px] ${open ? "rotate-180" : ""}`}
         />
       </button>
       <AnimatePresence initial={false}>
@@ -244,7 +244,9 @@ function Section({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="px-3.5 py-2">{children}</div>
+            <div className="px-2.5 sm:px-3 md:px-3.5 py-1.5 sm:py-2">
+              {children}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -282,10 +284,10 @@ function GachSpecs({ specs }: { specs: Record<string, any> }) {
     new Intl.NumberFormat("vi-VN").format(v) + "đ";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
       {/* Thông số chính — grid nổi bật */}
       {(size || thickness || piecesPerBox > 0 || m2PerBox > 0) && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
           {size && <StatCard label="Kích thước" value={`${size} mm`} accent />}
           {thickness && <StatCard label="Độ dày" value={`${thickness} mm`} />}
           {piecesPerBox > 0 && (
@@ -344,7 +346,7 @@ function GachSpecs({ specs }: { specs: Record<string, any> }) {
               Giá thành
             </span>
           </div>
-          <div className="px-3.5 py-3 grid grid-cols-2 gap-3">
+          <div className="px-3.5 py-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <p className="text-[10px] text-gray-400 mb-0.5">Giá / m²</p>
               <p className="text-lg font-black text-gray-900">
@@ -399,10 +401,10 @@ function TBVSSpecs({ specs }: { specs: Record<string, any> }) {
     new Intl.NumberFormat("vi-VN").format(v) + "đ";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
       {/* Thông số chính */}
       {(drainCenter || size || installType) && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
           {drainCenter && (
             <StatCard label="Tâm xả" value={fmt(drainCenter)!} accent />
           )}
@@ -537,9 +539,9 @@ function BepSpecs({ specs }: { specs: Record<string, any> }) {
   ].filter((s) => s.value === "Có");
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
       {/* Thông số chính */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2">
         {sizeOverall && (
           <StatCard
             label="Kích thước phủ bì"

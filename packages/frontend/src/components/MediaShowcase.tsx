@@ -188,22 +188,22 @@ function DesignGallery({
   return (
     <div className="flex flex-col h-full gap-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Images size={14} className="text-primary" />
-          <span className="text-sm font-semibold text-gray-700">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Images size={13} className="text-primary sm:w-[14px] sm:h-[14px]" />
+          <span className="text-xs sm:text-sm font-semibold text-gray-700">
             Thư viện thiết kế
           </span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] sm:text-xs text-gray-400 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full">
             {images.length} ảnh
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <ShareButton
             url={images[active].file_url}
             title={`${productName} - Thư viện thiết kế`}
             compact
           />
-          <span className="text-xs text-gray-400">
+          <span className="text-[10px] sm:text-xs text-gray-400">
             {active + 1} / {images.length}
           </span>
         </div>
@@ -211,8 +211,8 @@ function DesignGallery({
 
       <div className="flex gap-2 flex-1 min-h-0">
         <div
-          className="relative flex-1 rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in group"
-          style={{ minHeight: "200px" }}
+          className="relative flex-1 rounded-xl sm:rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in group"
+          style={{ minHeight: "180px" }}
           onClick={() => onLightbox(images[active].file_url)}
         >
           <AnimatePresence mode="wait">
@@ -304,15 +304,23 @@ export function MediaShowcase({
   if (!hasVideos && !hasImages) return null;
 
   return (
-    <section className="mt-14">
-      <div className="flex items-center gap-3 mb-6">
+    <section className="mt-8 sm:mt-14">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200" />
-        <div className="flex items-center gap-2 px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-primary/5 rounded-full border border-primary/10">
           {hasVideos && (
-            <Play size={13} className="text-primary fill-primary" />
+            <Play
+              size={12}
+              className="text-primary fill-primary sm:w-[13px] sm:h-[13px]"
+            />
           )}
-          {hasImages && <Images size={13} className="text-primary" />}
-          <span className="text-sm font-semibold text-primary">
+          {hasImages && (
+            <Images
+              size={12}
+              className="text-primary sm:w-[13px] sm:h-[13px]"
+            />
+          )}
+          <span className="text-xs sm:text-sm font-semibold text-primary">
             {hasVideos && hasImages
               ? "Video & Thư viện thiết kế"
               : hasVideos
@@ -324,19 +332,19 @@ export function MediaShowcase({
       </div>
 
       {hasVideos && hasImages ? (
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch p-3 bg-gray-50/80 backdrop-blur-sm rounded-2xl border border-gray-100/80">
-          <div className="shrink-0 flex justify-center lg:justify-start bg-white/60 backdrop-blur-md rounded-xl p-3 border border-white/80 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch p-2 sm:p-3 bg-gray-50/80 backdrop-blur-sm rounded-2xl border border-gray-100/80">
+          <div className="shrink-0 flex justify-center lg:justify-start bg-white/60 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/80 shadow-sm">
             <VideoPlayer
               videos={videos}
               activeIdx={activeVideoIdx}
               onSelect={setActiveVideoIdx}
-              height="clamp(260px, 48vh, 420px)"
+              height="clamp(220px, 45vh, 420px)"
               productName={productName}
             />
           </div>
           <div
-            className="flex-1 min-w-0 bg-white/60 backdrop-blur-md rounded-xl p-3 border border-white/80 shadow-sm"
-            style={{ minHeight: "clamp(260px, 48vh, 420px)" }}
+            className="flex-1 min-w-0 bg-white/60 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/80 shadow-sm"
+            style={{ minHeight: "clamp(220px, 45vh, 420px)" }}
           >
             <DesignGallery
               images={images}
@@ -351,7 +359,7 @@ export function MediaShowcase({
             videos={videos}
             activeIdx={activeVideoIdx}
             onSelect={setActiveVideoIdx}
-            height="clamp(300px, 58vh, 500px)"
+            height="clamp(240px, 50vh, 500px)"
             productName={productName}
           />
         </div>

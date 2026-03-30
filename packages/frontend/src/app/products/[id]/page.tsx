@@ -108,7 +108,7 @@ function InternalProductBlock({ productId }: { productId: string }) {
             <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
               Giá bán
             </p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
               {data.price_retail != null && (
                 <div className="text-xs">
                   <p className="text-amber-600 mb-0.5">Giá bán lẻ</p>
@@ -231,7 +231,7 @@ function InternalProductBlock({ productId }: { productId: string }) {
             <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
               Nhà cung cấp
             </p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs">
               {data.supplier_name && (
                 <div>
                   <p className="text-amber-600 mb-0.5">Tên</p>
@@ -407,27 +407,30 @@ function AddToQuoteButton({
     return (
       <button
         onClick={handleAdd}
-        className={`flex-1 h-11 flex items-center justify-center gap-2 font-bold rounded-lg transition-all shadow-md text-sm ${isAdded ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-[#0a192f] text-white hover:bg-emerald-600 hover:shadow-emerald-500/20"}`}
+        className={`flex-1 h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 font-bold rounded-lg transition-all shadow-md text-xs sm:text-sm ${isAdded ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-[#0a192f] text-white hover:bg-emerald-600 hover:shadow-emerald-500/20"}`}
       >
-        <ShoppingCart size={16} />
-        {isAdded ? "Đã thêm!" : "Thêm vào báo giá"}
+        <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
+        <span className="hidden xs:inline">
+          {isAdded ? "Đã thêm!" : "Thêm vào báo giá"}
+        </span>
+        <span className="xs:hidden">{isAdded ? "Đã thêm" : "Báo giá"}</span>
       </button>
     );
   }
   return (
-    <div className="flex flex-col sm:flex-row gap-2.5 w-full">
-      <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden h-11 bg-white focus-within:border-[#0a192f] transition-colors">
+    <div className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 w-full">
+      <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden h-10 sm:h-11 bg-white focus-within:border-[#0a192f] transition-colors">
         <input
           type="number"
           min="1"
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
-          className="w-16 px-3 h-full outline-none text-center font-semibold text-gray-900 text-sm"
+          className="w-12 sm:w-16 px-2 sm:px-3 h-full outline-none text-center font-semibold text-gray-900 text-xs sm:text-sm"
         />
         <select
           value={unit}
           onChange={(e) => setUnit(e.target.value as any)}
-          className="h-full px-3 bg-gray-50 border-l-2 border-gray-200 outline-none text-gray-700 font-semibold cursor-pointer text-sm"
+          className="h-full px-2 sm:px-3 bg-gray-50 border-l-2 border-gray-200 outline-none text-gray-700 font-semibold cursor-pointer text-xs sm:text-sm"
         >
           <option value="m2">m²</option>
           <option value="thùng">Thùng</option>
@@ -436,10 +439,15 @@ function AddToQuoteButton({
       </div>
       <button
         onClick={handleAdd}
-        className={`flex-1 h-11 flex items-center justify-center gap-2 font-bold rounded-lg transition-all shadow-lg text-white text-sm ${isAdded ? "bg-emerald-500 shadow-emerald-500/30" : "bg-[#0a192f] hover:bg-emerald-600 hover:shadow-emerald-500/30"}`}
+        className={`flex-1 h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 font-bold rounded-lg transition-all shadow-lg text-white text-xs sm:text-sm ${isAdded ? "bg-emerald-500 shadow-emerald-500/30" : "bg-[#0a192f] hover:bg-emerald-600 hover:shadow-emerald-500/30"}`}
       >
-        <ShoppingCart size={16} />
-        {isAdded ? "Đã thêm vào DS" : "Thêm vào DS Báo giá"}
+        <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
+        <span className="hidden xs:inline">
+          {isAdded ? "Đã thêm vào DS" : "Thêm vào DS Báo giá"}
+        </span>
+        <span className="xs:hidden">
+          {isAdded ? "Đã thêm" : "Thêm báo giá"}
+        </span>
       </button>
     </div>
   );
@@ -575,55 +583,71 @@ export default function ProductDetailPage({
         href={`${ZALO_URL}?text=${encodeURIComponent(`Xin chào, tôi muốn hỏi về SP: ${product.name} (SKU: ${product.sku})`)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#0068FF] text-white font-bold px-5 py-3.5 rounded-full shadow-[0_10px_20px_rgba(0,104,255,0.3)] hover:bg-blue-700 transition-transform hover:-translate-y-1 lg:bottom-8 lg:right-8"
+        className="fixed bottom-16 sm:bottom-6 right-3 sm:right-4 md:right-6 z-40 flex items-center gap-1.5 sm:gap-2 bg-[#0068FF] text-white font-bold px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 md:py-3.5 rounded-full shadow-[0_8px_16px_rgba(0,104,255,0.3)] hover:bg-blue-700 transition-transform hover:-translate-y-1 lg:bottom-8 lg:right-8"
       >
-        <MessageCircle size={22} />
-        <span className="text-sm hidden sm:inline">Tư vấn Zalo</span>
+        <MessageCircle
+          size={18}
+          className="sm:w-5 sm:h-5 md:w-[22px] md:h-[22px]"
+        />
+        <span className="text-[11px] sm:text-xs md:text-sm hidden sm:inline">
+          Tư vấn Zalo
+        </span>
       </a>
 
-      <main className="min-h-screen bg-[#F8F9FA] py-8 px-4 pt-8 pb-24 lg:pb-12">
+      <main className="min-h-screen bg-[#F8F9FA] py-4 sm:py-6 md:py-8 px-2 sm:px-3 md:px-4 pt-20 sm:pt-24 pb-28 sm:pb-24 lg:pb-12">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10 lg:gap-14 bg-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-10 lg:gap-14 bg-white p-2.5 sm:p-3 md:p-4 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm border border-gray-100">
             {/* Breadcrumb - Di chuyển vào trong khối trắng */}
-            <nav className="lg:col-span-12 flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-              <Link href="/" className="hover:text-[#0a192f] transition-colors">
-                Trang chủ
-              </Link>
-              <ChevronRight size={14} />
-              <Link
-                href="/products"
-                className="hover:text-[#0a192f] transition-colors"
-              >
-                Sản phẩm
-              </Link>
-              <ChevronRight size={14} />
-              <span className="text-emerald-600 truncate max-w-[200px] sm:max-w-xs">
-                {product.sku}
-              </span>
-              <div className="ml-auto flex items-center gap-2">
+            <nav className="lg:col-span-12 flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide sm:tracking-widest overflow-hidden">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
+                <Link
+                  href="/"
+                  className="hover:text-[#0a192f] transition-colors whitespace-nowrap"
+                >
+                  Trang chủ
+                </Link>
+                <ChevronRight
+                  size={12}
+                  className="hidden sm:inline sm:w-[14px] sm:h-[14px] shrink-0"
+                />
+                <Link
+                  href="/products"
+                  className="hover:text-[#0a192f] transition-colors whitespace-nowrap"
+                >
+                  Sản phẩm
+                </Link>
+                <ChevronRight
+                  size={12}
+                  className="hidden sm:inline sm:w-[14px] sm:h-[14px] shrink-0"
+                />
+                <span className="text-emerald-600 truncate max-w-[120px] sm:max-w-[150px] md:max-w-xs">
+                  {product.sku}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 sm:gap-2 sm:ml-auto shrink-0">
                 <ShareButton
                   url={`/products/${product.id}`}
                   title={product.name}
                   text={`Xem sản phẩm ${product.name} (SKU: ${product.sku})`}
-                  className="normal-case tracking-normal"
+                  className="normal-case tracking-normal text-[10px] sm:text-xs"
                 />
                 {isAuthenticated && (
                   <Link
                     href={`/admin/products/${product.id}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0a192f] text-white rounded-lg text-xs font-semibold hover:bg-[#0d2137] transition-colors normal-case tracking-normal"
+                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0a192f] text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-[#0d2137] transition-colors normal-case tracking-normal whitespace-nowrap"
                   >
-                    <Pencil size={12} />
-                    Chỉnh sửa
+                    <Pencil size={10} className="sm:w-3 sm:h-3" />
+                    <span className="hidden sm:inline">Chỉnh sửa</span>
                   </Link>
                 )}
-              </div>{" "}
+              </div>
             </nav>
 
             {/* ── LEFT: Cột Hình ảnh (STICKY) ── */}
             <div className="lg:col-span-5 relative">
-              <div className="lg:sticky lg:top-28 space-y-4">
+              <div className="lg:sticky lg:top-28 space-y-2 sm:space-y-3 md:space-y-4">
                 <div
-                  className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden cursor-zoom-in group border border-gray-100"
+                  className="relative aspect-square bg-gray-50 rounded-xl sm:rounded-2xl overflow-hidden cursor-zoom-in group border border-gray-100"
                   onClick={() => activeImage && setLightboxSrc(activeImage)}
                 >
                   {activeImage ? (
@@ -642,7 +666,7 @@ export default function ProductDetailPage({
                       </div>
                       {/* Badges đè lên ảnh — góc trên trái */}
                       <div
-                        className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none"
+                        className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-col gap-1 sm:gap-1.5 pointer-events-none"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <StockBadge status={stockStatus} />
@@ -650,7 +674,7 @@ export default function ProductDetailPage({
                           (badge) => (
                             <span
                               key={badge}
-                              className="self-start px-2.5 py-1 bg-amber-500 text-white text-[11px] font-bold rounded-full shadow-sm"
+                              className="self-start px-2 sm:px-2.5 py-0.5 sm:py-1 bg-amber-500 text-white text-[10px] sm:text-[11px] font-bold rounded-full shadow-sm"
                             >
                               {badge}
                             </span>
@@ -659,7 +683,7 @@ export default function ProductDetailPage({
                       </div>
                       {/* Share ảnh hiện tại */}
                       <div
-                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 sm:top-3 right-2 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ShareButton
@@ -676,18 +700,18 @@ export default function ProductDetailPage({
                               e.stopPropagation();
                               handlePrevImage();
                             }}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2.5 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 sm:p-2.5 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
                           >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleNextImage();
                             }}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-2.5 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 sm:p-2.5 shadow-md opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
                           >
-                            <ChevronRight size={20} />
+                            <ChevronRight size={18} className="sm:w-5 sm:h-5" />
                           </button>
                         </>
                       )}
@@ -700,12 +724,12 @@ export default function ProductDetailPage({
                 </div>
 
                 {images.length > 1 && (
-                  <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                  <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 no-scrollbar">
                     {images.map((m, idx) => (
                       <button
                         key={m.id}
                         onClick={() => setActiveImageIndex(idx)}
-                        className={`relative w-20 h-20 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === idx ? "border-emerald-500 shadow-sm scale-105" : "border-transparent opacity-70 hover:opacity-100 hover:border-gray-200"}`}
+                        className={`relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all ${activeImageIndex === idx ? "border-emerald-500 shadow-sm scale-105" : "border-transparent opacity-70 hover:opacity-100 hover:border-gray-200"}`}
                       >
                         <Image
                           src={m.file_url}
@@ -721,16 +745,16 @@ export default function ProductDetailPage({
             </div>
 
             {/* ── RIGHT: Cột Thông tin ── */}
-            <div className="lg:col-span-7 flex flex-col gap-4">
+            <div className="lg:col-span-7 flex flex-col gap-3 sm:gap-4">
               {/* Block 1: Header */}
-              <div className="border-b border-gray-100 pb-4">
+              <div className="border-b border-gray-100 pb-3 sm:pb-4">
                 {/* Tên + QR */}
-                <div className="flex items-start justify-between gap-3 mb-1.5">
-                  <h1 className="text-2xl md:text-3xl font-black text-[#0a192f] tracking-tight leading-tight">
+                <div className="flex items-start justify-between gap-2 mb-1 sm:mb-1.5">
+                  <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-black text-[#0a192f] tracking-tight leading-tight break-words min-w-0">
                     {product.name}
                   </h1>
                   {product.sku && (
-                    <div className="shrink-0 hidden sm:block bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                    <div className="shrink-0 hidden md:block bg-gray-50 p-1.5 rounded-lg border border-gray-100">
                       <QRSection
                         sku={product.sku}
                         productUrl={
@@ -744,28 +768,28 @@ export default function ProductDetailPage({
                 </div>
 
                 {/* SKU nhỏ */}
-                <p className="text-[11px] font-mono text-gray-400">
+                <p className="text-[10px] sm:text-[11px] font-mono text-gray-400">
                   SKU: {product.sku}
                 </p>
               </div>
 
               {/* Mô tả ngắn */}
               {product.description && (
-                <p className="text-gray-600 leading-relaxed text-sm line-clamp-2">
+                <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-base line-clamp-3 sm:line-clamp-2 break-words">
                   {product.description}
                 </p>
               )}
 
               {/* Block 2: Thông số kỹ thuật */}
-              <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/80 flex items-center gap-2 flex-wrap">
-                  <h2 className="text-sm font-semibold text-gray-700 mr-1">
+              <div className="bg-white border border-gray-100 rounded-lg sm:rounded-xl shadow-sm overflow-hidden">
+                <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-100 bg-gray-50/80 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <h2 className="text-xs sm:text-sm font-semibold text-gray-700 mr-1">
                     Thông số kỹ thuật
                   </h2>
                   {product.style_tags?.map((s) => (
                     <span
                       key={`style-${s.id}`}
-                      className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-semibold rounded-full border border-emerald-100"
+                      className="px-1.5 sm:px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] sm:text-[10px] font-semibold rounded-full border border-emerald-100"
                     >
                       {s.name}
                     </span>
@@ -773,18 +797,18 @@ export default function ProductDetailPage({
                   {product.space_tags?.map((s) => (
                     <span
                       key={`space-${s.id}`}
-                      className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-full border border-blue-100"
+                      className="px-1.5 sm:px-2 py-0.5 bg-blue-50 text-blue-600 text-[9px] sm:text-[10px] font-semibold rounded-full border border-blue-100"
                     >
                       {s.name}
                     </span>
                   ))}
                 </div>
 
-                <div className="p-3.5">
+                <div className="p-2.5 sm:p-3 md:p-3.5">
                   {Object.keys(specs).length > 0 ? (
                     <ProductSpecs specs={specs} />
                   ) : (
-                    <p className="text-sm text-gray-400 italic">
+                    <p className="text-xs sm:text-sm text-gray-400 italic">
                       Chưa có thông số kỹ thuật
                     </p>
                   )}
@@ -799,26 +823,28 @@ export default function ProductDetailPage({
               {/* Block 3: Khu vực CTA */}
               <div
                 ref={ctaRef}
-                className="bg-gray-50/70 p-3.5 rounded-xl border border-gray-100 space-y-3"
+                className="bg-gray-50/70 p-2 sm:p-2.5 md:p-3 rounded-lg sm:rounded-xl border border-gray-100 space-y-2 sm:space-y-2.5"
               >
                 <AddToQuoteButton product={product} />
-                <div className="flex gap-2.5">
+                <div className="flex gap-1.5 sm:gap-2">
                   <button
                     onClick={() => setShowAppointmentForm((v) => !v)}
-                    className="flex-1 h-11 flex items-center justify-center gap-2 font-bold rounded-lg border-2 border-gray-200 text-[#0a192f] hover:border-[#0a192f] hover:bg-white transition-all text-sm"
+                    className="flex-1 h-10 sm:h-11 flex items-center justify-center gap-1 sm:gap-1.5 font-bold rounded-lg border-2 border-gray-200 text-[#0a192f] hover:border-[#0a192f] hover:bg-white transition-all text-[11px] sm:text-xs md:text-sm"
                   >
-                    <CalendarDays size={16} />
-                    Xem mẫu Showroom
+                    <CalendarDays size={14} className="sm:w-4 sm:h-4" />
+                    <span className="hidden xs:inline">Xem mẫu Showroom</span>
+                    <span className="xs:hidden">Showroom</span>
                   </button>
                   {pdfFiles.length > 0 && (
                     <a
                       href={pdfFiles[0].file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-11 px-3.5 flex items-center justify-center gap-2 font-bold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all text-sm whitespace-nowrap"
+                      className="h-10 sm:h-11 px-2.5 sm:px-3.5 flex items-center justify-center gap-1.5 sm:gap-2 font-bold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all text-xs sm:text-sm whitespace-nowrap shrink-0"
                     >
-                      <Download size={16} />
+                      <Download size={14} className="sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">Tải PDF</span>
+                      <span className="sm:hidden">PDF</span>
                     </a>
                   )}
                 </div>
@@ -833,9 +859,9 @@ export default function ProductDetailPage({
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="bg-white border-2 border-emerald-100 rounded-xl p-4 shadow-sm">
-                      <h3 className="text-base font-bold text-[#0a192f] mb-3 flex items-center gap-2">
-                        <CalendarDays className="text-emerald-600" size={18} />{" "}
+                    <div className="bg-white border-2 border-emerald-100 rounded-lg sm:rounded-xl p-3 sm:p-4 shadow-sm">
+                      <h3 className="text-sm sm:text-base font-bold text-[#0a192f] mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
+                        <CalendarDays className="text-emerald-600" size={16} />{" "}
                         Đặt lịch tư vấn chuyên sâu
                       </h3>
                       <AppointmentForm
@@ -848,18 +874,21 @@ export default function ProductDetailPage({
               </AnimatePresence>
 
               {/* Block 5: Trust Badges (Dịch vụ & Cam kết) */}
-              <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 rounded-xl p-3.5">
-                <h3 className="text-xs font-bold text-[#0a192f] mb-3 uppercase tracking-wider">
+              <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-100 rounded-lg sm:rounded-xl p-2.5 sm:p-3 md:p-3.5">
+                <h3 className="text-[10px] sm:text-xs font-bold text-[#0a192f] mb-2 sm:mb-3 uppercase tracking-wider">
                   Dịch vụ & Cam kết
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 md:gap-3">
                   {TRUST_BADGES.map(({ icon: Icon, label }, idx) => (
                     <div
                       key={idx}
-                      className="flex flex-col items-center gap-1.5 text-center"
+                      className="flex flex-col items-center gap-1 sm:gap-1.5 text-center p-1.5 sm:p-0"
                     >
-                      <Icon size={20} className="text-emerald-600" />
-                      <span className="text-xs font-semibold text-gray-700">
+                      <Icon
+                        size={16}
+                        className="text-emerald-600 sm:w-[18px] sm:h-[18px] md:w-5 md:h-5"
+                      />
+                      <span className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-gray-700 leading-tight">
                         {label}
                       </span>
                     </div>
@@ -870,7 +899,7 @@ export default function ProductDetailPage({
           </div>
 
           {/* ── Các Khu vực bổ sung phía dưới ── */}
-          <div className="mt-16 space-y-16">
+          <div className="mt-6 sm:mt-8 md:mt-12 lg:mt-16 space-y-6 sm:space-y-8 md:space-y-12 lg:space-y-16">
             {(videos.length > 0 || showcaseImages.length > 0) && (
               <MediaShowcase
                 videos={videos}
@@ -888,11 +917,11 @@ export default function ProductDetailPage({
 
             {relatedProducts.length > 0 && (
               <section>
-                <h2 className="text-2xl font-black text-[#0a192f] mb-6 flex items-center gap-2">
-                  <span className="w-2 h-6 bg-emerald-500 rounded-full inline-block"></span>
+                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-black text-[#0a192f] mb-3 sm:mb-4 md:mb-6 flex items-center gap-1.5 sm:gap-2">
+                  <span className="w-1 sm:w-1.5 md:w-2 h-4 sm:h-5 md:h-6 bg-emerald-500 rounded-full inline-block"></span>
                   Gợi Ý Phối Hợp
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 lg:gap-6">
                   {relatedProducts.map((p, i) => (
                     <ProductCard key={p.id} product={p} index={i} />
                   ))}
@@ -904,10 +933,10 @@ export default function ProductDetailPage({
 
             {recentProducts.length > 0 && (
               <section>
-                <h2 className="text-2xl font-black text-[#0a192f] mb-6 border-t border-gray-200 pt-10">
+                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-black text-[#0a192f] mb-3 sm:mb-4 md:mb-6 border-t border-gray-200 pt-4 sm:pt-6 md:pt-10">
                   Sản Phẩm Vừa Xem
                 </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 lg:gap-6">
                   {recentProducts.map((p, i) => (
                     <ProductCard key={p.id} product={p} index={i} />
                   ))}
@@ -920,13 +949,13 @@ export default function ProductDetailPage({
 
       {/* Sticky Mobile Bar */}
       {showSticky && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 sm:px-3 py-2 sm:py-2.5 flex gap-1.5 sm:gap-2 shadow-[0_-10px_20px_rgba(0,0,0,0.08)] lg:hidden safe-area-inset-bottom">
           <AddToQuoteButton product={product} compact />
           <Link
             href={`/contact?type=appointment&product=${product.id}`}
-            className="h-12 px-4 flex items-center justify-center font-bold rounded-xl border-2 border-gray-200 text-[#0a192f] bg-gray-50 transition-all"
+            className="h-10 sm:h-11 px-2.5 sm:px-3 flex items-center justify-center font-bold rounded-lg border-2 border-gray-200 text-[#0a192f] bg-gray-50 hover:bg-gray-100 transition-all shrink-0"
           >
-            <CalendarDays size={18} />
+            <CalendarDays size={16} className="sm:w-4 sm:h-4" />
           </Link>
         </div>
       )}
