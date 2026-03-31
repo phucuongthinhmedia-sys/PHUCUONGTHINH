@@ -258,6 +258,9 @@ export function ProductForm({
   const originalMediaRef = useRef<PendingMedia[]>(
     initFormData(product).pendingMedia,
   );
+  const pendingMediaRef = useRef<PendingMedia[]>(
+    initFormData(product).pendingMedia,
+  );
   const initializedId = useRef<string | undefined>(undefined);
 
   // Re-init when product loads async
@@ -267,8 +270,14 @@ export function ProductForm({
       const d = initFormData(product);
       setFormData(d);
       originalMediaRef.current = d.pendingMedia;
+      pendingMediaRef.current = d.pendingMedia;
     }
   }, [product]);
+
+  // Keep pendingMediaRef in sync with latest formData.pendingMedia
+  useEffect(() => {
+    pendingMediaRef.current = formData.pendingMedia;
+  }, [formData.pendingMedia]);
 
   const [productType, setProductType] = useState<ProductType>(
     () =>
@@ -366,7 +375,7 @@ export function ProductForm({
   };
 
   const uploadPendingMedia = async (productId: string) => {
-    const pending = formData.pendingMedia.filter(
+    const pending = pendingMediaRef.current.filter(
       (m) => m.status === "pending" && m.file,
     );
     const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
@@ -410,7 +419,7 @@ export function ProductForm({
       }),
     );
 
-    const socialPending = formData.pendingMedia.filter(
+    const socialPending = pendingMediaRef.current.filter(
       (m) => m.status === "pending" && m.media_type === "social_link" && m.url,
     );
     await Promise.all(
@@ -436,8 +445,9 @@ export function ProductForm({
     productId: string,
     originalMedia: PendingMedia[],
   ) => {
+    const currentPendingMedia = pendingMediaRef.current;
     const currentIds = new Set(
-      formData.pendingMedia
+      currentPendingMedia
         .filter((m) => m.status === "done" && m.clientId)
         .map((m) => m.clientId),
     );
@@ -451,7 +461,7 @@ export function ProductForm({
     );
     await uploadPendingMedia(productId);
     const existingIds = new Set(originalMedia.map((m) => m.clientId));
-    const doneItems = formData.pendingMedia.filter(
+    const doneItems = currentPendingMedia.filter(
       (m) => m.status === "done" && m.clientId && existingIds.has(m.clientId),
     );
     if (doneItems.length > 0) {
