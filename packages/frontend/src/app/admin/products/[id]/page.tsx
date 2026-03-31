@@ -82,7 +82,7 @@ export default function AdminEditProductPage() {
     setIsLoading(true);
     try {
       const updated = await productService.updateProduct(productId, data);
-      router.push("/admin/products");
+      // Don't redirect here - let ProductForm handle it after media operations complete
       return updated;
     } catch (err: any) {
       throw err;
