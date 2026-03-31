@@ -48,6 +48,43 @@ export function setCover(list: PendingMedia[], index: number): PendingMedia[] {
   return list.map((item, i) => ({ ...item, is_cover: i === index }));
 }
 
+// ── Toast Component ──────────────────────────────────────────────────────────
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error" | "info";
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 2500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const colors = {
+    success: "bg-emerald-600",
+    error: "bg-red-600",
+    info: "bg-blue-600",
+  };
+
+  return (
+    <div
+      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${colors[type]} animate-in slide-in-from-bottom-2 fade-in`}
+    >
+      <span>{message}</span>
+      <button
+        type="button"
+        onClick={onClose}
+        className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 // ── Thumbnail item ────────────────────────────────────────────────────────────
 function MediaThumb({
   item,
@@ -59,6 +96,7 @@ function MediaThumb({
   onDragEnd,
   onSetCover,
   onRemove,
+  isNew,
 }: {
   item: PendingMedia;
   index: number;
@@ -69,19 +107,30 @@ function MediaThumb({
   onDragEnd: () => void;
   onSetCover: (i: number) => void;
   onRemove: (id: string) => void;
+  isNew?: boolean;
 }) {
   const isVideo = item.media_type === "video";
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsRemoving(true);
+    setTimeout(() => onRemove(item.clientId), 300);
+  };
+
   return (
     <div
       draggable
       onDragStart={() => onDragStart(globalIdx)}
       onDragOver={(e) => onDragOver(e, globalIdx)}
       onDragEnd={onDragEnd}
-      className={`relative group rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${
+      className={`relative group rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all duration-300 ${
         item.is_cover
           ? "border-blue-500 shadow-md"
           : "border-transparent hover:border-gray-300"
-      } ${draggedIndex === globalIdx ? "opacity-40" : ""}`}
+      } ${draggedIndex === globalIdx ? "opacity-40 scale-95" : ""} ${
+        isNew ? "animate-in zoom-in-95 fade-in duration-300" : ""
+      } ${isRemoving ? "animate-out zoom-out-95 fade-out duration-300" : ""}`}
     >
       <div className="aspect-square bg-gray-100">
         {item.preview_url && !isVideo ? (
@@ -144,11 +193,8 @@ function MediaThumb({
         )}
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(item.clientId);
-          }}
-          className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow hover:bg-red-600"
+          onClick={handleRemove}
+          className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow hover:bg-red-600 transition-colors"
         >
           Xóa
         </button>
@@ -224,6 +270,11 @@ export function MediaUploader({
   productName = "",
 }: MediaUploaderProps) {
   const [items, setItems] = useState<PendingMedia[]>(existingMedia);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
+  const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set());
 
   // Sync khi existingMedia load xong (edit mode)
   const initializedRef = useRef(false);
@@ -271,6 +322,7 @@ export function MediaUploader({
     (files: FileList | File[], zone: 1 | 2) => {
       const arr = Array.from(files);
       const newItems: PendingMedia[] = [];
+      const newIds: string[] = [];
 
       for (const file of arr) {
         const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -286,8 +338,10 @@ export function MediaUploader({
         }
 
         const result = validateFile(file, mediaType);
+        const clientId = nextId();
+
         newItems.push({
-          clientId: nextId(),
+          clientId,
           file,
           media_type: mediaType,
           is_cover: false,
@@ -296,6 +350,10 @@ export function MediaUploader({
           status: result.valid ? "pending" : "error",
           error: result.valid ? undefined : result.error,
         });
+
+        if (result.valid) {
+          newIds.push(clientId);
+        }
       }
 
       setItems((prev) => {
@@ -313,6 +371,26 @@ export function MediaUploader({
         onChange(next);
         return next;
       });
+
+      // Mark as new for animation
+      setNewItemIds(new Set(newIds));
+      setTimeout(() => setNewItemIds(new Set()), 500);
+
+      // Show toast
+      const validCount = newItems.filter((i) => i.status === "pending").length;
+      const errorCount = newItems.filter((i) => i.status === "error").length;
+
+      if (validCount > 0) {
+        setToast({
+          message: `✅ Đã thêm ${validCount} file${errorCount > 0 ? ` (${errorCount} lỗi)` : ""}`,
+          type: validCount > 0 && errorCount === 0 ? "success" : "info",
+        });
+      } else if (errorCount > 0) {
+        setToast({
+          message: `❌ ${errorCount} file không hợp lệ`,
+          type: "error",
+        });
+      }
     },
     [onChange],
   );
@@ -324,12 +402,22 @@ export function MediaUploader({
         .map((item, idx) => ({ ...item, sort_order: idx }));
       return next;
     });
+
+    setToast({
+      message: "🗑️ Đã xóa",
+      type: "info",
+    });
   };
 
   const handleSetCover = (globalIdx: number) => {
     setItems((prev) => {
       const next = setCover(prev, globalIdx);
       return next;
+    });
+
+    setToast({
+      message: "⭐ Đã đặt làm ảnh bìa",
+      type: "success",
     });
   };
 
@@ -373,6 +461,11 @@ export function MediaUploader({
       return next;
     });
     setSocialUrl("");
+
+    setToast({
+      message: "🔗 Đã thêm link",
+      type: "success",
+    });
   };
 
   const productItems = items.filter((i) =>
@@ -393,10 +486,20 @@ export function MediaUploader({
     onDragEnd: handleItemDragEnd,
     onSetCover: handleSetCover,
     onRemove: removeItem,
+    isNew: newItemIds.has(item.clientId),
   });
 
   return (
     <div className="space-y-4">
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
+
       {/* ── 2 Drop zones ── */}
       <div className="flex gap-3">
         {/* Zone 1: Ảnh sản phẩm — 70% */}
