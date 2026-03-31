@@ -255,33 +255,38 @@ export class ProductsService {
       }
     }
 
+    // Smart update: Only touch tags if they actually changed
+    const updateData: any = {
+      ...(name && { name }),
+      ...(sku && { sku }),
+      ...(description !== undefined && { description }),
+      ...(category_id && { category_id }),
+      ...(technical_specs && {
+        technical_specs: JSON.stringify(technical_specs),
+      }),
+      ...(is_published !== undefined && { is_published }),
+    };
+
+    // Only update style tags if provided
+    if (style_ids !== undefined) {
+      updateData.style_tags = {
+        deleteMany: {},
+        create: style_ids.map((style_id) => ({ style_id })),
+      };
+    }
+
+    // Only update space tags if provided
+    if (space_ids !== undefined) {
+      updateData.space_tags = {
+        deleteMany: {},
+        create: space_ids.map((space_id) => ({ space_id })),
+      };
+    }
+
     // Update product with relationships
     const product = await this.prisma.product.update({
       where: { id },
-      data: {
-        ...(name && { name }),
-        ...(sku && { sku }),
-        ...(description !== undefined && { description }),
-        ...(category_id && { category_id }),
-        ...(technical_specs && {
-          technical_specs: JSON.stringify(technical_specs),
-        }),
-        ...(is_published !== undefined && { is_published }),
-        // Update style tags if provided
-        ...(style_ids !== undefined && {
-          style_tags: {
-            deleteMany: {},
-            create: style_ids.map((style_id) => ({ style_id })),
-          },
-        }),
-        // Update space tags if provided
-        ...(space_ids !== undefined && {
-          space_tags: {
-            deleteMany: {},
-            create: space_ids.map((space_id) => ({ space_id })),
-          },
-        }),
-      },
+      data: updateData,
       include: {
         category: true,
         style_tags: {
