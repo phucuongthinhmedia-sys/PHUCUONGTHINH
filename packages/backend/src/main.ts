@@ -21,7 +21,8 @@ async function bootstrap() {
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Type', 'Cache-Control'],
     credentials: true,
   });
 
@@ -73,6 +74,10 @@ async function bootstrap() {
     frontendUrl,
     cmsUrl,
   });
+
+  console.log(
+    `📡 SSE endpoint: http://localhost:${port}/api/v1/products/events`,
+  );
 }
 
 bootstrap().catch((error) => {

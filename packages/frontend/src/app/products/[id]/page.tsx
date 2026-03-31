@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +37,7 @@ import { Product } from "@/types";
 import { useAuth } from "@repo/shared-utils";
 import { apiClient } from "@/lib/admin-api-client";
 import { ShareButton } from "@/components/ShareButton";
+import { useProductEvents } from "@/hooks/useProductEvents";
 
 // ── Block thông tin nội bộ (chỉ admin) ───────────────────────────────────────
 function InternalProductBlock({ productId }: { productId: string }) {
@@ -467,11 +468,12 @@ export default function ProductDetailPage({
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
+  const loadProduct = useCallback(() => {
     if (!params.id) return;
     setIsLoading(true);
+
     productService
       .getProductById(params.id)
       .then(async (data) => {
@@ -499,6 +501,10 @@ export default function ProductDetailPage({
   }, [params.id]);
 
   useEffect(() => {
+    loadProduct();
+  }, [loadProduct]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setShowSticky(!entry.isIntersecting),
       { threshold: 0 },
@@ -506,6 +512,12 @@ export default function ProductDetailPage({
     if (ctaRef.current) observer.observe(ctaRef.current);
     return () => observer.disconnect();
   }, [product]);
+
+  // Listen for real-time product updates
+  useProductEvents(() => {
+    console.log("🔄 Product updated, reloading...");
+    loadProduct();
+  }, params.id);
 
   if (isLoading)
     return (

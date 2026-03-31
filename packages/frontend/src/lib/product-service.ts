@@ -1,5 +1,6 @@
 import { apiClient, rawApiClient } from "./admin-api-client";
 import { cleanPayload } from "./constants";
+import { clientCache } from "./cache-utils";
 
 export interface ProductTag {
   id: string;
@@ -149,8 +150,22 @@ class ProductService {
   }
 
   async getProductById(id: string): Promise<Product> {
+    // Try cache first
+    const cacheKey = `product:${id}`;
+    const cached = clientCache.get<Product>(cacheKey);
+    if (cached) {
+      console.log("✅ Cache hit for product:", id);
+      return cached;
+    }
+
+    console.log("❌ Cache miss for product:", id);
     const raw = await apiClient.get<any>(`/products/${id}`);
-    return normalizeTags(raw);
+    const product = normalizeTags(raw);
+
+    // Cache for 30 seconds
+    clientCache.set(cacheKey, product, 30000);
+
+    return product;
   }
 
   async createProduct(data: CreateProductRequest): Promise<Product> {
@@ -161,11 +176,22 @@ class ProductService {
     id: string,
     data: UpdateProductRequest,
   ): Promise<Product> {
-    return apiClient.put<Product>(`/products/${id}`, cleanPayload(data));
+    const result = await apiClient.put<Product>(
+      `/products/${id}`,
+      cleanPayload(data),
+    );
+
+    // Invalidate cache for this product
+    clientCache.invalidateProduct(id);
+
+    return result;
   }
 
   async deleteProduct(id: string): Promise<void> {
     await apiClient.delete(`/products/${id}`);
+
+    // Invalidate cache
+    clientCache.invalidateProduct(id);
   }
 
   async publishProduct(id: string): Promise<Product> {

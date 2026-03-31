@@ -465,6 +465,13 @@ export function ProductForm({
         }
       }
       setToast({ message: "Đã lưu sản phẩm", type: "success" });
+
+      // Redirect to public product page after successful save
+      if (productId) {
+        setTimeout(() => {
+          window.location.href = `/products/${productId}`;
+        }, 1000);
+      }
     } catch (err: any) {
       const msg =
         err?.response?.data?.error?.message ||

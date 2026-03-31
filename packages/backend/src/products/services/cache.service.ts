@@ -225,8 +225,14 @@ export class CacheService {
    */
   invalidateProductCache(productId?: string): number {
     if (productId) {
-      return this.invalidatePattern(new RegExp(productId));
+      // Invalidate specific product and all filter caches
+      const productPattern = new RegExp(productId);
+      const filterPattern = new RegExp('^(filters|search|products)');
+      let count = this.invalidatePattern(productPattern);
+      count += this.invalidatePattern(filterPattern);
+      return count;
     } else {
+      // Invalidate all product-related caches
       return this.invalidatePattern(
         new RegExp('^(filters|search|products|api:.*product)'),
       );
