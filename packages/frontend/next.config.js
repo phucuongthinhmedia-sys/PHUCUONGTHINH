@@ -24,6 +24,10 @@ const nextConfig = {
         hostname: "**.amazonaws.com",
       },
       {
+        protocol: "https",
+        hostname: "**.railway.app",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
         port: "3001",
