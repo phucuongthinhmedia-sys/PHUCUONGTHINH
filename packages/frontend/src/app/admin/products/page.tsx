@@ -350,34 +350,14 @@ export default function AdminProductsPage() {
     loadProducts();
   }, [loadProducts]);
 
-  // Debounced reload for SSE events
-  const reloadTimeoutRef = useRef<NodeJS.Timeout>();
-  const handleProductEvent = useCallback(() => {
-    // Debounce: wait 500ms before reloading to batch multiple events
-    if (reloadTimeoutRef.current) {
-      clearTimeout(reloadTimeoutRef.current);
-    }
+  // DISABLED: Real-time updates causing infinite loop
+  // User can manually refresh (F5) to see latest changes
+  // TODO: Implement proper WebSocket with room-based events
+  // useProductEvents(handleProductEvent);
 
-    reloadTimeoutRef.current = setTimeout(() => {
-      // Only reload if not currently loading
-      if (!isLoadingRef.current) {
-        loadProducts();
-      }
-    }, 500);
-  }, [loadProducts]);
-
-  // Listen for real-time product updates with debouncing
-  useProductEvents(handleProductEvent);
-
-  // Cleanup debounce timeout
   useEffect(() => {
-    return () => {
-      if (reloadTimeoutRef.current) {
-        clearTimeout(reloadTimeoutRef.current);
-      }
-    };
-  }, []);
-
+    setSelected(new Set());
+  }, [page, search]);
   useEffect(() => {
     setSelected(new Set());
   }, [page, search]);
