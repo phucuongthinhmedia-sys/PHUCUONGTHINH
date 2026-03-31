@@ -233,6 +233,27 @@ export function MediaUploader({
       setItems(existingMedia);
     }
   }, [existingMedia]);
+
+  // Notify parent sau mỗi thay đổi, bỏ qua lần set từ existingMedia sync
+  const skipNextNotify = useRef(false);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    if (skipNextNotify.current) {
+      skipNextNotify.current = false;
+      return;
+    }
+    onChange(items);
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Đánh dấu skip khi sync từ existingMedia
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    skipNextNotify.current = true;
+  }, [existingMedia]);
   const [dragging1, setDragging1] = useState(false);
   const [dragging2, setDragging2] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -301,7 +322,6 @@ export function MediaUploader({
       const next = prev
         .filter((i) => i.clientId !== clientId)
         .map((item, idx) => ({ ...item, sort_order: idx }));
-      onChange(next);
       return next;
     });
   };
@@ -309,7 +329,6 @@ export function MediaUploader({
   const handleSetCover = (globalIdx: number) => {
     setItems((prev) => {
       const next = setCover(prev, globalIdx);
-      onChange(next);
       return next;
     });
   };
@@ -324,7 +343,6 @@ export function MediaUploader({
       const [moved] = next.splice(draggedIndex, 1);
       next.splice(index, 0, moved);
       const reordered = next.map((item, i) => ({ ...item, sort_order: i }));
-      onChange(reordered);
       setDraggedIndex(index);
       return reordered;
     });
@@ -352,7 +370,6 @@ export function MediaUploader({
           status: "pending" as const,
         },
       ];
-      onChange(next);
       return next;
     });
     setSocialUrl("");
@@ -476,15 +493,13 @@ export function MediaUploader({
               <button
                 type="button"
                 onClick={() => {
-                  setItems((prev) => {
-                    const next = prev.map((item) =>
+                  setItems((prev) =>
+                    prev.map((item) =>
                       PRODUCT_TYPES.includes(item.media_type)
                         ? { ...item, alt_text: productName }
                         : item,
-                    );
-                    onChange(next);
-                    return next;
-                  });
+                    ),
+                  );
                 }}
                 className="text-xs text-blue-600 hover:text-blue-800 underline underline-offset-2"
               >
@@ -513,15 +528,13 @@ export function MediaUploader({
                   type="text"
                   value={item.alt_text ?? ""}
                   onChange={(e) => {
-                    setItems((prev) => {
-                      const next = prev.map((m) =>
+                    setItems((prev) =>
+                      prev.map((m) =>
                         m.clientId === item.clientId
                           ? { ...m, alt_text: e.target.value }
                           : m,
-                      );
-                      onChange(next);
-                      return next;
-                    });
+                      ),
+                    );
                   }}
                   placeholder={`Alt text ảnh ${item.sort_order + 1}...`}
                   className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"

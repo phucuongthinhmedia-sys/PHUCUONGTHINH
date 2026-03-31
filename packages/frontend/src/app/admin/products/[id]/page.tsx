@@ -54,8 +54,9 @@ export default function AdminEditProductPage() {
   ): Promise<Product | void> => {
     setIsLoading(true);
     try {
-      await productService.updateProduct(productId, data);
-      router.push("/products");
+      const updated = await productService.updateProduct(productId, data);
+      router.push("/admin/products");
+      return updated;
     } catch (err: any) {
       throw err;
     } finally {
@@ -72,30 +73,31 @@ export default function AdminEditProductPage() {
     );
 
   return (
-    <div>
-      <div className="mb-8">
-        <Link href="/products" className="text-blue-600 hover:text-blue-800">
-          ← Quay lại Sản phẩm
+    <div className="p-4 md:p-6">
+      <div className="mb-5">
+        <Link
+          href="/admin/products"
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          ← Quay lại
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mt-4">
-          Chỉnh sửa Sản phẩm
+        <h1 className="text-xl font-black text-gray-900 mt-2">
+          Chỉnh sửa sản phẩm
         </h1>
       </div>
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-800">
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm">
           {error}
         </div>
       )}
-      <div className="bg-white rounded-lg shadow p-8">
-        <ProductForm
-          product={product}
-          categories={categories}
-          styles={styles}
-          spaces={spaces}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-        />
-      </div>
+      <ProductForm
+        product={product}
+        categories={categories}
+        styles={styles}
+        spaces={spaces}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

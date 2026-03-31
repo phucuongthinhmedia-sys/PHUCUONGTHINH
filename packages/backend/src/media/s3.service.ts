@@ -21,6 +21,8 @@ export class S3Service {
     const config: any = {
       region: this.configService.get('AWS_REGION') || 'auto',
       ...(r2Endpoint && { endpoint: r2Endpoint }),
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     };
 
     if (accessKeyId && secretAccessKey) {
@@ -46,7 +48,13 @@ export class S3Service {
       ContentType: contentType,
     });
 
-    return getSignedUrl(this.s3Client, command, { expiresIn });
+    return getSignedUrl(this.s3Client, command, {
+      expiresIn,
+      unhoistableHeaders: new Set([
+        'x-amz-checksum-crc32',
+        'x-amz-sdk-checksum-algorithm',
+      ]),
+    });
   }
 
   async getPresignedDownloadUrl(
@@ -74,15 +82,17 @@ export class S3Service {
   validateFileType(filename: string, mediaType: string): boolean {
     const fileExtension = filename.toLowerCase().split('.').pop();
 
-    const allowedTypes = {
+    const allowedTypes: Record<string, string[]> = {
       lifestyle: ['jpg', 'jpeg', 'png', 'webp'],
       cutout: ['jpg', 'jpeg', 'png', 'webp'],
-      video: ['mp4', 'webm'],
-      '3d_file': ['dwg', 'obj', 'fbx', 'dae', 'blend'],
+      showcase: ['jpg', 'jpeg', 'png', 'webp'],
+      video: ['mp4', 'webm', 'mov'],
+      '3d_file': ['dwg', 'obj', 'fbx', 'dae', 'blend', 'glb', 'gltf', 'skp'],
       pdf: ['pdf'],
+      social_link: [],
     };
 
-    return allowedTypes[mediaType]?.includes(fileExtension) || false;
+    return allowedTypes[mediaType]?.includes(fileExtension ?? '') ?? false;
   }
 
   validateFileSize(fileSize: number, mediaType: string): boolean {
@@ -98,11 +108,18 @@ export class S3Service {
   }
 
   getPublicUrl(key: string): string {
-    const cdnDomain = this.configService.get('CDN_DOMAIN'); // R2 public domain hoặc custom domain
+    const cdnDomain = this.configService.get('CDN_DOMAIN');
     if (cdnDomain) {
       return `https://${cdnDomain}/${key}`;
     }
-    // fallback S3
+    const r2PublicUrl = this.configService.get('R2_PUBLIC_URL');
+    if (r2PublicUrl) {
+      return `${r2PublicUrl}/${key}`;
+    }
+    const r2Endpoint = this.configService.get('R2_ENDPOINT');
+    if (r2Endpoint) {
+      return `${r2Endpoint}/${this.bucketName}/${key}`;
+    }
     return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
   }
 }

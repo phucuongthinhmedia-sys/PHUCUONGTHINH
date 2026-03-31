@@ -323,7 +323,7 @@ export function ProductForm({
           productId,
           item.file.name,
           item.media_type as any,
-          item.file.type,
+          item.file.type || "application/octet-stream",
         );
         await uploadFileToS3(upload_url, item.file, (percent) =>
           updateItemStatus(item.clientId, { progress: percent }),
@@ -381,8 +381,10 @@ export function ProductForm({
       .map((m) => deleteMedia(m.clientId).catch(() => {}));
     await Promise.all(deletions);
     await uploadPendingMedia(productId);
+    // Chỉ update sort-order cho media đã tồn tại trong DB (từ existingMedia)
+    const existingIds = new Set(originalMedia.map((m) => m.clientId));
     const doneItems = formData.pendingMedia.filter(
-      (m) => m.status === "done" && m.clientId,
+      (m) => m.status === "done" && m.clientId && existingIds.has(m.clientId),
     );
     if (doneItems.length > 0) {
       try {
@@ -777,7 +779,7 @@ export function ProductForm({
     <>
       <form onSubmit={handleSubmit} noValidate>
         {/* ── Save bar (luôn hiện, sticky trên mobile) ── */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 -mx-4 px-4 py-3 mb-5 flex items-center gap-3 shadow-sm">
+        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100 px-4 py-3 mb-5 flex items-center gap-3 shadow-sm">
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
               {formData.name ||
@@ -832,7 +834,7 @@ export function ProductForm({
         </div>
 
         {/* ── Tab nav ── */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 overflow-x-auto no-scrollbar -mx-4 px-5 md:mx-0 md:px-1">
           {TABS.map(({ id, label, icon: Icon }) => {
             const hasError =
               id === "info" &&
@@ -842,7 +844,7 @@ export function ProductForm({
                 key={id}
                 type="button"
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all flex-1 justify-center relative ${activeTab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all shrink-0 relative ${activeTab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Icon size={14} />
                 {label}

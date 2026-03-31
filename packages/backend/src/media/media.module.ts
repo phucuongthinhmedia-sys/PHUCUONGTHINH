@@ -5,9 +5,10 @@ import { MediaService } from './media.service';
 import { S3Service } from './s3.service';
 import { LocalStorageService } from './local-storage.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ProductsModule],
   controllers: [MediaController],
   providers: [
     MediaService,

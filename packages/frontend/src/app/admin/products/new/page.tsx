@@ -51,7 +51,7 @@ export default function AdminNewProductPage() {
       const created = await productService.createProduct(
         data as CreateProductRequest,
       );
-      router.push("/products");
+      router.push("/admin/products");
       return created;
     } catch (err: any) {
       throw err;
@@ -65,31 +65,32 @@ export default function AdminNewProductPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <Link href="/products" className="text-blue-600 hover:text-blue-800">
-          ← Quay lại Sản phẩm
+    <div className="p-4 md:p-6">
+      <div className="mb-5">
+        <Link
+          href="/admin/products"
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          ← Quay lại
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mt-4">
-          Tạo Sản phẩm mới
+        <h1 className="text-xl font-black text-gray-900 mt-2">
+          Tạo sản phẩm mới
         </h1>
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-800">
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm">
           {error}
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow p-8">
-        <ProductForm
-          categories={categories}
-          styles={styles}
-          spaces={spaces}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-        />
-      </div>
+      <ProductForm
+        categories={categories}
+        styles={styles}
+        spaces={spaces}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

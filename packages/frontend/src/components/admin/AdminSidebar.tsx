@@ -5,59 +5,56 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@repo/shared-utils";
 import { authService } from "@/lib/auth-service";
 import {
+  Home,
+  ShoppingBag,
+  Plus,
+  Warehouse,
+  MoreHorizontal,
+  ShoppingCart,
+  UserPlus,
+  ScanLine,
   FolderTree,
   Tags,
   ImageIcon,
   Upload,
   Users,
   LogOut,
-  ChevronRight,
-  Warehouse,
-  ClipboardList,
-  FileText,
-  Home,
-  ShoppingBag,
-  Eye,
   X,
+  ChevronRight,
+  Eye,
 } from "lucide-react";
+import { useState } from "react";
 
-// ─── 1. TÁCH DATA MENU RA CHO GỌN CODE ───
-const MENU_GROUPS = [
-  {
-    title: "Trang web",
-    items: [
-      { href: "/", label: "Trang chủ", icon: Home },
-      { href: "/products", label: "Sản phẩm", icon: ShoppingBag },
-    ],
-  },
-  {
-    title: "Quản trị",
-    items: [
-      { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
-      { href: "/admin/tags", label: "Tags", icon: Tags },
-      { href: "/admin/media", label: "Media", icon: ImageIcon },
-      { href: "/admin/import", label: "Import", icon: Upload },
-      { href: "/admin/leads", label: "Leads", icon: Users },
-    ],
-  },
-  {
-    title: "Vận hành",
-    items: [
-      { href: "/warehouse", label: "Kho hàng", icon: Warehouse },
-      { href: "/catalogue", label: "Catalogue", icon: ClipboardList },
-      { href: "/management", label: "Nội dung", icon: FileText },
-      { href: "/leads", label: "Leads nội bộ", icon: Users },
-    ],
-  },
+// ─── 5 MAIN NAV ITEMS ───
+const MAIN_NAV = [
+  { href: "/admin/dashboard", label: "Trang chính", icon: Home },
+  { href: "/admin/products", label: "Sản phẩm", icon: ShoppingBag },
+  // index 2 = nút "+"  (handled separately)
+  { href: "/warehouse", label: "Kho hàng", icon: Warehouse },
+  // index 4 = nút "..." (handled separately)
 ];
 
-// ─── 2. COMPONENT NAV ITEM ───
+// ─── MORE MENU ITEMS ───
+const MORE_ITEMS = [
+  { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
+  { href: "/admin/tags", label: "Tags", icon: Tags },
+  { href: "/admin/media", label: "Media", icon: ImageIcon },
+  { href: "/admin/import", label: "Import", icon: Upload },
+  { href: "/admin/leads", label: "Leads", icon: Users },
+  { href: "/products", label: "Xem như khách", icon: Eye, target: "_blank" },
+];
+
 function NavItem({
   item,
   isActive,
   onClick,
 }: {
-  item: any;
+  item: {
+    href: string;
+    label: string;
+    icon: React.ElementType;
+    target?: string;
+  };
   isActive: boolean;
   onClick?: () => void;
 }) {
@@ -69,8 +66,8 @@ function NavItem({
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all group ${
         isActive
-          ? "bg-[#804000] text-white shadow-md shadow-[#804000]/20 -translate-y-0.5" // Active: Nền nâu, chữ trắng nổi bật
-          : "text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000]" // Inactive: Chữ nâu mờ, hover nền nâu nhạt
+          ? "bg-[#804000] text-white shadow-md shadow-[#804000]/20 -translate-y-0.5"
+          : "text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000]"
       }`}
     >
       <Icon
@@ -87,11 +84,81 @@ function NavItem({
   );
 }
 
-// ─── 3. MAIN SIDEBAR CONTENT (BẢN SÁNG - LIGHT THEME) ───
+// ─── PLUS POPUP ───
+function PlusMenu({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="absolute left-full top-0 ml-3 z-50 bg-white rounded-2xl shadow-xl border border-[#804000]/10 p-2 w-52 animate-in slide-in-from-left-2">
+      <button
+        onClick={onClose}
+        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000] transition-all"
+      >
+        <ShoppingCart size={17} />
+        Thêm đơn hàng
+      </button>
+      <button
+        onClick={onClose}
+        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000] transition-all"
+      >
+        <UserPlus size={17} />
+        Thêm khách
+      </button>
+      <button
+        onClick={onClose}
+        className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000] transition-all"
+      >
+        <ScanLine size={17} />
+        Quét mã QR / Barcode
+      </button>
+    </div>
+  );
+}
+
+// ─── MORE POPUP ───
+function MoreMenu({
+  onClose,
+  onNavClose,
+}: {
+  onClose: () => void;
+  onNavClose?: () => void;
+}) {
+  const pathname = usePathname();
+  return (
+    <div className="absolute left-full top-0 ml-3 z-50 bg-white rounded-2xl shadow-xl border border-[#804000]/10 p-2 w-52 animate-in slide-in-from-left-2">
+      {MORE_ITEMS.map((item) => {
+        const Icon = item.icon;
+        const active =
+          pathname === item.href || pathname.startsWith(item.href + "/");
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            target={item.target}
+            onClick={() => {
+              onClose();
+              onNavClose?.();
+            }}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+              active
+                ? "bg-[#804000]/10 text-[#804000]"
+                : "text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000]"
+            }`}
+          >
+            <Icon size={17} />
+            {item.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── SIDEBAR CONTENT ───
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [plusOpen, setPlusOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -99,11 +166,13 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     router.replace("/admin/login");
   };
 
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
   return (
-    // Nền màu Kem sáng (#FDF5E6) thay vì Nâu đen nặng nề
     <aside className="h-full w-64 bg-[#FDF5E6] flex flex-col border-r border-[#804000]/10 shadow-[20px_0_40px_rgba(128,64,0,0.03)]">
-      {/* Header Logo */}
-      <div className="px-6 py-8 shrink-0 flex items-center justify-between relative">
+      {/* Logo */}
+      <div className="px-6 py-8 shrink-0 flex items-center justify-between">
         <Link
           href="/"
           onClick={onClose}
@@ -130,40 +199,77 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         )}
       </div>
 
-      {/* Menu List */}
-      <nav className="flex-1 overflow-y-auto px-4 pb-6 space-y-6 custom-scrollbar">
-        {MENU_GROUPS.map((group, idx) => (
-          <div key={idx} className="space-y-1">
-            <p className="px-4 pb-2 text-[11px] font-black uppercase tracking-widest text-[#804000]/40">
-              {group.title}
-            </p>
-            {group.items.map((item) => (
-              <NavItem
-                key={item.href}
-                item={item}
-                isActive={
-                  pathname === item.href || pathname.startsWith(item.href + "/")
-                }
-                onClick={onClose}
-              />
-            ))}
-          </div>
-        ))}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-4 pb-6 space-y-1">
+        {/* Trang chính */}
+        <NavItem
+          item={MAIN_NAV[0]}
+          isActive={isActive(MAIN_NAV[0].href)}
+          onClick={onClose}
+        />
 
-        <div className="border-t border-[#804000]/10 mx-4 pt-4">
-          <NavItem
-            item={{
-              href: "/products",
-              label: "Xem như khách",
-              icon: Eye,
-              target: "_blank",
+        {/* Sản phẩm */}
+        <NavItem
+          item={MAIN_NAV[1]}
+          isActive={isActive(MAIN_NAV[1].href)}
+          onClick={onClose}
+        />
+
+        {/* Nút + */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setPlusOpen((v) => !v);
+              setMoreOpen(false);
             }}
-            isActive={false}
-          />
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+              plusOpen
+                ? "bg-[#804000] text-white shadow-md"
+                : "text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000]"
+            }`}
+          >
+            <Plus
+              size={18}
+              className={plusOpen ? "text-white" : "text-[#804000]/50"}
+            />
+            <span className="flex-1">Thêm mới</span>
+          </button>
+          {plusOpen && <PlusMenu onClose={() => setPlusOpen(false)} />}
+        </div>
+
+        {/* Kho hàng */}
+        <NavItem
+          item={MAIN_NAV[2]}
+          isActive={isActive(MAIN_NAV[2].href)}
+          onClick={onClose}
+        />
+
+        {/* Nút ... */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setMoreOpen((v) => !v);
+              setPlusOpen(false);
+            }}
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+              moreOpen
+                ? "bg-[#804000] text-white shadow-md"
+                : "text-[#804000]/70 hover:bg-[#804000]/5 hover:text-[#804000]"
+            }`}
+          >
+            <MoreHorizontal
+              size={18}
+              className={moreOpen ? "text-white" : "text-[#804000]/50"}
+            />
+            <span className="flex-1">Thêm</span>
+          </button>
+          {moreOpen && (
+            <MoreMenu onClose={() => setMoreOpen(false)} onNavClose={onClose} />
+          )}
         </div>
       </nav>
 
-      {/* Footer Profile */}
+      {/* Footer */}
       <div className="p-4 bg-white/50 border-t border-[#804000]/10 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white shadow-sm border border-[#804000]/5 mb-3">
           <div className="w-9 h-9 rounded-full bg-[#804000]/10 flex items-center justify-center shrink-0">
@@ -180,7 +286,6 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             </p>
           </div>
         </div>
-
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
@@ -193,7 +298,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   );
 }
 
-// ─── 4. CÁC EXPORT CHÍNH ───
+// ─── EXPORTS ───
 export default function AdminSidebar() {
   return (
     <div className="fixed top-0 left-0 h-screen w-64 z-50 hidden lg:block">

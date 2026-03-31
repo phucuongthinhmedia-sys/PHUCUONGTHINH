@@ -27,7 +27,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
         {/* Content — full width on mobile, offset on desktop */}
         <div className="flex-1 min-h-screen lg:ml-60 admin-content flex flex-col">
-          <MobileTopBar onMenuOpen={() => setMobileMenuOpen(true)} />
+          {pathname !== "/admin/dashboard" && (
+            <MobileTopBar onMenuOpen={() => setMobileMenuOpen(true)} />
+          )}
           {children}
         </div>
 

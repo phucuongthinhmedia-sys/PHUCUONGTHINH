@@ -31,43 +31,37 @@ function BulkActionBar({
   onClear: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-[#0a192f] text-white rounded-xl mb-4 animate-in slide-in-from-top-2 duration-200">
-      <span className="text-sm font-semibold mr-1">
-        Đã chọn {count} sản phẩm
+    <div className="flex flex-wrap items-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-xl mb-4">
+      <span className="text-sm font-semibold flex-1 min-w-0">
+        Đã chọn {count} SP
       </span>
-      <div className="flex-1 flex items-center gap-2">
-        <button
-          onClick={onPublish}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-xs font-semibold transition-colors"
-        >
-          <Eye size={13} /> Đăng tất cả
-        </button>
-        <button
-          onClick={onUnpublish}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold transition-colors"
-        >
-          <EyeOff size={13} /> Ẩn tất cả
-        </button>
-        <button
-          onClick={onDelete}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-xs font-semibold transition-colors"
-        >
-          <Trash2 size={13} /> Xóa tất cả
-        </button>
-      </div>
       <button
-        onClick={onClear}
-        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
-        title="Bỏ chọn"
+        onClick={onPublish}
+        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 rounded-lg text-xs font-semibold"
       >
-        <X size={15} />
+        <Eye size={12} /> Đăng
+      </button>
+      <button
+        onClick={onUnpublish}
+        className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-semibold"
+      >
+        <EyeOff size={12} /> Ẩn
+      </button>
+      <button
+        onClick={onDelete}
+        className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 rounded-lg text-xs font-semibold"
+      >
+        <Trash2 size={12} /> Xóa
+      </button>
+      <button onClick={onClear} className="p-1.5 hover:bg-white/10 rounded-lg">
+        <X size={14} />
       </button>
     </div>
   );
 }
 
-// ── Chế độ admin: table ───────────────────────────────────────────────────────
-function AdminTable({
+// ── Desktop table ─────────────────────────────────────────────────────────────
+function DesktopTable({
   products,
   selected,
   onToggleSelect,
@@ -95,8 +89,7 @@ function AdminTable({
             <th className="px-4 py-3 w-10">
               <button
                 onClick={onToggleAll}
-                className="text-gray-400 hover:text-blue-600 transition-colors"
-                title={allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                className="text-gray-400 hover:text-blue-600"
               >
                 {allSelected ? (
                   <CheckSquare size={16} className="text-blue-600" />
@@ -107,16 +100,16 @@ function AdminTable({
                 )}
               </button>
             </th>
-            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Tên
             </th>
-            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
               SKU
             </th>
-            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Trạng thái
             </th>
-            <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Thao tác
             </th>
           </tr>
@@ -136,7 +129,7 @@ function AdminTable({
                 >
                   <button
                     onClick={() => onToggleSelect(product.id)}
-                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    className="text-gray-400 hover:text-blue-600"
                   >
                     {isSelected ? (
                       <CheckSquare size={16} className="text-blue-600" />
@@ -145,14 +138,14 @@ function AdminTable({
                     )}
                   </button>
                 </td>
-                <td className="px-5 py-3.5 text-sm font-medium text-gray-900 max-w-[260px] truncate">
+                <td className="px-4 py-3.5 text-sm font-medium text-gray-900 max-w-[260px] truncate">
                   {product.name}
                 </td>
-                <td className="px-5 py-3.5 text-sm text-gray-500 font-mono">
+                <td className="px-4 py-3.5 text-sm text-gray-500 font-mono">
                   {product.sku}
                 </td>
                 <td
-                  className="px-5 py-3.5"
+                  className="px-4 py-3.5"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -171,27 +164,27 @@ function AdminTable({
                   </button>
                 </td>
                 <td
-                  className="px-5 py-3.5"
+                  className="px-4 py-3.5"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex items-center justify-end gap-1">
                     <Link
                       href={`/admin/products/${product.id}`}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                       title="Sửa"
                     >
                       <Pencil size={14} />
                     </Link>
                     <button
                       onClick={() => onClone(product.id)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
                       title="Nhân bản"
                     >
                       <Copy size={14} />
                     </button>
                     <button
                       onClick={() => onDelete(product.id)}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50"
                       title="Xóa"
                     >
                       <Trash2 size={14} />
@@ -203,6 +196,99 @@ function AdminTable({
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ── Mobile card list ──────────────────────────────────────────────────────────
+function MobileCardList({
+  products,
+  selected,
+  onToggleSelect,
+  onPublish,
+  onClone,
+  onDelete,
+}: {
+  products: Product[];
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onPublish: (id: string, current: boolean) => void;
+  onClone: (id: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {products.map((product) => {
+        const isSelected = selected.has(product.id);
+        return (
+          <div
+            key={product.id}
+            className={`bg-white rounded-2xl border p-4 transition-colors ${isSelected ? "border-blue-300 bg-blue-50/30" : "border-gray-100"}`}
+          >
+            <div className="flex items-start gap-3">
+              {/* Checkbox */}
+              <button
+                onClick={() => onToggleSelect(product.id)}
+                className="mt-0.5 shrink-0 text-gray-400 hover:text-blue-600"
+              >
+                {isSelected ? (
+                  <CheckSquare size={16} className="text-blue-600" />
+                ) : (
+                  <Square size={16} />
+                )}
+              </button>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                  {product.name}
+                </p>
+                <p className="text-xs text-gray-400 font-mono mt-0.5">
+                  {product.sku}
+                </p>
+              </div>
+
+              {/* Status badge */}
+              <button
+                onClick={() => onPublish(product.id, product.is_published)}
+                className={`shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${product.is_published ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}
+              >
+                {product.is_published ? (
+                  <>
+                    <Eye size={10} /> Đăng
+                  </>
+                ) : (
+                  <>
+                    <EyeOff size={10} /> Nháp
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+              <Link
+                href={`/admin/products/${product.id}`}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <Pencil size={13} /> Sửa
+              </Link>
+              <button
+                onClick={() => onClone(product.id)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <Copy size={13} /> Nhân bản
+              </button>
+              <button
+                onClick={() => onDelete(product.id)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                <Trash2 size={13} /> Xóa
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -240,8 +326,6 @@ export default function AdminProductsPage() {
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
-
-  // Reset selection khi đổi trang/search
   useEffect(() => {
     setSelected(new Set());
   }, [page, search]);
@@ -255,11 +339,11 @@ export default function AdminProductsPage() {
   };
 
   const handleToggleAll = () => {
-    if (selected.size === products.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(products.map((p) => p.id)));
-    }
+    setSelected(
+      selected.size === products.length
+        ? new Set()
+        : new Set(products.map((p) => p.id)),
+    );
   };
 
   const handleDelete = async (id: string) => {
@@ -294,13 +378,8 @@ export default function AdminProductsPage() {
     }
   };
 
-  // ── Bulk actions ────────────────────────────────────────────────────────────
   const handleBulkDelete = async () => {
-    if (
-      !confirm(
-        `Bạn có chắc muốn xóa ${selected.size} sản phẩm đã chọn? Hành động này không thể hoàn tác.`,
-      )
-    )
+    if (!confirm(`Xóa ${selected.size} sản phẩm đã chọn? Không thể hoàn tác.`))
       return;
     setIsBulkLoading(true);
     const ids = Array.from(selected);
@@ -308,12 +387,11 @@ export default function AdminProductsPage() {
       ids.map((id) => productService.deleteProduct(id)),
     );
     const deleted = ids.filter((_, i) => results[i].status === "fulfilled");
-    const failCount = ids.length - deleted.length;
     setProducts((p) => p.filter((x) => !deleted.includes(x.id)));
     setTotal((t) => t - deleted.length);
     setSelected(new Set());
-    if (failCount > 0)
-      setError(`Xóa thất bại ${failCount} sản phẩm. Vui lòng thử lại.`);
+    const failCount = ids.length - deleted.length;
+    if (failCount > 0) setError(`Xóa thất bại ${failCount} sản phẩm.`);
     setIsBulkLoading(false);
   };
 
@@ -330,12 +408,7 @@ export default function AdminProductsPage() {
     const updated: Product[] = results
       .filter((r) => r.status === "fulfilled")
       .map((r) => (r as PromiseFulfilledResult<Product>).value);
-    setProducts((p) =>
-      p.map((x) => {
-        const u = updated.find((u) => u.id === x.id);
-        return u ?? x;
-      }),
-    );
+    setProducts((p) => p.map((x) => updated.find((u) => u.id === x.id) ?? x));
     setSelected(new Set());
     setIsBulkLoading(false);
   };
@@ -343,22 +416,22 @@ export default function AdminProductsPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div>
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Sản phẩm</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{total} sản phẩm</p>
+          <h1 className="text-xl font-black text-gray-900">Sản phẩm</h1>
+          <p className="text-xs text-gray-400 mt-0.5">{total} sản phẩm</p>
         </div>
         <Link
           href="/admin/products/new"
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#0a192f] text-white rounded-xl text-sm font-semibold hover:bg-[#0d2137] transition-colors shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm"
         >
-          <Plus size={16} />
-          Thêm sản phẩm
+          <Plus size={15} /> Thêm
         </Link>
       </div>
 
+      {/* Error */}
       {error && (
         <div className="mb-4 p-3.5 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm flex items-center justify-between">
           <span>{error}</span>
@@ -371,7 +444,7 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* Bulk action bar */}
+      {/* Bulk bar */}
       {selected.size > 0 && (
         <BulkActionBar
           count={selected.size}
@@ -382,24 +455,22 @@ export default function AdminProductsPage() {
         />
       )}
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1">
-          <Search
-            size={15}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-          <input
-            type="text"
-            placeholder="Tìm theo tên, SKU..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search
+          size={15}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+        />
+        <input
+          type="text"
+          placeholder="Tìm theo tên, SKU..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+        />
       </div>
 
       {/* Content */}
@@ -413,21 +484,35 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className={isBulkLoading ? "opacity-60 pointer-events-none" : ""}>
-          <AdminTable
-            products={products}
-            selected={selected}
-            onToggleSelect={handleToggleSelect}
-            onToggleAll={handleToggleAll}
-            onPublish={handlePublish}
-            onClone={handleClone}
-            onDelete={handleDelete}
-          />
+          {/* Mobile: card list */}
+          <div className="md:hidden">
+            <MobileCardList
+              products={products}
+              selected={selected}
+              onToggleSelect={handleToggleSelect}
+              onPublish={handlePublish}
+              onClone={handleClone}
+              onDelete={handleDelete}
+            />
+          </div>
+          {/* Desktop: table */}
+          <div className="hidden md:block">
+            <DesktopTable
+              products={products}
+              selected={selected}
+              onToggleSelect={handleToggleSelect}
+              onToggleAll={handleToggleAll}
+              onPublish={handlePublish}
+              onClone={handleClone}
+              onDelete={handleDelete}
+            />
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+        <div className="mt-5 flex items-center justify-between text-sm text-gray-500">
           <span>
             {(page - 1) * limit + 1}–{Math.min(page * limit, total)} / {total}
           </span>
@@ -435,7 +520,7 @@ export default function AdminProductsPage() {
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
             >
               Trước
             </button>
@@ -445,7 +530,7 @@ export default function AdminProductsPage() {
             <button
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 transition-colors"
+              className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40"
             >
               Sau
             </button>

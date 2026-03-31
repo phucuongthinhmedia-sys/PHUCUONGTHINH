@@ -30,13 +30,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) return null;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 md:py-8">
-        {children}
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }
 
 export default function AdminLayout({

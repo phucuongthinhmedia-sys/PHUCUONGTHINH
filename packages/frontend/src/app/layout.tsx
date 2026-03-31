@@ -4,7 +4,7 @@ import { Providers } from "./providers";
 import { PublicShell } from "@/components/PublicShell";
 
 export const metadata: Metadata = {
-  title: "Phúc Cường Thịnh - Tiên phong Big Slab & Kiến trúc xanh",
+  title: "Phú Cường Thịnh - Tiên phong Big Slab & Kiến trúc xanh",
   description:
     "Đơn vị dẫn đầu chuỗi cung ứng vật liệu xây dựng B2B. Tổng kho phân phối Gạch khổ lớn (Big Slab) và giải pháp Gạch kháng khuẩn công nghệ cao.",
   icons: {

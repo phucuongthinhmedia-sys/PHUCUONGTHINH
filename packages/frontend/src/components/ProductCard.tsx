@@ -3,10 +3,8 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
 import { Product } from "@/types";
-import { useWishlist, useQuoteCart } from "@/lib/wishlist-context";
-import { useState } from "react";
+import { useQuoteCart } from "@/lib/wishlist-context";
 
 interface ProductCardProps {
   product: Product;
@@ -18,21 +16,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     product.media?.find((m) => m.is_cover) || product.media?.[0];
   const imageUrl = coverImage?.file_url || "/placeholder-product.svg";
 
-  const { isInWishlist, toggleWishlist } = useWishlist();
-  const { addItem } = useQuoteCart();
-  const isLiked = isInWishlist(product.id);
-  const [isAdded, setIsAdded] = useState(false);
+  const { items, addItem, removeItem } = useQuoteCart();
+  const isInCart = items.some((item) => item.product.id === product.id);
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleToggleCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    toggleWishlist(product.id);
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    addItem(product, 1, "m2");
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+    if (isInCart) {
+      removeItem(product.id);
+    } else {
+      addItem(product, 1, "m2");
+    }
   };
 
   return (
@@ -54,19 +47,24 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           />
         </Link>
 
-        {/* Wishlist button — min 44px touch target */}
+        {/* Nút thêm vào giỏ báo giá — icon tym */}
         <button
-          onClick={handleLike}
+          onClick={handleToggleCart}
           className="absolute top-1.5 right-1.5 md:top-2 md:right-2 p-2 md:p-2.5 min-w-[40px] min-h-[40px] md:min-w-[44px] md:min-h-[44px] flex items-center justify-center bg-white/85 backdrop-blur-sm rounded-full shadow-sm active:scale-95 transition-all z-10"
-          aria-label={isLiked ? "Bỏ yêu thích" : "Yêu thích"}
+          aria-label={isInCart ? "Xóa khỏi báo giá" : "Thêm vào báo giá"}
+          title={
+            isInCart
+              ? "Xóa khỏi danh sách báo giá"
+              : "Thêm vào danh sách báo giá"
+          }
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            fill={isLiked ? "#ef4444" : "none"}
+            fill={isInCart ? "#ef4444" : "none"}
             viewBox="0 0 24 24"
             strokeWidth={1.5}
-            stroke={isLiked ? "#ef4444" : "currentColor"}
-            className="w-4 h-4 md:w-5 md:h-5 text-gray-600"
+            stroke={isInCart ? "#ef4444" : "currentColor"}
+            className="w-4 h-4 md:w-5 md:h-5 text-gray-600 transition-colors"
           >
             <path
               strokeLinecap="round"
@@ -114,18 +112,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             ))}
           </div>
         )}
-
-        <button
-          onClick={handleAddToCart}
-          className={`w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-            isAdded
-              ? "bg-emerald-500 text-white"
-              : "bg-[#0a192f] text-white hover:bg-emerald-600"
-          }`}
-        >
-          <ShoppingCart size={14} />
-          {isAdded ? "Đã thêm!" : "Thêm vào giỏ"}
-        </button>
       </div>
     </motion.div>
   );

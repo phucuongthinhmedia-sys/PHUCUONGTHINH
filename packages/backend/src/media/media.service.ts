@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { GetPresignedUrlDto } from './dto/upload-media.dto';
+import { CombinedFilterService } from '../products/services/combined-filter.service';
 
 interface StorageService {
   getPresignedUploadUrl(
@@ -27,6 +28,7 @@ export class MediaService {
   constructor(
     private prisma: PrismaService,
     @Inject('STORAGE_SERVICE') private storageService: StorageService,
+    private combinedFilterService: CombinedFilterService,
   ) {}
 
   async create(createMediaDto: CreateMediaDto) {
@@ -59,9 +61,11 @@ export class MediaService {
       createMediaDto.sort_order = (lastMedia?.sort_order || 0) + 1;
     }
 
-    return this.prisma.media.create({
+    const media = await this.prisma.media.create({
       data: createMediaDto,
     });
+    this.combinedFilterService.clearProductCaches(createMediaDto.product_id);
+    return media;
   }
 
   async findAll() {
@@ -130,9 +134,9 @@ export class MediaService {
 
   async remove(id: string) {
     const media = await this.findOne(id);
-    return this.prisma.media.delete({
-      where: { id },
-    });
+    const result = await this.prisma.media.delete({ where: { id } });
+    this.combinedFilterService.clearProductCaches(media.product_id);
+    return result;
   }
 
   async getPresignedUploadUrl(
