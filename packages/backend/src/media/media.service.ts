@@ -72,6 +72,7 @@ export class MediaService {
     this.eventsService.emit({
       type: 'updated',
       productId: createMediaDto.product_id,
+      timestamp: new Date().toISOString(),
     });
 
     return media;
@@ -145,6 +146,7 @@ export class MediaService {
     this.eventsService.emit({
       type: 'updated',
       productId: existingMedia.product_id,
+      timestamp: new Date().toISOString(),
     });
 
     return result;
@@ -159,6 +161,7 @@ export class MediaService {
     this.eventsService.emit({
       type: 'updated',
       productId: media.product_id,
+      timestamp: new Date().toISOString(),
     });
 
     return result;
