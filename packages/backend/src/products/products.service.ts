@@ -209,7 +209,19 @@ export class ProductsService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    const existingProduct = await this.findOne(id);
+    // Fetch existing product with relations for comparison
+    const existingProductWithRelations = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        style_tags: true,
+        space_tags: true,
+      },
+    });
+
+    if (!existingProductWithRelations) {
+      throw new NotFoundException('Product not found');
+    }
+
     const {
       name,
       sku,
@@ -221,39 +233,59 @@ export class ProductsService {
       is_published,
     } = updateProductDto;
 
+    // Run all validations in parallel for better performance
+    const validationPromises: Promise<any>[] = [];
+
     // Validate category if provided
     if (category_id) {
-      await this.categoriesService.findOne(category_id);
+      validationPromises.push(this.categoriesService.findOne(category_id));
     }
 
     // Check SKU uniqueness if changed
-    if (sku && sku !== existingProduct.sku) {
-      const existingSku = await this.prisma.product.findUnique({
-        where: { sku },
-      });
-      if (existingSku) {
-        throw new BadRequestException('SKU already exists');
-      }
+    if (sku && sku !== existingProductWithRelations.sku) {
+      validationPromises.push(
+        this.prisma.product
+          .findUnique({ where: { sku } })
+          .then((existingSku) => {
+            if (existingSku) {
+              throw new BadRequestException('SKU already exists');
+            }
+          }),
+      );
     }
 
-    // Validate style and space IDs if provided
+    // Validate style IDs if provided
     if (style_ids && style_ids.length > 0) {
-      const styles = await this.prisma.style.findMany({
-        where: { id: { in: style_ids } },
-      });
-      if (styles.length !== style_ids.length) {
-        throw new BadRequestException('One or more style IDs are invalid');
-      }
+      validationPromises.push(
+        this.prisma.style
+          .findMany({ where: { id: { in: style_ids } } })
+          .then((styles) => {
+            if (styles.length !== style_ids.length) {
+              throw new BadRequestException(
+                'One or more style IDs are invalid',
+              );
+            }
+          }),
+      );
     }
 
+    // Validate space IDs if provided
     if (space_ids && space_ids.length > 0) {
-      const spaces = await this.prisma.space.findMany({
-        where: { id: { in: space_ids } },
-      });
-      if (spaces.length !== space_ids.length) {
-        throw new BadRequestException('One or more space IDs are invalid');
-      }
+      validationPromises.push(
+        this.prisma.space
+          .findMany({ where: { id: { in: space_ids } } })
+          .then((spaces) => {
+            if (spaces.length !== space_ids.length) {
+              throw new BadRequestException(
+                'One or more space IDs are invalid',
+              );
+            }
+          }),
+      );
     }
+
+    // Wait for all validations to complete
+    await Promise.all(validationPromises);
 
     // Smart update: Only touch tags if they actually changed
     const updateData: any = {
@@ -267,20 +299,40 @@ export class ProductsService {
       ...(is_published !== undefined && { is_published }),
     };
 
-    // Only update style tags if provided
+    // Smart tag update: Only update if tags actually changed
     if (style_ids !== undefined) {
-      updateData.style_tags = {
-        deleteMany: {},
-        create: style_ids.map((style_id) => ({ style_id })),
-      };
+      const currentStyleIds = existingProductWithRelations.style_tags
+        .map((t) => t.style_id)
+        .sort();
+      const newStyleIds = [...style_ids].sort();
+      const tagsChanged =
+        currentStyleIds.length !== newStyleIds.length ||
+        currentStyleIds.some((id, i) => id !== newStyleIds[i]);
+
+      if (tagsChanged) {
+        updateData.style_tags = {
+          deleteMany: {},
+          create: style_ids.map((style_id) => ({ style_id })),
+        };
+      }
     }
 
-    // Only update space tags if provided
+    // Smart tag update: Only update if tags actually changed
     if (space_ids !== undefined) {
-      updateData.space_tags = {
-        deleteMany: {},
-        create: space_ids.map((space_id) => ({ space_id })),
-      };
+      const currentSpaceIds = existingProductWithRelations.space_tags
+        .map((t) => t.space_id)
+        .sort();
+      const newSpaceIds = [...space_ids].sort();
+      const tagsChanged =
+        currentSpaceIds.length !== newSpaceIds.length ||
+        currentSpaceIds.some((id, i) => id !== newSpaceIds[i]);
+
+      if (tagsChanged) {
+        updateData.space_tags = {
+          deleteMany: {},
+          create: space_ids.map((space_id) => ({ space_id })),
+        };
+      }
     }
 
     // Update product with relationships

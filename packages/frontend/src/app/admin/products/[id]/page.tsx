@@ -16,6 +16,10 @@ import { apiClient } from "@/lib/admin-api-client";
 import { staticDataCache } from "@/lib/static-data-cache";
 import { useMediaPolling } from "@/hooks/useMediaPolling";
 
+// Force dynamic rendering - no caching
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function AdminEditProductPage() {
   const params = useParams();
   const productId = params.id as string;

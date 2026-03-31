@@ -17,6 +17,10 @@ import {
   X,
 } from "lucide-react";
 
+// Force dynamic rendering - no caching
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // ── Bulk action bar ───────────────────────────────────────────────────────────
 function BulkActionBar({
   count,

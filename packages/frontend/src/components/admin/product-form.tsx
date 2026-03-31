@@ -11,6 +11,7 @@ import {
   Product,
   CreateProductRequest,
   UpdateProductRequest,
+  productService,
 } from "@/lib/product-service";
 import { Category } from "@/lib/category-service";
 import { Tag } from "@/lib/tag-service";
@@ -385,11 +386,6 @@ export function ProductForm({
     e.preventDefault();
     if (!validate()) return;
 
-    console.log(
-      "🚀 [ProductForm] handleSubmit - formData.pendingMedia:",
-      formData.pendingMedia.map((m) => ({ id: m.clientId, status: m.status })),
-    );
-
     setIsSaving(true);
     try {
       const payload: CreateProductRequest | UpdateProductRequest = {
@@ -430,30 +426,12 @@ export function ProductForm({
               m.status === "done" && m.clientId && !currentIds.has(m.clientId),
           );
 
-          console.log("🔍 [ProductForm] Media deletion:", {
-            original: originalMediaRef.current.map((m) => ({
-              id: m.clientId,
-              status: m.status,
-            })),
-            current: formData.pendingMedia.map((m) => ({
-              id: m.clientId,
-              status: m.status,
-            })),
-            currentIds: Array.from(currentIds),
-            toDelete: toDelete.map((m) => m.clientId),
-          });
-
           await Promise.all(
-            toDelete.map((m) => {
-              console.log("🗑️ [ProductForm] Deleting media:", m.clientId);
-              return deleteMedia(m.clientId).catch((err) => {
-                console.error(
-                  "❌ [ProductForm] Failed to delete media:",
-                  m.clientId,
-                  err,
-                );
-              });
-            }),
+            toDelete.map((m) =>
+              deleteMedia(m.clientId).catch((err) => {
+                console.error("Failed to delete media:", m.clientId, err);
+              }),
+            ),
           );
         }
 
@@ -546,7 +524,7 @@ export function ProductForm({
                 }),
               );
 
-              // Update sort order for existing items
+              // Update sort order ONLY if changed
               const existingIds = new Set(
                 originalMediaRef.current.map((m) => m.clientId),
               );
@@ -556,7 +534,16 @@ export function ProductForm({
                   m.clientId &&
                   existingIds.has(m.clientId),
               );
-              if (doneItems.length > 0) {
+
+              // Check if order actually changed
+              const orderChanged = doneItems.some((item) => {
+                const original = originalMediaRef.current.find(
+                  (m) => m.clientId === item.clientId,
+                );
+                return original && original.sort_order !== item.sort_order;
+              });
+
+              if (doneItems.length > 0 && orderChanged) {
                 await updateSortOrder(
                   productId,
                   doneItems.map((m) => ({
@@ -568,9 +555,14 @@ export function ProductForm({
             })()
           : result?.id
             ? (async () => {
+                console.log(
+                  "🆕 New product upload starting, result.id:",
+                  result.id,
+                );
                 const pending = formData.pendingMedia.filter(
                   (m) => m.status === "pending" && m.file,
                 );
+                console.log("📦 Pending media to upload:", pending.length);
                 const updateStatus = (
                   clientId: string,
                   patch: Partial<PendingMedia>,
@@ -612,6 +604,10 @@ export function ProductForm({
                         status: "done",
                         progress: 100,
                       });
+                      console.log(
+                        "✅ Media uploaded successfully:",
+                        item.file.name,
+                      );
                     } catch (err: any) {
                       const msg =
                         err?.response?.data?.message ||
@@ -641,13 +637,37 @@ export function ProductForm({
 
         // MUST await both upload and internal data save before redirect
         await Promise.all([uploadPromise, internalPromise]);
+
+        console.log("✅ Upload and internal data completed");
+
+        // CRITICAL: Verify media was actually saved for new products
+        if (!product?.id && result?.id && formData.pendingMedia.length > 0) {
+          console.log("🔍 Verifying new product media saved...");
+          try {
+            const verified = await productService.getProductById(
+              result.id,
+              true,
+            );
+            console.log(
+              "✅ Verified product has",
+              verified.media?.length || 0,
+              "media items",
+            );
+            if ((verified.media?.length || 0) === 0) {
+              console.error("⚠️ WARNING: No media found after upload!");
+            }
+          } catch (err) {
+            console.error("⚠️ Could not verify product:", err);
+          }
+        }
       }
 
       setToast({ message: "✅ Đã lưu sản phẩm", type: "success" });
-      // Redirect after short delay to show toast
+
+      // CRITICAL FIX: Add timestamp to force cache bust and fresh data load
       setTimeout(() => {
-        window.location.replace(`/admin/products`);
-      }, 500);
+        window.location.href = `/admin/products?t=${Date.now()}`;
+      }, 800);
     } catch (err: any) {
       const msg =
         err?.response?.data?.error?.message ||

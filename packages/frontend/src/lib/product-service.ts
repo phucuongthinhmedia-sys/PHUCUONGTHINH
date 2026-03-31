@@ -138,6 +138,9 @@ class ProductService {
       if (search) params.append("search", search);
     }
 
+    // Add cache-busting timestamp for admin pages to ensure fresh data
+    params.set("_t", Date.now().toString());
+
     const raw = await rawApiClient.getRaw<BackendProductsResponse>(
       `/products?${params.toString()}`,
     );
