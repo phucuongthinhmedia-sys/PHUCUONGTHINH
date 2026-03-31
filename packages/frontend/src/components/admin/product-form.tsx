@@ -480,15 +480,14 @@ export function ProductForm({
               .filter((m) => m.status === "done" && m.clientId)
               .map((m) => m.clientId),
           );
+
+          const toDelete = originalMediaRef.current.filter(
+            (m) =>
+              m.status === "done" && m.clientId && !currentIds.has(m.clientId),
+          );
+
           await Promise.all(
-            originalMediaRef.current
-              .filter(
-                (m) =>
-                  m.status === "done" &&
-                  m.clientId &&
-                  !currentIds.has(m.clientId),
-              )
-              .map((m) => deleteMedia(m.clientId).catch(() => {})),
+            toDelete.map((m) => deleteMedia(m.clientId).catch(() => {})),
           );
         }
 
@@ -522,12 +521,14 @@ export function ProductForm({
         const internalPromise = hasInternal
           ? apiClient
               .patch(`/products/${productId}/internal`, internalData)
-              .catch((err) =>
-                console.error("Failed to save internal info:", err),
-              )
+              .catch((err) => {
+                console.error("Failed to save internal info:", err);
+                throw err; // Re-throw to catch in outer try-catch
+              })
           : Promise.resolve();
 
-        Promise.all([uploadPromise, internalPromise]).catch(() => {});
+        // MUST await both upload and internal data save before redirect
+        await Promise.all([uploadPromise, internalPromise]);
       }
 
       setToast({ message: "✅ Đã lưu sản phẩm", type: "success" });

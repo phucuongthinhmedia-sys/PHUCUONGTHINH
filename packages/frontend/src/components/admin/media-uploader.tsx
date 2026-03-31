@@ -278,6 +278,8 @@ export function MediaUploader({
 
   // Sync khi existingMedia thay đổi (edit mode: product load async)
   const prevMediaKey = useRef<string>("");
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
     // Create a key from media IDs to detect real changes
     const key = existingMedia.map((m) => m.clientId).join(",");
@@ -289,27 +291,27 @@ export function MediaUploader({
     }
   }, [existingMedia]);
 
-  // Notify parent sau mỗi thay đổi do user (không notify khi sync từ existingMedia)
-  const skipNextNotify = useRef(false);
-  const mountedRef = useRef(false);
+  // Notify parent sau mỗi thay đổi do user
   useEffect(() => {
-    if (!mountedRef.current) {
-      mountedRef.current = true;
+    // Skip notification on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
       return;
     }
-    if (skipNextNotify.current) {
-      skipNextNotify.current = false;
-      return;
-    }
-    onChange(items);
-  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Khi sync từ existingMedia, skip notify để tránh loop
-  useEffect(() => {
-    const key = existingMedia.map((m) => m.clientId).join(",");
-    if (key !== prevMediaKey.current) return; // chỉ skip khi vừa sync
-    skipNextNotify.current = true;
-  }, [existingMedia]);
+    // Skip notification if this is a sync from existingMedia (same IDs in same order)
+    const existingKey = existingMedia.map((m) => m.clientId).join(",");
+    const currentKey = items.map((m) => m.clientId).join(",");
+
+    if (existingKey === currentKey && existingMedia.length === items.length) {
+      // This is likely a sync from existingMedia, not a user action
+      return;
+    }
+
+    // Always notify parent when items change (user action)
+    onChange(items);
+  }, [items, onChange, existingMedia]);
+
   const [dragging1, setDragging1] = useState(false);
   const [dragging2, setDragging2] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
