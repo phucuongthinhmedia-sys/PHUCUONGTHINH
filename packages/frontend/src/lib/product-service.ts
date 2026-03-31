@@ -142,11 +142,6 @@ class ProductService {
       bustCache = true;
     }
 
-    // Add cache-busting timestamp only when needed (admin pages)
-    if (bustCache) {
-      params.set("_t", Date.now().toString());
-    }
-
     const raw = await rawApiClient.getRaw<BackendProductsResponse>(
       `/products?${params.toString()}`,
     );
@@ -159,10 +154,7 @@ class ProductService {
   }
 
   async getProductById(id: string, bustCache = false): Promise<Product> {
-    const url = bustCache
-      ? `/products/${id}?_t=${Date.now()}`
-      : `/products/${id}`;
-    const raw = await apiClient.get<any>(url);
+    const raw = await apiClient.get<any>(`/products/${id}`);
     const product = normalizeTags(raw);
     return product;
   }
