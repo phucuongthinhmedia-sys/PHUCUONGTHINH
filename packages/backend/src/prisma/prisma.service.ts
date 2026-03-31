@@ -45,12 +45,20 @@ export class PrismaService
       });
     } else if (isTurso) {
       // Use Turso (libSQL) adapter
+      console.log('🔍 Creating Turso client with URL:', dbUrl);
+      console.log(
+        '🔍 Auth token length:',
+        process.env.TURSO_AUTH_TOKEN?.length,
+      );
+
       const libsql = createClient({
         url: dbUrl,
         authToken: process.env.TURSO_AUTH_TOKEN,
       });
 
+      console.log('🔍 Turso client created successfully');
       const adapter = new PrismaLibSql(libsql as any);
+      console.log('🔍 Turso adapter created successfully');
 
       super({
         adapter,
