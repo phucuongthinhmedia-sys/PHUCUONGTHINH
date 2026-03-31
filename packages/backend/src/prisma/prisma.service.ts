@@ -12,6 +12,10 @@ export class PrismaService
   constructor() {
     const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
 
+    // Debug logging
+    console.log('🔍 DATABASE_URL:', dbUrl);
+    console.log('🔍 TURSO_AUTH_TOKEN exists:', !!process.env.TURSO_AUTH_TOKEN);
+
     // Check database type
     const isPostgreSQL =
       dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://');
@@ -19,6 +23,15 @@ export class PrismaService
       (dbUrl.startsWith('libsql://') || dbUrl.startsWith('https://')) &&
       !!process.env.TURSO_AUTH_TOKEN;
     const isSQLite = dbUrl.startsWith('file:');
+
+    console.log(
+      '🔍 Database type - PostgreSQL:',
+      isPostgreSQL,
+      'Turso:',
+      isTurso,
+      'SQLite:',
+      isSQLite,
+    );
 
     if (isPostgreSQL) {
       // Use PostgreSQL directly without adapter
