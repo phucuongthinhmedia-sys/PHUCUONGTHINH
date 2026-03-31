@@ -25,20 +25,37 @@ export class LoggingInterceptor implements NestInterceptor {
     // Attach requestId to request for use in other services
     request.requestId = requestId;
 
-    this.loggerService.logRequest(method, endpoint, requestId);
+    // Skip logging common GET requests in production to reduce noise
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isCommonGetRequest =
+      method === 'GET' &&
+      (endpoint.startsWith('/api/v1/products/') ||
+        endpoint.startsWith('/api/v1/media/') ||
+        endpoint === '/api/v1/products');
+    const shouldSkipLog = isProduction && isCommonGetRequest;
+
+    if (!shouldSkipLog) {
+      this.loggerService.logRequest(method, endpoint, requestId);
+    }
 
     return next.handle().pipe(
       tap(() => {
         const duration = Date.now() - startTime;
         const statusCode = response.statusCode;
 
-        this.loggerService.logResponse(
-          method,
-          endpoint,
-          statusCode,
-          duration,
-          requestId,
-        );
+        // Only log responses that are errors or slow (>3s) in production
+        const isError = statusCode >= 400;
+        const isSlow = duration > 3000;
+
+        if (!shouldSkipLog || isError || isSlow) {
+          this.loggerService.logResponse(
+            method,
+            endpoint,
+            statusCode,
+            duration,
+            requestId,
+          );
+        }
       }),
     );
   }
