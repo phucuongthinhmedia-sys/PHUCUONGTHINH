@@ -258,9 +258,6 @@ export function ProductForm({
   const originalMediaRef = useRef<PendingMedia[]>(
     initFormData(product).pendingMedia,
   );
-  const pendingMediaRef = useRef<PendingMedia[]>(
-    initFormData(product).pendingMedia,
-  );
   const initializedId = useRef<string | undefined>(undefined);
 
   // Re-init when product loads async
@@ -270,7 +267,6 @@ export function ProductForm({
       const d = initFormData(product);
       setFormData(d);
       originalMediaRef.current = d.pendingMedia;
-      pendingMediaRef.current = d.pendingMedia;
       console.log(
         "🔄 [ProductForm] Product loaded, originalMediaRef:",
         originalMediaRef.current.map((m) => ({
@@ -280,18 +276,6 @@ export function ProductForm({
       );
     }
   }, [product]);
-
-  // Keep pendingMediaRef in sync with latest formData.pendingMedia
-  useEffect(() => {
-    pendingMediaRef.current = formData.pendingMedia;
-    console.log(
-      "🔄 [ProductForm] pendingMediaRef synced:",
-      pendingMediaRef.current.map((m) => ({
-        id: m.clientId,
-        status: m.status,
-      })),
-    );
-  }, [formData.pendingMedia]);
 
   const [productType, setProductType] = useState<ProductType>(
     () =>
@@ -397,73 +381,6 @@ export function ProductForm({
     return true;
   };
 
-  const uploadPendingMedia = async (productId: string) => {
-    const pending = pendingMediaRef.current.filter(
-      (m) => m.status === "pending" && m.file,
-    );
-    const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
-      setFormData((p) => ({
-        ...p,
-        pendingMedia: p.pendingMedia.map((m) =>
-          m.clientId === clientId ? { ...m, ...patch } : m,
-        ),
-      }));
-
-    await Promise.all(
-      pending.map(async (item) => {
-        if (!item.file) return;
-        updateStatus(item.clientId, { status: "uploading", progress: 0 });
-        try {
-          const { upload_url, public_url } = await getPresignedUrl(
-            productId,
-            item.file.name,
-            item.media_type as any,
-            item.file.type || "application/octet-stream",
-          );
-          await uploadFileToS3(upload_url, item.file, (pct) =>
-            updateStatus(item.clientId, { progress: pct }),
-          );
-          await createMediaRecord({
-            product_id: productId,
-            file_url: public_url,
-            file_type: item.file.type,
-            media_type: item.media_type,
-            is_cover: item.is_cover,
-            sort_order: item.sort_order,
-            alt_text: item.alt_text,
-          });
-          updateStatus(item.clientId, { status: "done", progress: 100 });
-        } catch (err: any) {
-          const msg =
-            err?.response?.data?.message || err?.message || "Upload thất bại";
-          updateStatus(item.clientId, { status: "error", error: msg });
-          throw new Error(`Upload "${item.file.name}" thất bại: ${msg}`);
-        }
-      }),
-    );
-
-    const socialPending = pendingMediaRef.current.filter(
-      (m) => m.status === "pending" && m.media_type === "social_link" && m.url,
-    );
-    await Promise.all(
-      socialPending.map(async (item) => {
-        if (!item.url) return;
-        try {
-          await createMediaRecord({
-            product_id: productId,
-            file_url: item.url,
-            file_type: "text/html",
-            media_type: "social_link",
-            is_cover: false,
-            sort_order: item.sort_order,
-          });
-        } catch {
-          /* non-fatal */
-        }
-      }),
-    );
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -494,18 +411,16 @@ export function ProductForm({
       const result = await onSubmit(payload);
       const productId = product?.id || result?.id;
 
-      // Ensure pendingMediaRef is always fresh before sync
-      pendingMediaRef.current = formData.pendingMedia;
-
       const hasInternal = Object.values(internalData).some(
         (v) => v != null && v !== "",
       );
 
       if (productId) {
         // DELETE phải await — không được chạy background
+        // FIX: Dùng formData.pendingMedia trực tiếp thay vì pendingMediaRef
         if (product?.id) {
           const currentIds = new Set(
-            pendingMediaRef.current
+            formData.pendingMedia
               .filter((m) => m.status === "done" && m.clientId)
               .map((m) => m.clientId),
           );
@@ -520,7 +435,7 @@ export function ProductForm({
               id: m.clientId,
               status: m.status,
             })),
-            current: pendingMediaRef.current.map((m) => ({
+            current: formData.pendingMedia.map((m) => ({
               id: m.clientId,
               status: m.status,
             })),
@@ -542,14 +457,100 @@ export function ProductForm({
           );
         }
 
-        // Upload mới + internal + sort-order chạy background
+        // Upload mới + internal + sort-order chạy song song
         const uploadPromise = product?.id
           ? (async () => {
-              await uploadPendingMedia(productId);
+              // Upload pending files
+              const pending = formData.pendingMedia.filter(
+                (m) => m.status === "pending" && m.file,
+              );
+              const updateStatus = (
+                clientId: string,
+                patch: Partial<PendingMedia>,
+              ) =>
+                setFormData((p) => ({
+                  ...p,
+                  pendingMedia: p.pendingMedia.map((m) =>
+                    m.clientId === clientId ? { ...m, ...patch } : m,
+                  ),
+                }));
+
+              await Promise.all(
+                pending.map(async (item) => {
+                  if (!item.file) return;
+                  updateStatus(item.clientId, {
+                    status: "uploading",
+                    progress: 0,
+                  });
+                  try {
+                    const { upload_url, public_url } = await getPresignedUrl(
+                      productId,
+                      item.file.name,
+                      item.media_type as any,
+                      item.file.type || "application/octet-stream",
+                    );
+                    await uploadFileToS3(upload_url, item.file, (pct) =>
+                      updateStatus(item.clientId, { progress: pct }),
+                    );
+                    await createMediaRecord({
+                      product_id: productId,
+                      file_url: public_url,
+                      file_type: item.file.type,
+                      media_type: item.media_type,
+                      is_cover: item.is_cover,
+                      sort_order: item.sort_order,
+                      alt_text: item.alt_text,
+                    });
+                    updateStatus(item.clientId, {
+                      status: "done",
+                      progress: 100,
+                    });
+                  } catch (err: any) {
+                    const msg =
+                      err?.response?.data?.message ||
+                      err?.message ||
+                      "Upload thất bại";
+                    updateStatus(item.clientId, {
+                      status: "error",
+                      error: msg,
+                    });
+                    throw new Error(
+                      `Upload "${item.file.name}" thất bại: ${msg}`,
+                    );
+                  }
+                }),
+              );
+
+              // Upload social links
+              const socialPending = formData.pendingMedia.filter(
+                (m) =>
+                  m.status === "pending" &&
+                  m.media_type === "social_link" &&
+                  m.url,
+              );
+              await Promise.all(
+                socialPending.map(async (item) => {
+                  if (!item.url) return;
+                  try {
+                    await createMediaRecord({
+                      product_id: productId,
+                      file_url: item.url,
+                      file_type: "text/html",
+                      media_type: "social_link",
+                      is_cover: false,
+                      sort_order: item.sort_order,
+                    });
+                  } catch {
+                    /* non-fatal */
+                  }
+                }),
+              );
+
+              // Update sort order for existing items
               const existingIds = new Set(
                 originalMediaRef.current.map((m) => m.clientId),
               );
-              const doneItems = pendingMediaRef.current.filter(
+              const doneItems = formData.pendingMedia.filter(
                 (m) =>
                   m.status === "done" &&
                   m.clientId &&
@@ -566,7 +567,67 @@ export function ProductForm({
               }
             })()
           : result?.id
-            ? uploadPendingMedia(result.id)
+            ? (async () => {
+                const pending = formData.pendingMedia.filter(
+                  (m) => m.status === "pending" && m.file,
+                );
+                const updateStatus = (
+                  clientId: string,
+                  patch: Partial<PendingMedia>,
+                ) =>
+                  setFormData((p) => ({
+                    ...p,
+                    pendingMedia: p.pendingMedia.map((m) =>
+                      m.clientId === clientId ? { ...m, ...patch } : m,
+                    ),
+                  }));
+
+                await Promise.all(
+                  pending.map(async (item) => {
+                    if (!item.file) return;
+                    updateStatus(item.clientId, {
+                      status: "uploading",
+                      progress: 0,
+                    });
+                    try {
+                      const { upload_url, public_url } = await getPresignedUrl(
+                        result.id,
+                        item.file.name,
+                        item.media_type as any,
+                        item.file.type || "application/octet-stream",
+                      );
+                      await uploadFileToS3(upload_url, item.file, (pct) =>
+                        updateStatus(item.clientId, { progress: pct }),
+                      );
+                      await createMediaRecord({
+                        product_id: result.id,
+                        file_url: public_url,
+                        file_type: item.file.type,
+                        media_type: item.media_type,
+                        is_cover: item.is_cover,
+                        sort_order: item.sort_order,
+                        alt_text: item.alt_text,
+                      });
+                      updateStatus(item.clientId, {
+                        status: "done",
+                        progress: 100,
+                      });
+                    } catch (err: any) {
+                      const msg =
+                        err?.response?.data?.message ||
+                        err?.message ||
+                        "Upload thất bại";
+                      updateStatus(item.clientId, {
+                        status: "error",
+                        error: msg,
+                      });
+                      throw new Error(
+                        `Upload "${item.file.name}" thất bại: ${msg}`,
+                      );
+                    }
+                  }),
+                );
+              })()
             : Promise.resolve();
 
         const internalPromise = hasInternal
@@ -574,7 +635,7 @@ export function ProductForm({
               .patch(`/products/${productId}/internal`, internalData)
               .catch((err) => {
                 console.error("Failed to save internal info:", err);
-                throw err; // Re-throw to catch in outer try-catch
+                throw err;
               })
           : Promise.resolve();
 
