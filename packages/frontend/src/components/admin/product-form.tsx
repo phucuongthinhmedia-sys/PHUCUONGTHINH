@@ -500,6 +500,8 @@ export function ProductForm({
       const result = await onSubmit(payload);
       const productId = product?.id || result?.id;
       if (productId) {
+        // Ensure pendingMediaRef is always fresh before sync
+        pendingMediaRef.current = formData.pendingMedia;
         if (product?.id)
           await syncMediaForEdit(product.id, originalMediaRef.current);
         else if (result?.id) await uploadPendingMedia(result.id);

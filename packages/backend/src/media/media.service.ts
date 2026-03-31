@@ -126,10 +126,12 @@ export class MediaService {
       });
     }
 
-    return this.prisma.media.update({
+    const result = await this.prisma.media.update({
       where: { id },
       data: updateMediaDto,
     });
+    this.combinedFilterService.clearProductCaches(existingMedia.product_id);
+    return result;
   }
 
   async remove(id: string) {
@@ -225,7 +227,7 @@ export class MediaService {
     }
 
     // Update sort orders in a transaction
-    return this.prisma.$transaction(
+    const result = await this.prisma.$transaction(
       mediaOrders.map(({ id, sort_order }) =>
         this.prisma.media.update({
           where: { id },
@@ -233,5 +235,7 @@ export class MediaService {
         }),
       ),
     );
+    this.combinedFilterService.clearProductCaches(productId);
+    return result;
   }
 }
