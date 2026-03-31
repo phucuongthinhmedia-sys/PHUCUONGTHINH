@@ -13,6 +13,16 @@ export const API_URL =
         : null) ||
       "http://localhost:3001/api/v1";
 
+// Debug: log which URL is being used (remove after confirming)
+if (typeof window !== "undefined") {
+  console.log(
+    "[API_URL]",
+    API_URL,
+    "| NEXT_PUBLIC_API_URL:",
+    process.env.NEXT_PUBLIC_API_URL,
+  );
+}
+
 // Helper: strip empty strings/null/undefined before sending to API
 export function cleanPayload<T extends Record<string, any>>(
   obj: T,
