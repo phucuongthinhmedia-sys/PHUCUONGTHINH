@@ -598,6 +598,13 @@ export default function ProductDetailPage({
               m.file_url?.match(/\.(jpg|jpeg|png|webp|svg)$/i)))) &&
         m.file_url?.startsWith("http"),
     ) ?? [];
+  
+  // DEBUG: Log media info
+  console.log("📸 Media debug:", {
+    total: product.media?.length,
+    media: product.media?.map(m => ({ id: m.id, type: m.media_type, file_type: m.file_type, url: m.file_url?.slice(0, 50) })),
+    filteredImages: images.length,
+  });
   const videos =
     product.media?.filter(
       (m) => m.media_type === "video" && m.file_url?.startsWith("http"),
