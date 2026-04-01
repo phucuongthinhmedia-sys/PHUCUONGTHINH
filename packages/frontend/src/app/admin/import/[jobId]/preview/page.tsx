@@ -5,8 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { importService, ExtractedProduct } from "@/lib/import-service";
-import { ImportProductCard } from "@/components/admin/import-product-card";
-import { EditProductModal } from "@/components/admin/edit-product-modal";
+import { ProductCard } from "@/components/admin/import/product-card";
+import { EditProductModal } from "@/components/admin/import/edit-product-modal";
 
 export default function AdminImportPreviewPage() {
   const router = useRouter();
@@ -198,7 +198,7 @@ export default function AdminImportPreviewPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.map((product) => (
-            <ImportProductCard
+            <ProductCard
               key={product.id}
               product={product}
               selected={selectedIds.has(product.id)}

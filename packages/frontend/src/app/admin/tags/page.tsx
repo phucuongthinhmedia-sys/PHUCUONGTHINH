@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { tagService, Tag } from "@/lib/tag-service";
+import { staticDataCache } from "@/lib/static-data-cache";
 
 export default function AdminTagsPage() {
   const [styles, setStyles] = useState<Tag[]>([]);
@@ -52,6 +53,7 @@ export default function AdminTagsPage() {
       setFormName("");
       setEditingId(null);
       setShowForm(false);
+      staticDataCache.clearAll();
       loadTags();
     } catch (err: any) {
       setError(err.response?.data?.error?.message || "Không thể lưu thẻ");
@@ -64,6 +66,7 @@ export default function AdminTagsPage() {
       activeTab === "styles"
         ? await tagService.deleteStyle(id)
         : await tagService.deleteSpace(id);
+      staticDataCache.clearAll();
       loadTags();
     } catch (err: any) {
       setError(err.response?.data?.error?.message || "Không thể xóa thẻ");

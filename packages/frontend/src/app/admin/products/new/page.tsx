@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProductForm } from "@/components/admin/product-form";
 import {
@@ -15,7 +14,6 @@ import { tagService, Tag } from "@/lib/tag-service";
 import { staticDataCache } from "@/lib/static-data-cache";
 
 export default function AdminNewProductPage() {
-  const router = useRouter();
   const [categories, setCategories] = useState<Category[]>(
     () => staticDataCache.getCategories() ?? [],
   );
@@ -51,7 +49,8 @@ export default function AdminNewProductPage() {
       const created = await productService.createProduct(
         data as CreateProductRequest,
       );
-      router.push("/admin/products");
+      // Return product first — ProductForm needs the ID to upload media
+      // Redirect is handled by ProductForm after media upload completes
       return created;
     } catch (err: any) {
       throw err;

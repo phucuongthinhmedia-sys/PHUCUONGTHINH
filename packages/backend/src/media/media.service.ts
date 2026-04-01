@@ -2,26 +2,19 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ConflictException,
   Inject,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
-import { GetPresignedUrlDto } from './dto/upload-media.dto';
 import { CombinedFilterService } from '../products/services/combined-filter.service';
 import { ProductsEventService } from '../products/products-events.service';
+import { validateFileType, validateFileSize } from './media-constants';
 
-interface StorageService {
-  getPresignedUploadUrl(
-    key: string,
-    contentType: string,
-    expiresIn?: number,
-  ): Promise<string>;
-  getPresignedDownloadUrl(key: string, expiresIn?: number): Promise<string>;
-  generateS3Key(productId: string, filename: string, mediaType: string): string;
-  validateFileType(filename: string, mediaType: string): boolean;
+export interface StorageService {
+  uploadFile(file: Buffer, folder: string): Promise<string>;
   getPublicUrl(key: string): string;
+  generateS3Key(productId: string, filename: string, mediaType: string): string;
 }
 
 @Injectable()
@@ -33,62 +26,69 @@ export class MediaService {
     private eventsService: ProductsEventService,
   ) {}
 
+  private emitUpdated(productId: string) {
+    this.eventsService.emit({
+      type: 'updated',
+      productId,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  async uploadFile(
+    productId: string,
+    file: Express.Multer.File,
+    mediaType: string,
+  ): Promise<string> {
+    if (!validateFileType(file.originalname, mediaType)) {
+      throw new BadRequestException(
+        `Invalid file type for media type "${mediaType}"`,
+      );
+    }
+    if (!validateFileSize(file.size, mediaType)) {
+      throw new BadRequestException(
+        `File size exceeds limit for media type "${mediaType}"`,
+      );
+    }
+    const folder = `products/${productId}/${mediaType}`;
+    return this.storageService.uploadFile(file.buffer, folder);
+  }
+
   async create(createMediaDto: CreateMediaDto) {
-    // Validate that the product exists
     const product = await this.prisma.product.findUnique({
       where: { id: createMediaDto.product_id },
     });
+    if (!product) throw new NotFoundException('Product not found');
 
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    // If this is being set as cover image, unset any existing cover image
-    if (createMediaDto.is_cover) {
-      await this.prisma.media.updateMany({
-        where: {
-          product_id: createMediaDto.product_id,
-          is_cover: true,
-        },
-        data: { is_cover: false },
-      });
-    }
-
-    // If no sort_order provided, set it to the next available position
+    // Resolve sort_order before transaction
     if (createMediaDto.sort_order === undefined) {
-      const lastMedia = await this.prisma.media.findFirst({
+      const last = await this.prisma.media.findFirst({
         where: { product_id: createMediaDto.product_id },
         orderBy: { sort_order: 'desc' },
       });
-      createMediaDto.sort_order = (lastMedia?.sort_order || 0) + 1;
+      createMediaDto.sort_order = (last?.sort_order ?? 0) + 1;
     }
 
-    const media = await this.prisma.media.create({
-      data: createMediaDto,
-    });
+    // Atomic: unset old cover + create new record
+    const [, media] = await this.prisma.$transaction([
+      ...(createMediaDto.is_cover
+        ? [
+            this.prisma.media.updateMany({
+              where: { product_id: createMediaDto.product_id, is_cover: true },
+              data: { is_cover: false },
+            }),
+          ]
+        : []),
+      this.prisma.media.create({ data: createMediaDto }),
+    ] as any);
+
     this.combinedFilterService.clearProductCaches(createMediaDto.product_id);
-
-    // Emit event for real-time updates
-    this.eventsService.emit({
-      type: 'updated',
-      productId: createMediaDto.product_id,
-      timestamp: new Date().toISOString(),
-    });
-
+    this.emitUpdated(createMediaDto.product_id);
     return media;
   }
 
   async findAll() {
     return this.prisma.media.findMany({
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-          },
-        },
-      },
+      include: { product: { select: { id: true, name: true, sku: true } } },
       orderBy: [{ product_id: 'asc' }, { sort_order: 'asc' }],
     });
   }
@@ -103,52 +103,36 @@ export class MediaService {
   async findOne(id: string) {
     const media = await this.prisma.media.findUnique({
       where: { id },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-          },
-        },
-      },
+      include: { product: { select: { id: true, name: true, sku: true } } },
     });
-
-    if (!media) {
-      throw new NotFoundException('Media not found');
-    }
-
+    if (!media) throw new NotFoundException('Media not found');
     return media;
   }
 
   async update(id: string, updateMediaDto: UpdateMediaDto) {
-    const existingMedia = await this.findOne(id);
+    const existing = await this.findOne(id);
 
-    // If setting as cover image, unset any existing cover image for the product
+    // Atomic: unset old cover + update record
+    const ops: any[] = [];
     if (updateMediaDto.is_cover) {
-      await this.prisma.media.updateMany({
-        where: {
-          product_id: existingMedia.product_id,
-          is_cover: true,
-          id: { not: id },
-        },
-        data: { is_cover: false },
-      });
+      ops.push(
+        this.prisma.media.updateMany({
+          where: {
+            product_id: existing.product_id,
+            is_cover: true,
+            id: { not: id },
+          },
+          data: { is_cover: false },
+        }),
+      );
     }
+    ops.push(this.prisma.media.update({ where: { id }, data: updateMediaDto }));
 
-    const result = await this.prisma.media.update({
-      where: { id },
-      data: updateMediaDto,
-    });
-    this.combinedFilterService.clearProductCaches(existingMedia.product_id);
+    const results = await this.prisma.$transaction(ops);
+    const result = results[results.length - 1];
 
-    // Emit event for real-time updates
-    this.eventsService.emit({
-      type: 'updated',
-      productId: existingMedia.product_id,
-      timestamp: new Date().toISOString(),
-    });
-
+    this.combinedFilterService.clearProductCaches(existing.product_id);
+    this.emitUpdated(existing.product_id);
     return result;
   }
 
@@ -156,112 +140,32 @@ export class MediaService {
     const media = await this.findOne(id);
     const result = await this.prisma.media.delete({ where: { id } });
     this.combinedFilterService.clearProductCaches(media.product_id);
-
-    // Emit event for real-time updates
-    this.eventsService.emit({
-      type: 'updated',
-      productId: media.product_id,
-      timestamp: new Date().toISOString(),
-    });
-
+    this.emitUpdated(media.product_id);
     return result;
-  }
-
-  async getPresignedUploadUrl(
-    productId: string,
-    getPresignedUrlDto: GetPresignedUrlDto,
-  ) {
-    // Validate that the product exists
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-    });
-
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
-
-    // Validate file type
-    if (
-      !this.storageService.validateFileType(
-        getPresignedUrlDto.filename,
-        getPresignedUrlDto.media_type,
-      )
-    ) {
-      throw new BadRequestException(
-        `Invalid file type for media type ${getPresignedUrlDto.media_type}`,
-      );
-    }
-
-    // Generate S3 key
-    const s3Key = this.storageService.generateS3Key(
-      productId,
-      getPresignedUrlDto.filename,
-      getPresignedUrlDto.media_type,
-    );
-
-    // Get presigned URL
-    const uploadUrl = await this.storageService.getPresignedUploadUrl(
-      s3Key,
-      getPresignedUrlDto.content_type,
-    );
-
-    return {
-      upload_url: uploadUrl,
-      s3_key: s3Key,
-      public_url: this.storageService.getPublicUrl(s3Key),
-    };
-  }
-
-  async getDownloadUrl(id: string) {
-    const media = await this.findOne(id);
-
-    // Extract S3 key from file_url
-    const s3Key = this.extractS3KeyFromUrl(media.file_url);
-
-    const downloadUrl =
-      await this.storageService.getPresignedDownloadUrl(s3Key);
-
-    return {
-      download_url: downloadUrl,
-      expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
-    };
-  }
-
-  private extractS3KeyFromUrl(fileUrl: string): string {
-    // Handle both CDN URLs and direct S3 URLs
-    const url = new URL(fileUrl);
-    return url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
   }
 
   async updateSortOrder(
     productId: string,
     mediaOrders: { id: string; sort_order: number }[],
   ) {
-    // Validate that all media belong to the product
     const mediaIds = mediaOrders.map((m) => m.id);
-    const existingMedia = await this.prisma.media.findMany({
-      where: {
-        id: { in: mediaIds },
-        product_id: productId,
-      },
+    const existing = await this.prisma.media.findMany({
+      where: { id: { in: mediaIds }, product_id: productId },
     });
-
-    if (existingMedia.length !== mediaIds.length) {
+    if (existing.length !== mediaIds.length) {
       throw new BadRequestException(
         'Some media items do not belong to this product',
       );
     }
 
-    // Update sort orders in a transaction
     const result = await this.prisma.$transaction(
       mediaOrders.map(({ id, sort_order }) =>
-        this.prisma.media.update({
-          where: { id },
-          data: { sort_order },
-        }),
+        this.prisma.media.update({ where: { id }, data: { sort_order } }),
       ),
     );
+
     this.combinedFilterService.clearProductCaches(productId);
+    this.emitUpdated(productId); // Fix: was missing before
     return result;
   }
 }

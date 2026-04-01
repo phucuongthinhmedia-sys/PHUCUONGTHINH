@@ -1,15 +1,4 @@
-// Direct backend URL - bypass Next.js proxy to eliminate double-hop latency
-const DIRECT_BACKEND = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-  : null;
-
-const API_URL =
-  typeof window !== "undefined"
-    ? DIRECT_BACKEND || "/api/backend" // prefer direct if env is set
-    : process.env.BACKEND_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3001/api/v1";
-// v6 - direct backend
+import { API_URL } from "./constants";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -35,21 +24,25 @@ async function request<T>(
     "Content-Type": "application/json",
   };
   if (token) headers["Authorization"] = "Bearer " + token;
+
   const res = await fetch(API_URL + url, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
   if (res.status === 401) {
     clearToken();
     if (typeof window !== "undefined")
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     throw new Error("Unauthorized");
   }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error((err as any)?.error?.message || "HTTP " + res.status);
   }
+
   const json = await res.json();
   if (json.data && Array.isArray(json.data) && "pagination" in json) {
     return {

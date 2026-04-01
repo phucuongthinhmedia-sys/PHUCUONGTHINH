@@ -37,13 +37,6 @@ export default function AdminLeadsPage() {
         limit,
         statusFilter || undefined,
       );
-      console.log("Leads response:", res);
-
-      // Kiểm tra cấu trúc response
-      if (!res || typeof res !== "object") {
-        throw new Error("Invalid response format");
-      }
-
       setLeads(res.leads || []);
       setTotal(res.pagination?.total || 0);
     } catch (err: any) {

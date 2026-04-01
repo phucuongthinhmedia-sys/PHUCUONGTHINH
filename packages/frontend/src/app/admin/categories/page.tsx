@@ -6,6 +6,7 @@ import {
   Category,
   CreateCategoryRequest,
 } from "@/lib/category-service";
+import { staticDataCache } from "@/lib/static-data-cache";
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,6 +56,7 @@ export default function AdminCategoriesPage() {
       setFormData({ name: "", slug: "", parent_id: "" });
       setEditingId(null);
       setShowForm(false);
+      staticDataCache.clearAll();
       loadCategories();
     } catch (err: any) {
       setError(err.response?.data?.error?.message || "Không thể lưu danh mục");
@@ -75,6 +77,7 @@ export default function AdminCategoriesPage() {
     if (!confirm("Bạn có chắc muốn xóa danh mục này?")) return;
     try {
       await categoryService.deleteCategory(id);
+      staticDataCache.clearAll();
       loadCategories();
     } catch (err: any) {
       setError(err.response?.data?.error?.message || "Không thể xóa danh mục");

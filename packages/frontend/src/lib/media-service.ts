@@ -31,11 +31,6 @@ export interface MediaRecord {
   created_at: string;
 }
 
-export interface PresignedUrlResponse {
-  upload_url: string;
-  public_url: string;
-}
-
 export interface FileValidationResult {
   valid: boolean;
   error?: string;
@@ -51,7 +46,6 @@ const ALLOWED_EXTENSIONS: Record<string, string[]> = {
   social_link: [],
 };
 
-const ALL_IMAGE_VIDEO_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "mp4", "mov"];
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 const ALLOWED_SOCIAL_DOMAINS = [
@@ -61,15 +55,30 @@ const ALLOWED_SOCIAL_DOMAINS = [
   "facebook.com",
 ];
 
+export function validateSocialUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return ALLOWED_SOCIAL_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function validateFile(
   file: File,
   mediaType: string,
 ): FileValidationResult {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const allowed =
-    ALLOWED_EXTENSIONS[mediaType as MediaType] ?? ALL_IMAGE_VIDEO_EXTENSIONS;
+  const allowed = ALLOWED_EXTENSIONS[mediaType as MediaType] ?? [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+  ];
 
-  if (!allowed.includes(ext)) {
+  if (allowed.length > 0 && !allowed.includes(ext)) {
     return {
       valid: false,
       error: `Định dạng không hợp lệ. Chấp nhận: ${allowed.join(", ")}`,
@@ -83,61 +92,43 @@ export function validateFile(
   return { valid: true };
 }
 
-export function validateSocialUrl(url: string): boolean {
-  try {
-    const { hostname } = new URL(url);
-    return ALLOWED_SOCIAL_DOMAINS.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
-  } catch {
-    return false;
-  }
-}
-
-export async function getPresignedUrl(
+/**
+ * Upload file to Cloudinary via backend endpoint.
+ * Returns the real Cloudinary URL.
+ */
+export async function uploadMedia(
   productId: string,
-  filename: string,
-  mediaType: MediaType,
-  contentType: string,
-): Promise<PresignedUrlResponse> {
-  return apiClient.post<PresignedUrlResponse>(
-    `/media/products/${productId}/presigned-url`,
-    { filename, media_type: mediaType, content_type: contentType },
-  );
-}
-
-export async function uploadFileToS3(
-  uploadUrl: string,
   file: File,
+  mediaType: MediaType = "lifestyle",
   onProgress?: (percent: number) => void,
-): Promise<void> {
-  if (uploadUrl.includes("/api/v1/media/upload")) {
-    const url = new URL(uploadUrl);
-    const key = url.pathname.replace("/api/v1/media/upload/", "");
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("media_type", mediaType);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("key", decodeURIComponent(key));
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
 
-    const baseUrl = uploadUrl.split("/api/v1/media/upload")[0];
-    await axios.post(`${baseUrl}/api/v1/media/upload`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+  const response = await axios.post(
+    `${baseUrl}/api/v1/media/products/${productId}/upload`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       onUploadProgress: (event) => {
         if (onProgress && event.total) {
           onProgress(Math.round((event.loaded * 100) / event.total));
         }
       },
-    });
-  } else {
-    await axios.put(uploadUrl, file, {
-      headers: { "Content-Type": file.type },
-      onUploadProgress: (event) => {
-        if (onProgress && event.total) {
-          onProgress(Math.round((event.loaded * 100) / event.total));
-        }
-      },
-    });
-  }
+    },
+  );
+
+  const url = response.data?.url;
+  if (!url) throw new Error("Upload thất bại: không nhận được URL từ server");
+  return url;
 }
 
 export async function createMediaRecord(
@@ -156,13 +147,3 @@ export async function updateSortOrder(
 ): Promise<void> {
   await apiClient.patch(`/media/products/${productId}/sort-order`, orders);
 }
-
-export const mediaService = {
-  validateFile,
-  validateSocialUrl,
-  getPresignedUrl,
-  uploadFileToS3,
-  createMediaRecord,
-  deleteMedia,
-  updateSortOrder,
-};

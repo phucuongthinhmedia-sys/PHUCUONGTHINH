@@ -298,8 +298,11 @@ export function MediaShowcase({
   onLightbox,
 }: MediaShowcaseProps) {
   const [activeVideoIdx, setActiveVideoIdx] = useState(0);
-  const hasVideos = videos.length > 0;
-  const hasImages = images.length > 0;
+  // Filter out any invalid URLs (e.g. cloudinary_pending:...)
+  const validImages = images.filter((m) => m.file_url?.startsWith("http"));
+  const validVideos = videos.filter((m) => m.file_url?.startsWith("http"));
+  const hasVideos = validVideos.length > 0;
+  const hasImages = validImages.length > 0;
 
   if (!hasVideos && !hasImages) return null;
 
@@ -335,7 +338,7 @@ export function MediaShowcase({
         <div className="flex flex-col lg:flex-row gap-3 lg:items-stretch p-2 sm:p-3 bg-gray-50/80 backdrop-blur-sm rounded-2xl border border-gray-100/80">
           <div className="shrink-0 flex justify-center lg:justify-start bg-white/60 backdrop-blur-md rounded-xl p-2 sm:p-3 border border-white/80 shadow-sm">
             <VideoPlayer
-              videos={videos}
+              videos={validVideos}
               activeIdx={activeVideoIdx}
               onSelect={setActiveVideoIdx}
               height="clamp(220px, 45vh, 420px)"
@@ -347,7 +350,7 @@ export function MediaShowcase({
             style={{ minHeight: "clamp(220px, 45vh, 420px)" }}
           >
             <DesignGallery
-              images={images}
+              images={validImages}
               productName={productName}
               onLightbox={onLightbox}
             />
@@ -356,7 +359,7 @@ export function MediaShowcase({
       ) : hasVideos ? (
         <div className="flex justify-center">
           <VideoPlayer
-            videos={videos}
+            videos={validVideos}
             activeIdx={activeVideoIdx}
             onSelect={setActiveVideoIdx}
             height="clamp(240px, 50vh, 500px)"
@@ -365,7 +368,7 @@ export function MediaShowcase({
         </div>
       ) : (
         <DesignGallery
-          images={images}
+          images={validImages}
           productName={productName}
           onLightbox={onLightbox}
         />

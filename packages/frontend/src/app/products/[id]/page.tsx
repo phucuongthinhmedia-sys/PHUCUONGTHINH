@@ -594,15 +594,21 @@ export default function ProductDetailPage({
   const images =
     product.media?.filter(
       (m) =>
-        m.media_type === "lifestyle" ||
-        m.media_type === "cutout" ||
-        (!m.media_type &&
-          (m.file_type?.startsWith("image") ||
-            m.file_url?.match(/\.(jpg|jpeg|png|webp|svg)$/i))),
+        (m.media_type === "lifestyle" ||
+          m.media_type === "cutout" ||
+          (!m.media_type &&
+            (m.file_type?.startsWith("image") ||
+              m.file_url?.match(/\.(jpg|jpeg|png|webp|svg)$/i)))) &&
+        m.file_url?.startsWith("http"),
     ) ?? [];
-  const videos = product.media?.filter((m) => m.media_type === "video") ?? [];
+  const videos =
+    product.media?.filter(
+      (m) => m.media_type === "video" && m.file_url?.startsWith("http"),
+    ) ?? [];
   const showcaseImages =
-    product.media?.filter((m) => m.media_type === "showcase") ?? [];
+    product.media?.filter(
+      (m) => m.media_type === "showcase" && m.file_url?.startsWith("http"),
+    ) ?? [];
   const pdfFiles =
     product.media?.filter(
       (m) => m.media_type === "pdf" || m.file_url?.endsWith(".pdf"),

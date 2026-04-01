@@ -1,6 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSQLite3 } from '@prisma/adapter-better-sqlite3';
 
 @Injectable()
 export class PrismaService
@@ -8,61 +7,12 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
-
-    console.log('🔍 DATABASE_URL:', dbUrl.substring(0, 30) + '...');
-
-    // Check database type
-    const isPostgreSQL =
-      dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://');
-    const isSQLite = dbUrl.startsWith('file:');
-
-    console.log(
-      '🔍 Database type - PostgreSQL:',
-      isPostgreSQL,
-      'SQLite:',
-      isSQLite,
-    );
-
-    if (isPostgreSQL) {
-      // Use PostgreSQL directly (Neon or any PostgreSQL)
-      super({
-        log:
-          process.env.NODE_ENV === 'test'
-            ? ['error']
-            : process.env.NODE_ENV === 'production'
-              ? ['error', 'warn']
-              : ['query', 'info', 'warn', 'error'],
-      });
-    } else if (isSQLite) {
-      // Use local SQLite with adapter and performance optimizations
-      const adapter = new PrismaBetterSQLite3({ url: dbUrl });
-
-      // Apply performance pragmas to the underlying database
-      const db = (adapter as any).db;
-      if (db) {
-        db.pragma('journal_mode = WAL');
-        db.pragma('synchronous = NORMAL');
-        db.pragma('cache_size = -64000');
-        db.pragma('temp_store = MEMORY');
-        db.pragma('mmap_size = 268435456');
-        db.pragma('page_size = 8192');
-        db.pragma('busy_timeout = 5000');
-        db.pragma('wal_autocheckpoint = 1000');
-      }
-
-      super({
-        adapter: adapter as any,
-        log:
-          process.env.NODE_ENV === 'test'
-            ? ['error']
-            : process.env.NODE_ENV === 'production'
-              ? ['error', 'warn']
-              : ['query', 'info', 'warn', 'error'],
-      });
-    } else {
-      throw new Error(`Unsupported database URL: ${dbUrl}`);
-    }
+    super({
+      log:
+        process.env.NODE_ENV === 'production'
+          ? ['error', 'warn']
+          : ['warn', 'error'],
+    });
   }
 
   async onModuleInit() {

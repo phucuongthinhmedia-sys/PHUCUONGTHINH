@@ -43,6 +43,6 @@ import { ProductsModule } from '../products/products.module';
       ],
     },
   ],
-  exports: [MediaService, 'STORAGE_SERVICE', CloudinaryService],
+  exports: [MediaService, 'STORAGE_SERVICE'],
 })
 export class MediaModule {}

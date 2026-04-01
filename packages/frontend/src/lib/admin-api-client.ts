@@ -3,6 +3,7 @@
  * Uses the shared ApiClient factory with the frontend's token storage.
  */
 import { createApiClient, ApiClient } from "@repo/shared-utils";
+import { API_URL } from "./constants";
 
 const TOKEN_KEY = "auth_token";
 
@@ -19,26 +20,12 @@ function onUnauthorized(): void {
   }
 }
 
-// Direct backend URL - bypass Next.js proxy to eliminate double-hop latency
-// Browser calls backend directly, no proxy overhead
-const DIRECT_BACKEND = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-  : null;
-
-const API_URL =
-  typeof window !== "undefined"
-    ? DIRECT_BACKEND || "/api/backend" // prefer direct if env is set
-    : process.env.BACKEND_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3001/api/v1";
-// v6 - direct backend
-
 export const adminApiClient: ApiClient = createApiClient({
   baseURL: API_URL,
   getToken,
   onUnauthorized,
 });
 
-// Convenience alias matching CMS api-client interface
+// Convenience aliases
 export const apiClient = adminApiClient;
 export const rawApiClient = adminApiClient;

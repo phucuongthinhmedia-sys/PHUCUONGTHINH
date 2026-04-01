@@ -14,7 +14,6 @@ import { tagService, Tag } from "@/lib/tag-service";
 import { MediaRecord } from "@/lib/media-service";
 import { apiClient } from "@/lib/admin-api-client";
 import { staticDataCache } from "@/lib/static-data-cache";
-import { useMediaPolling } from "@/hooks/useMediaPolling";
 
 export default function AdminEditProductPage() {
   const params = useParams();
@@ -34,18 +33,6 @@ export default function AdminEditProductPage() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Smart polling for media updates (replaces SSE)
-  // Only polls when tab is active, uses exponential backoff
-  useMediaPolling(productId, () => {
-    console.log("📡 [EditPage] Media changes detected, reloading...");
-    apiClient
-      .get<MediaRecord[]>(`/media/product/${productId}`)
-      .then((media) => {
-        setProduct((prev) => (prev ? { ...prev, media: media || [] } : null));
-      })
-      .catch((err) => console.error("Failed to reload media:", err));
-  });
 
   useEffect(() => {
     // Load product + media (critical path)

@@ -11,7 +11,6 @@ import {
   Product,
   CreateProductRequest,
   UpdateProductRequest,
-  productService,
 } from "@/lib/product-service";
 import { Category } from "@/lib/category-service";
 import { Tag } from "@/lib/tag-service";
@@ -24,8 +23,7 @@ import {
 import { SpecTable } from "@/components/admin/spec-table";
 import { ProductType, detectProductType } from "@/lib/spec-templates";
 import {
-  getPresignedUrl,
-  uploadFileToS3,
+  uploadMedia,
   createMediaRecord,
   deleteMedia,
   updateSortOrder,
@@ -388,6 +386,7 @@ export function ProductForm({
 
     setIsSaving(true);
     try {
+      // 1. Save product
       const payload: CreateProductRequest | UpdateProductRequest = {
         name: formData.name.trim(),
         sku: formData.sku.trim(),
@@ -404,269 +403,108 @@ export function ProductForm({
         style_ids: formData.style_ids,
         space_ids: formData.space_ids,
       };
-      const result = await onSubmit(payload);
-      const productId = product?.id || result?.id;
 
-      const hasInternal = Object.values(internalData).some(
-        (v) => v != null && v !== "",
+      const result = await onSubmit(payload);
+      const productId = product?.id ?? (result as any)?.id;
+
+      if (!productId) throw new Error("Không lấy được product ID");
+
+      // 2. Delete removed media (edit mode only)
+      if (product?.id) {
+        const currentIds = new Set(
+          formData.pendingMedia
+            .filter((m) => m.status === "done")
+            .map((m) => m.clientId),
+        );
+        const toDelete = originalMediaRef.current.filter(
+          (m) => m.status === "done" && !currentIds.has(m.clientId),
+        );
+        await Promise.all(
+          toDelete.map((m) => deleteMedia(m.clientId).catch(() => {})),
+        );
+      }
+
+      // 3. Upload new files (same logic for both create and edit)
+      const pending = formData.pendingMedia.filter(
+        (m) => m.status === "pending" && m.file,
       );
 
-      if (productId) {
-        // DELETE phải await — không được chạy background
-        // FIX: Dùng formData.pendingMedia trực tiếp thay vì pendingMediaRef
-        if (product?.id) {
-          const currentIds = new Set(
-            formData.pendingMedia
-              .filter((m) => m.status === "done" && m.clientId)
-              .map((m) => m.clientId),
-          );
+      const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
+        setFormData((p) => ({
+          ...p,
+          pendingMedia: p.pendingMedia.map((m) =>
+            m.clientId === clientId ? { ...m, ...patch } : m,
+          ),
+        }));
 
-          const toDelete = originalMediaRef.current.filter(
-            (m) =>
-              m.status === "done" && m.clientId && !currentIds.has(m.clientId),
-          );
-
-          await Promise.all(
-            toDelete.map((m) =>
-              deleteMedia(m.clientId).catch((err) => {
-                console.error("Failed to delete media:", m.clientId, err);
-              }),
-            ),
-          );
-        }
-
-        // Upload mới + internal + sort-order chạy song song
-        const uploadPromise = product?.id
-          ? (async () => {
-              // Upload pending files
-              const pending = formData.pendingMedia.filter(
-                (m) => m.status === "pending" && m.file,
-              );
-              const updateStatus = (
-                clientId: string,
-                patch: Partial<PendingMedia>,
-              ) =>
-                setFormData((p) => ({
-                  ...p,
-                  pendingMedia: p.pendingMedia.map((m) =>
-                    m.clientId === clientId ? { ...m, ...patch } : m,
-                  ),
-                }));
-
-              await Promise.all(
-                pending.map(async (item) => {
-                  if (!item.file) return;
-                  updateStatus(item.clientId, {
-                    status: "uploading",
-                    progress: 0,
-                  });
-                  try {
-                    const { upload_url, public_url } = await getPresignedUrl(
-                      productId,
-                      item.file.name,
-                      item.media_type as any,
-                      item.file.type || "application/octet-stream",
-                    );
-                    await uploadFileToS3(upload_url, item.file, (pct) =>
-                      updateStatus(item.clientId, { progress: pct }),
-                    );
-                    await createMediaRecord({
-                      product_id: productId,
-                      file_url: public_url,
-                      file_type: item.file.type,
-                      media_type: item.media_type,
-                      is_cover: item.is_cover,
-                      sort_order: item.sort_order,
-                      alt_text: item.alt_text,
-                    });
-                    updateStatus(item.clientId, {
-                      status: "done",
-                      progress: 100,
-                    });
-                  } catch (err: any) {
-                    const msg =
-                      err?.response?.data?.message ||
-                      err?.message ||
-                      "Upload thất bại";
-                    updateStatus(item.clientId, {
-                      status: "error",
-                      error: msg,
-                    });
-                    throw new Error(
-                      `Upload "${item.file.name}" thất bại: ${msg}`,
-                    );
-                  }
-                }),
-              );
-
-              // Upload social links
-              const socialPending = formData.pendingMedia.filter(
-                (m) =>
-                  m.status === "pending" &&
-                  m.media_type === "social_link" &&
-                  m.url,
-              );
-              await Promise.all(
-                socialPending.map(async (item) => {
-                  if (!item.url) return;
-                  try {
-                    await createMediaRecord({
-                      product_id: productId,
-                      file_url: item.url,
-                      file_type: "text/html",
-                      media_type: "social_link",
-                      is_cover: false,
-                      sort_order: item.sort_order,
-                    });
-                  } catch {
-                    /* non-fatal */
-                  }
-                }),
-              );
-
-              // Update sort order ONLY if changed
-              const existingIds = new Set(
-                originalMediaRef.current.map((m) => m.clientId),
-              );
-              const doneItems = formData.pendingMedia.filter(
-                (m) =>
-                  m.status === "done" &&
-                  m.clientId &&
-                  existingIds.has(m.clientId),
-              );
-
-              // Check if order actually changed
-              const orderChanged = doneItems.some((item) => {
-                const original = originalMediaRef.current.find(
-                  (m) => m.clientId === item.clientId,
-                );
-                return original && original.sort_order !== item.sort_order;
-              });
-
-              if (doneItems.length > 0 && orderChanged) {
-                await updateSortOrder(
-                  productId,
-                  doneItems.map((m) => ({
-                    id: m.clientId,
-                    sort_order: m.sort_order,
-                  })),
-                ).catch(() => {});
-              }
-            })()
-          : result?.id
-            ? (async () => {
-                console.log(
-                  "🆕 New product upload starting, result.id:",
-                  result.id,
-                );
-                const pending = formData.pendingMedia.filter(
-                  (m) => m.status === "pending" && m.file,
-                );
-                console.log("📦 Pending media to upload:", pending.length);
-                const updateStatus = (
-                  clientId: string,
-                  patch: Partial<PendingMedia>,
-                ) =>
-                  setFormData((p) => ({
-                    ...p,
-                    pendingMedia: p.pendingMedia.map((m) =>
-                      m.clientId === clientId ? { ...m, ...patch } : m,
-                    ),
-                  }));
-
-                await Promise.all(
-                  pending.map(async (item) => {
-                    if (!item.file) return;
-                    updateStatus(item.clientId, {
-                      status: "uploading",
-                      progress: 0,
-                    });
-                    try {
-                      const { upload_url, public_url } = await getPresignedUrl(
-                        result.id,
-                        item.file.name,
-                        item.media_type as any,
-                        item.file.type || "application/octet-stream",
-                      );
-                      await uploadFileToS3(upload_url, item.file, (pct) =>
-                        updateStatus(item.clientId, { progress: pct }),
-                      );
-                      await createMediaRecord({
-                        product_id: result.id,
-                        file_url: public_url,
-                        file_type: item.file.type,
-                        media_type: item.media_type,
-                        is_cover: item.is_cover,
-                        sort_order: item.sort_order,
-                        alt_text: item.alt_text,
-                      });
-                      updateStatus(item.clientId, {
-                        status: "done",
-                        progress: 100,
-                      });
-                      console.log(
-                        "✅ Media uploaded successfully:",
-                        item.file.name,
-                      );
-                    } catch (err: any) {
-                      const msg =
-                        err?.response?.data?.message ||
-                        err?.message ||
-                        "Upload thất bại";
-                      updateStatus(item.clientId, {
-                        status: "error",
-                        error: msg,
-                      });
-                      throw new Error(
-                        `Upload "${item.file.name}" thất bại: ${msg}`,
-                      );
-                    }
-                  }),
-                );
-              })()
-            : Promise.resolve();
-
-        const internalPromise = hasInternal
-          ? apiClient
-              .patch(`/products/${productId}/internal`, internalData)
-              .catch((err) => {
-                console.error("Failed to save internal info:", err);
-                throw err;
-              })
-          : Promise.resolve();
-
-        // MUST await both upload and internal data save before redirect
-        await Promise.all([uploadPromise, internalPromise]);
-
-        console.log("✅ Upload and internal data completed");
-
-        // CRITICAL: Verify media was actually saved for new products
-        if (!product?.id && result?.id && formData.pendingMedia.length > 0) {
-          console.log("🔍 Verifying new product media saved...");
+      await Promise.all(
+        pending.map(async (item) => {
+          if (!item.file) return;
+          updateStatus(item.clientId, { status: "uploading", progress: 0 });
           try {
-            const verified = await productService.getProductById(
-              result.id,
-              true,
+            const fileUrl = await uploadMedia(
+              productId,
+              item.file,
+              item.media_type as any,
+              (pct) => updateStatus(item.clientId, { progress: pct }),
             );
-            console.log(
-              "✅ Verified product has",
-              verified.media?.length || 0,
-              "media items",
-            );
-            if ((verified.media?.length || 0) === 0) {
-              console.error("⚠️ WARNING: No media found after upload!");
-            }
-          } catch (err) {
-            console.error("⚠️ Could not verify product:", err);
+            await createMediaRecord({
+              product_id: productId,
+              file_url: fileUrl,
+              file_type: item.file.type,
+              media_type: item.media_type,
+              is_cover: item.is_cover,
+              sort_order: item.sort_order,
+              alt_text: item.alt_text,
+            });
+            updateStatus(item.clientId, { status: "done", progress: 100 });
+          } catch (err: any) {
+            const msg =
+              err?.response?.data?.message || err?.message || "Upload thất bại";
+            updateStatus(item.clientId, { status: "error", error: msg });
+            throw new Error(`Upload "${item.file.name}" thất bại: ${msg}`);
           }
+        }),
+      );
+
+      // 4. Update sort order if changed (edit mode)
+      if (product?.id) {
+        const existingIds = new Set(
+          originalMediaRef.current.map((m) => m.clientId),
+        );
+        const doneItems = formData.pendingMedia.filter(
+          (m) => m.status === "done" && existingIds.has(m.clientId),
+        );
+        const orderChanged = doneItems.some((item) => {
+          const orig = originalMediaRef.current.find(
+            (m) => m.clientId === item.clientId,
+          );
+          return orig && orig.sort_order !== item.sort_order;
+        });
+        if (doneItems.length > 0 && orderChanged) {
+          await updateSortOrder(
+            productId,
+            doneItems.map((m) => ({
+              id: m.clientId,
+              sort_order: m.sort_order,
+            })),
+          ).catch(() => {});
         }
       }
 
-      setToast({ message: "✅ Đã lưu sản phẩm", type: "success" });
+      // 5. Save internal info
+      const hasInternal = Object.values(internalData).some(
+        (v) => v != null && v !== "",
+      );
+      if (hasInternal) {
+        await apiClient
+          .patch(`/products/${productId}/internal`, internalData)
+          .catch(() => {});
+      }
 
-      // CRITICAL FIX: Add timestamp to force cache bust and fresh data load
+      setToast({ message: "✅ Đã lưu sản phẩm", type: "success" });
       setTimeout(() => {
-        window.location.href = `/admin/products?t=${Date.now()}`;
+        window.location.href = `/products/${productId}?_updated=1`;
       }, 800);
     } catch (err: any) {
       const msg =
@@ -675,6 +513,7 @@ export function ProductForm({
         (Array.isArray(err?.response?.data?.message)
           ? err.response.data.message.join(", ")
           : null) ||
+        err?.message ||
         "Lưu sản phẩm thất bại";
       setToast({ message: msg, type: "error" });
     } finally {

@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { productService, Product } from "@/lib/product-service";
-import { useProductEvents } from "@/hooks/useProductEvents";
 import {
+  ImageIcon,
   Eye,
   EyeOff,
   Plus,
@@ -16,6 +16,31 @@ import {
   Square,
   X,
 } from "lucide-react";
+
+// ── Thumbnail helper ──────────────────────────────────────────────────────────
+function getCoverUrl(product: Product): string | null {
+  const media = product.media;
+  if (!media?.length) return null;
+  return (media.find((m) => m.is_cover) ?? media[0])?.file_url ?? null;
+}
+
+function Thumbnail({ url }: { url: string | null }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0"
+      />
+    );
+  }
+  return (
+    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+      <ImageIcon size={14} className="text-gray-300" />
+    </div>
+  );
+}
 
 // ── Bulk action bar ───────────────────────────────────────────────────────────
 function BulkActionBar({
@@ -101,6 +126,9 @@ function DesktopTable({
                 )}
               </button>
             </th>
+            <th className="px-4 py-3 w-14 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Ảnh
+            </th>
             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Tên
             </th>
@@ -138,6 +166,9 @@ function DesktopTable({
                       <Square size={16} />
                     )}
                   </button>
+                </td>
+                <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  <Thumbnail url={getCoverUrl(product)} />
                 </td>
                 <td
                   className="px-4 py-3.5 text-sm font-medium text-gray-900 max-w-[260px] truncate"
@@ -247,6 +278,9 @@ function MobileCardList({
                 )}
               </button>
 
+              {/* Thumbnail */}
+              <Thumbnail url={getCoverUrl(product)} />
+
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <Link
@@ -355,9 +389,6 @@ export default function AdminProductsPage() {
   // TODO: Implement proper WebSocket with room-based events
   // useProductEvents(handleProductEvent);
 
-  useEffect(() => {
-    setSelected(new Set());
-  }, [page, search]);
   useEffect(() => {
     setSelected(new Set());
   }, [page, search]);

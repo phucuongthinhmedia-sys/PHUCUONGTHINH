@@ -5,46 +5,61 @@ import { Product } from "@/types";
 
 export interface CartItem {
   product: Product;
-  quantity: number; // Có thể hiểu là số m2, số thùng, hoặc số bộ (với TBVS)
+  quantity: number;
   unit: "m2" | "thùng" | "bộ" | "viên";
 }
 
-interface QuoteCartContextType {
+interface StoreContextType {
+  // Quote cart
   items: CartItem[];
   addItem: (product: Product, quantity: number, unit: CartItem["unit"]) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   itemCount: number;
+  // Wishlist
+  wishlistIds: string[];
+  toggleWishlist: (id: string) => void;
+  isInWishlist: (id: string) => boolean;
 }
 
-const QuoteCartContext = createContext<QuoteCartContextType | undefined>(
-  undefined,
-);
+const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function QuoteCartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from LocalStorage
+  // Hydrate from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
-    const saved = localStorage.getItem("pct_quote_cart");
-    if (saved) {
-      try {
-        setItems(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse cart data");
-      }
+    try {
+      const savedCart = localStorage.getItem("pct_quote_cart");
+      if (savedCart) setItems(JSON.parse(savedCart));
+    } catch {
+      // ignore corrupt data
+    }
+    try {
+      const savedWishlist = localStorage.getItem("pct_wishlist");
+      if (savedWishlist) setWishlistIds(JSON.parse(savedWishlist));
+    } catch {
+      // ignore corrupt data
     }
     setIsLoaded(true);
   }, []);
 
-  // Save to LocalStorage
+  // Persist cart
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem("pct_quote_cart", JSON.stringify(items));
     }
   }, [items, isLoaded]);
+
+  // Persist wishlist
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("pct_wishlist", JSON.stringify(wishlistIds));
+    }
+  }, [wishlistIds, isLoaded]);
 
   const addItem = (
     product: Product,
@@ -78,8 +93,16 @@ export function QuoteCartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = () => setItems([]);
 
+  const toggleWishlist = (id: string) => {
+    setWishlistIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const isInWishlist = (id: string) => wishlistIds.includes(id);
+
   return (
-    <QuoteCartContext.Provider
+    <StoreContext.Provider
       value={{
         items,
         addItem,
@@ -87,47 +110,33 @@ export function QuoteCartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         itemCount: items.length,
+        wishlistIds,
+        toggleWishlist,
+        isInWishlist,
       }}
     >
       {children}
-    </QuoteCartContext.Provider>
+    </StoreContext.Provider>
   );
 }
 
-export function useQuoteCart() {
-  const context = useContext(QuoteCartContext);
-  if (context === undefined) {
-    throw new Error("useQuoteCart must be used within a QuoteCartProvider");
-  }
+function useStore(): StoreContextType {
+  const context = useContext(StoreContext);
+  if (!context)
+    throw new Error("useStore must be used within a QuoteCartProvider");
   return context;
 }
 
-// Aliases để tương thích với các import cũ
-export const WishlistProvider = QuoteCartProvider;
-export function useWishlist() {
-  useQuoteCart(); // ensure context is available
-  const [wishlistIds, setWishlistIds] = React.useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(localStorage.getItem("pct_wishlist") || "[]");
-    } catch {
-      return [];
-    }
-  });
-
-  const toggleWishlist = (id: string) => {
-    setWishlistIds((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id];
-      localStorage.setItem("pct_wishlist", JSON.stringify(next));
-      return next;
-    });
-  };
-
-  return {
-    wishlist: wishlistIds,
-    isInWishlist: (id: string) => wishlistIds.includes(id),
-    toggleWishlist,
-  };
+export function useQuoteCart() {
+  const { items, addItem, removeItem, updateQuantity, clearCart, itemCount } =
+    useStore();
+  return { items, addItem, removeItem, updateQuantity, clearCart, itemCount };
 }
+
+export function useWishlist() {
+  const { wishlistIds, toggleWishlist, isInWishlist } = useStore();
+  return { wishlist: wishlistIds, toggleWishlist, isInWishlist };
+}
+
+// Alias for backward compatibility
+export const WishlistProvider = QuoteCartProvider;

@@ -27,6 +27,20 @@ export function EditProductModal({
 
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync formData when product prop changes (e.g. modal reused for different products)
+  useEffect(() => {
+    setFormData({
+      name: product.name,
+      sku: product.sku || "",
+      description: product.description || "",
+      category: product.category || "",
+      price_retail: product.price_retail || 0,
+      price_dealer: product.price_dealer || 0,
+      unit: product.unit || "M2",
+      technical_specs: product.technical_specs,
+    });
+  }, [product]);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
