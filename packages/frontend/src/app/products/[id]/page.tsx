@@ -92,9 +92,11 @@ function getFirstProductImage(product: Product): string | null {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }): Promise<Metadata> {
-  const product = await getProduct(params.id);
+  // Next.js 14+ params can be a Promise
+  const { id } = await params;
+  const product = await getProduct(id);
 
   if (!product) {
     return {
@@ -104,10 +106,12 @@ export async function generateMetadata({
   }
 
   const productImage = getFirstProductImage(product);
-  const title = `${product.name} | Phú Cường Thịnh`;
+  const productName = product.name || "Sản phẩm";
+  const productSku = product.sku || "";
+  const title = `${productName} | Phú Cường Thịnh`;
   const description =
     product.description ||
-    `Sản phẩm ${product.name} (SKU: ${product.sku}) - Đơn vị tiên phong trong ngành VLXD hoàn thiện về gạch khổ lớn và thiết bị vệ sinh/bếp kháng khuẩn.`;
+    `Sản phẩm ${productName}${productSku ? ` (SKU: ${productSku})` : ""} - Đơn vị tiên phong trong ngành VLXD hoàn thiện về gạch khổ lớn và thiết bị vệ sinh/bếp kháng khuẩn.`;
 
   // Ensure images have absolute URLs
   const ogImage = productImage
@@ -121,11 +125,11 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      url: `/products/${params.id}`,
+      url: `/products/${id}`,
       images: [
         {
           url: ogImage,
-          alt: product.name,
+          alt: productName,
           width: 1200,
           height: 630,
         },
@@ -141,10 +145,11 @@ export async function generateMetadata({
 }
 
 // Page component (Server Component)
-export default function ProductDetailPage({
+export default async function ProductDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
-  return <ProductDetailClient productId={params.id} />;
+  const { id } = await params;
+  return <ProductDetailClient productId={id} />;
 }
