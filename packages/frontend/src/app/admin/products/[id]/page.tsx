@@ -35,11 +35,11 @@ export default function AdminEditProductPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Load product + media (critical path)
+    // Load product + media (ALWAYS bust cache to get fresh data after edit)
     Promise.all([
-      productService.getProductById(productId),
+      productService.getProductById(productId, true), // bustCache = true
       apiClient
-        .get<MediaRecord[]>(`/media/product/${productId}`)
+        .get<MediaRecord[]>(`/media/product/${productId}?_t=${Date.now()}`)
         .catch(() => []),
     ])
       .then(([prod, media]) => setProduct({ ...prod, media: media || [] }))
