@@ -10,12 +10,12 @@ import { StylesModule } from './styles/styles.module';
 import { SpacesModule } from './spaces/spaces.module';
 import { MediaModule } from './media/media.module';
 import { LeadsModule } from './leads/leads.module';
-import { ImportModule } from './import/import.module';
 import { CommonModule } from './common/common.module';
 import { HealthModule } from './health/health.module';
 import { InternalProductsModule } from './internal-products/internal-products.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { ContentModule } from './content/content.module';
+import { DocumentsModule } from './documents/documents.module';
 import configuration, { validate } from './config/configuration';
 
 @Module({
@@ -38,7 +38,7 @@ import configuration, { validate } from './config/configuration';
     SpacesModule,
     MediaModule,
     LeadsModule,
-    ImportModule,
+    DocumentsModule,
     HealthModule,
     InternalProductsModule,
     InventoryModule,

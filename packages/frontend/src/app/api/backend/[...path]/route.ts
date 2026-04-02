@@ -29,11 +29,26 @@ export async function GET(
     headers: buildHeaders(request, "application/json"),
     cache: "no-store",
   });
-  const data = await res.json();
 
-  return NextResponse.json(data, {
-    status: res.status,
-  });
+  // For binary responses (file download/preview), forward raw bytes
+  const contentType = res.headers.get("content-type") ?? "";
+  if (
+    !contentType.includes("application/json") &&
+    !contentType.includes("text/")
+  ) {
+    const buffer = await res.arrayBuffer();
+    return new NextResponse(buffer, {
+      status: res.status,
+      headers: {
+        "Content-Type": contentType,
+        "Content-Disposition": res.headers.get("content-disposition") ?? "",
+        "Content-Length": res.headers.get("content-length") ?? "",
+      },
+    });
+  }
+
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
 export async function POST(

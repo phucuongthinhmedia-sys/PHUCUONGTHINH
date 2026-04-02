@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_DIRECT")
 }
 
 model User {
@@ -161,56 +162,6 @@ model LeadProduct {
   @@map("lead_products")
 }
 
-model ImportJob {
-  id            String   @id @default(cuid())
-  user_id       String
-  file_name     String
-  file_path     String
-  file_size     Int
-  total_pages   Int
-  current_page  Int      @default(0)
-  status        String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
-  progress      Int      @default(0)
-  failed_pages  String   @default("[]") // JSON array as string for SQLite
-  started_at    DateTime?
-  completed_at  DateTime?
-  created_at    DateTime @default(now())
-
-  extracted_products ExtractedProduct[]
-
-  @@index([user_id])
-  @@index([status])
-  @@index([created_at])
-  @@map("import_jobs")
-}
-
-model ExtractedProduct {
-  id                 String   @id @default(cuid())
-  import_job_id      String
-  page_number        Int
-  name               String
-  sku                String?
-  description        String?
-  category           String?
-  category_id        String?
-  technical_specs    String   @default("{}") // JSON as string for SQLite
-  price_retail       Float?
-  price_dealer       Float?
-  unit               String?
-  images             String   @default("[]") // JSON array as string for SQLite
-  ai_raw_response    String   @default("{}") // JSON as string for SQLite
-  user_edited        Boolean  @default(false)
-  validation_status  String   @default("VALID") // VALID, WARNING, ERROR
-  validation_errors  String   @default("[]") // JSON array as string for SQLite
-  created_at         DateTime @default(now())
-
-  import_job ImportJob @relation(fields: [import_job_id], references: [id], onDelete: Cascade)
-
-  @@index([import_job_id])
-  @@index([validation_status])
-  @@map("extracted_products")
-}
-
 model ProductInternal {
   id                       String   @id @default(cuid())
   product_id               String   @unique
@@ -299,4 +250,60 @@ model ContentItem {
   @@index([type])
   @@index([is_published])
   @@map("content_items")
+}
+
+// ============================================
+// DOCUMENT MANAGEMENT MODULE
+// ============================================
+
+// Document categories (CO/CQ, Sales Docs, Fulfillment, Internal)
+model DocumentCategory {
+  id         String   @id @default(cuid())
+  name       String   // "Hợp đồng", "CO/CQ", "Biên bản nghiệm thu", etc.
+  code       String   @unique // CO_CQ, SALE_DOCS, FULFILLMENT_DOCS, INTERNAL
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  documents Document[]
+
+  @@map("document_categories")
+}
+
+// Main document storage (flat structure, no folders)
+model Document {
+  id            String   @id @default(cuid())
+  file_name     String   // Generated unique filename
+  original_name String   // User's original filename
+  file_url      String   // Cloud storage URL (Cloudinary/S3)
+  file_size     Int      // Size in bytes
+  mime_type     String   // application/pdf, image/jpeg, etc.
+  category_id   String
+  uploaded_by   String   // User ID
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  category DocumentCategory @relation(fields: [category_id], references: [id])
+  tags     DocumentTag[]
+
+  @@index([category_id])
+  @@index([uploaded_by])
+  @@index([created_at])
+  @@map("documents")
+}
+
+// Relational mapping: Document <-> Entity (Order/Customer/Product)
+// This allows one document to be attached to multiple entities
+model DocumentTag {
+  id          String   @id @default(cuid())
+  document_id String
+  entity_type String   // "ORDER", "CUSTOMER", "PRODUCT", "LEAD"
+  entity_id   String   // The ID of the related entity
+  created_at  DateTime @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@unique([document_id, entity_type, entity_id])
+  @@index([document_id])
+  @@index([entity_type, entity_id])
+  @@map("document_tags")
 }

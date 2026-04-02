@@ -36,12 +36,16 @@ export class CloudinaryService {
   async uploadFile(file: Buffer, folder: string = 'products'): Promise<string> {
     if (!this.enabled) {
       this.logger.error('❌ Cloudinary upload failed: not configured');
-      this.logger.error('   Required env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+      this.logger.error(
+        '   Required env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET',
+      );
       throw new Error('Cloudinary is not configured');
     }
 
-    this.logger.log(`⬆️ Uploading to Cloudinary: folder=${folder}, size=${file.length} bytes`);
-    
+    this.logger.log(
+      `⬆️ Uploading to Cloudinary: folder=${folder}, size=${file.length} bytes`,
+    );
+
     try {
       const result: UploadApiResponse = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -71,6 +75,39 @@ export class CloudinaryService {
   async deleteFile(publicId: string): Promise<void> {
     if (!this.enabled) throw new Error('Cloudinary is not configured');
     await cloudinary.uploader.destroy(publicId);
+  }
+
+  // Upload with full response (for documents)
+  async uploadFileWithMetadata(
+    file: Buffer,
+    options: {
+      folder?: string;
+      resource_type?: 'image' | 'video' | 'raw' | 'auto';
+      public_id?: string;
+    } = {},
+  ): Promise<UploadApiResponse> {
+    if (!this.enabled) {
+      throw new Error('Cloudinary is not configured');
+    }
+
+    const result: UploadApiResponse = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: options.folder || 'uploads',
+          resource_type: options.resource_type || 'auto',
+          public_id: options.public_id,
+          overwrite: true,
+        },
+        (error, res) => {
+          if (error) reject(error);
+          else if (res) resolve(res);
+          else reject(new Error('Upload failed: no result'));
+        },
+      );
+      stream.end(file);
+    });
+
+    return result;
   }
 
   extractPublicId(url: string): string | null {
