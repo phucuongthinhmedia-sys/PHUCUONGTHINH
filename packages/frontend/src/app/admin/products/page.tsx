@@ -354,7 +354,7 @@ export default function AdminProductsPage() {
   // Stable reference to track if we're already loading
   const isLoadingRef = useRef(false);
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (bustCache = false) => {
     // Prevent concurrent loads
     if (isLoadingRef.current) {
       return;
@@ -364,7 +364,13 @@ export default function AdminProductsPage() {
     setIsLoading(true);
     setError("");
     try {
-      const response = await productService.getProducts(page, limit, search);
+      // Always add timestamp for admin to ensure fresh data
+      const response = await productService.getProducts(
+        page, 
+        limit, 
+        search,
+        bustCache // Pass bustCache to service
+      );
       setProducts(response.products);
       setTotal(response.pagination.total);
     } catch (err: any) {
@@ -381,7 +387,7 @@ export default function AdminProductsPage() {
 
   // Initial load and reload on page/search change
   useEffect(() => {
-    loadProducts();
+    loadProducts(true); // Always bust cache for admin
   }, [loadProducts]);
 
   // DISABLED: Real-time updates causing infinite loop
@@ -411,13 +417,22 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
+    
+    // Optimistic update - remove from UI immediately
+    const deletedProduct = products.find((p) => p.id === id);
+    setProducts((p) => p.filter((x) => x.id !== id));
+    setTotal((t) => t - 1);
+    
     try {
       await productService.deleteProduct(id);
-      setProducts((p) => p.filter((x) => x.id !== id));
-      setTotal((t) => t - 1);
-      // Reload to ensure fresh data from server
-      await loadProducts();
+      // Reload with cache bust to ensure fresh data
+      await loadProducts(true);
     } catch (err: any) {
+      // Restore on error
+      if (deletedProduct) {
+        setProducts((p) => [...p, deletedProduct]);
+        setTotal((t) => t + 1);
+      }
       setError(err.response?.data?.message || "Không thể xóa sản phẩm");
     }
   };
@@ -434,14 +449,26 @@ export default function AdminProductsPage() {
 
   const handlePublish = async (id: string, isPublished: boolean) => {
     try {
+      // Optimistic update - update UI immediately
+      setProducts((p) =>
+        p.map((x) =>
+          x.id === id ? { ...x, is_published: !isPublished } : x,
+        ),
+      );
+      
       const updated = isPublished
         ? await productService.unpublishProduct(id)
         : await productService.publishProduct(id);
+      
+      // Update with server response
       setProducts((p) => p.map((x) => (x.id === id ? updated : x)));
-      // Reload to ensure fresh data from server
-      await loadProducts();
+      
+      // Reload with cache bust to ensure fresh data
+      await loadProducts(true);
     } catch (err: any) {
+      // Revert on error
       setError(err.response?.data?.message || "Không thể cập nhật sản phẩm");
+      await loadProducts(true);
     }
   };
 
@@ -450,21 +477,43 @@ export default function AdminProductsPage() {
       return;
     setIsBulkLoading(true);
     const ids = Array.from(selected);
+    
+    // Optimistic update
+    const deletedProducts = products.filter((p) => ids.includes(p.id));
+    setProducts((p) => p.filter((x) => !ids.includes(x.id)));
+    setTotal((t) => t - ids.length);
+    setSelected(new Set());
+    
     const results = await Promise.allSettled(
       ids.map((id) => productService.deleteProduct(id)),
     );
     const deleted = ids.filter((_, i) => results[i].status === "fulfilled");
-    setProducts((p) => p.filter((x) => !deleted.includes(x.id)));
-    setTotal((t) => t - deleted.length);
-    setSelected(new Set());
     const failCount = ids.length - deleted.length;
-    if (failCount > 0) setError(`Xóa thất bại ${failCount} sản phẩm.`);
+    
+    if (failCount > 0) {
+      // Restore failed items
+      const failedIds = ids.filter((_, i) => results[i].status === "rejected");
+      const restored = deletedProducts.filter((p) => failedIds.includes(p.id));
+      setProducts((p) => [...p, ...restored]);
+      setTotal((t) => t + restored.length);
+      setError(`Xóa thất bại ${failCount} sản phẩm.`);
+    }
+    
     setIsBulkLoading(false);
+    // Reload with cache bust
+    await loadProducts(true);
   };
 
   const handleBulkPublish = async (publish: boolean) => {
     setIsBulkLoading(true);
     const ids = Array.from(selected);
+    
+    // Optimistic update
+    setProducts((p) =>
+      p.map((x) => (ids.includes(x.id) ? { ...x, is_published: publish } : x)),
+    );
+    setSelected(new Set());
+    
     const results = await Promise.allSettled(
       ids.map((id) =>
         publish
@@ -475,11 +524,13 @@ export default function AdminProductsPage() {
     const updated: Product[] = results
       .filter((r) => r.status === "fulfilled")
       .map((r) => (r as PromiseFulfilledResult<Product>).value);
+    
+    // Update with server results
     setProducts((p) => p.map((x) => updated.find((u) => u.id === x.id) ?? x));
-    setSelected(new Set());
     setIsBulkLoading(false);
-    // Reload to ensure fresh data from server
-    await loadProducts();
+    
+    // Reload with cache bust to ensure fresh data
+    await loadProducts(true);
   };
 
   const totalPages = Math.ceil(total / limit);
