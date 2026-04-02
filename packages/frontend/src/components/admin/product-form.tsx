@@ -693,20 +693,19 @@ export function ProductForm({
         }
       }
 
-      // 5. SAVE internal info
-      const hasInternal = Object.values(internalData).some(
-        (v) => v != null && v !== "",
+      // 5. SAVE internal info (always call to allow clearing fields)
+      console.log('[DEBUG] Saving internal data:', internalData);
+      console.log('[DEBUG] Product ID:', productId);
+      
+      const internalResult = await safeApiCall(
+        () => apiClient.patch(`/products/${productId}/internal`, internalData),
+        'Lưu thông tin nội bộ'
       );
-      if (hasInternal) {
-        const internalResult = await safeApiCall(
-          () => apiClient.patch(`/products/${productId}/internal`, internalData),
-          'Lưu thông tin nội bộ',
-          { throwOnError: false }
-        );
-        
-        if (!internalResult.success) {
-          console.warn(`⚠️ [API] Internal info save failed:`, internalResult.error);
-        }
+      
+      console.log('[DEBUG] Internal save result:', internalResult);
+      
+      if (!internalResult.success) {
+        console.warn(`⚠️ [API] Internal info save failed:`, internalResult.error);
       }
 
       // Invalidate cache immediately for real-time effect
