@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
-import "html5-qrcode/dist/html5-qrcode.min.css";
 
 const SCANNER_ID = "qr-scanner-container";
 
@@ -93,8 +92,18 @@ export default function QRScanner() {
   }, []);
 
   return (
-    <div className="relative w-full" style={{ minHeight: "300px" }}>
-      <div id={SCANNER_ID} className="w-full h-full" />
+    <div className="relative w-full" style={{ minHeight: "400px" }}>
+      {/* Scanner container with explicit styling for html5-qrcode */}
+      <div 
+        id={SCANNER_ID} 
+        className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_video]:rounded-lg"
+        style={{ 
+          minHeight: "400px",
+          background: "#000",
+          borderRadius: "12px",
+          overflow: "hidden"
+        }}
+      />
 
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-lg">
