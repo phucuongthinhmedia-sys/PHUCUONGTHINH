@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Pencil,
+  ScanLine,
 } from "lucide-react";
 import { useQuoteCart } from "@/lib/wishlist-context";
 import { productService } from "@/lib/product-service";
@@ -476,7 +477,7 @@ export default function ProductDetailPage({
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [showSticky, setShowSticky] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
 
@@ -696,13 +697,23 @@ export default function ProductDetailPage({
                   className="normal-case tracking-normal text-[10px] sm:text-xs"
                 />
                 {isAuthenticated && (
-                  <Link
-                    href={`/admin/products/${product.id}`}
-                    className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0a192f] text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-[#0d2137] transition-colors normal-case tracking-normal whitespace-nowrap"
-                  >
-                    <Pencil size={10} className="sm:w-3 sm:h-3" />
-                    <span className="hidden sm:inline">Chỉnh sửa</span>
-                  </Link>
+                  <>
+                    <button
+                      onClick={() => setShowQRScanner(true)}
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-emerald-700 transition-colors normal-case tracking-normal whitespace-nowrap"
+                      title="Quét QR sản phẩm khác"
+                    >
+                      <ScanLine size={10} className="sm:w-3 sm:h-3" />
+                      <span className="hidden sm:inline">Quét QR</span>
+                    </button>
+                    <Link
+                      href={`/admin/products/${product.id}`}
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-[#0a192f] text-white rounded-lg text-[10px] sm:text-xs font-semibold hover:bg-[#0d2137] transition-colors normal-case tracking-normal whitespace-nowrap"
+                    >
+                      <Pencil size={10} className="sm:w-3 sm:h-3" />
+                      <span className="hidden sm:inline">Chỉnh sửa</span>
+                    </Link>
+                  </>
                 )}
               </div>
             </nav>
@@ -1014,7 +1025,42 @@ export default function ProductDetailPage({
         </div>
       </main>
 
-      {/* Sticky Mobile Bar - Improved */}
+      {/* QR Scanner Modal */}
+      <AnimatePresence>
+        {showQRScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setShowQRScanner(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-md bg-white rounded-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <h3 className="text-sm font-bold text-gray-800">Quét mã QR sản phẩm</h3>
+                <button
+                  onClick={() => setShowQRScanner(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={18} className="text-gray-500" />
+                </button>
+              </div>
+              <div className="p-4">
+                <QRScanner />
+                <p className="text-xs text-gray-500 text-center mt-3">
+                  Đưa camera vào mã QR để chuyển đến sản phẩm
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {showSticky && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-3.5 flex gap-2 sm:gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] lg:hidden" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <AddToQuoteButton product={product} compact />
