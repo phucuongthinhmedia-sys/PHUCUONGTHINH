@@ -108,8 +108,40 @@ export function QRSection({
   sku: string;
   productUrl: string;
 }) {
+  const [isDownloading, setIsDownloading] = useState(false);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=56x56&data=${encodeURIComponent(productUrl)}`;
   const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(productUrl)}`;
+  
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    try {
+      // Fetch the image as blob to enable download
+      const response = await fetch(qrDownloadUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `qr-${sku}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Cleanup
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('Failed to download QR:', err);
+      // Fallback: open in new tab
+      window.open(qrDownloadUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
   return (
     <div className="flex flex-col items-center gap-1">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -120,14 +152,14 @@ export function QRSection({
         height={56}
         className="rounded-lg border border-gray-200"
       />
-      <a
-        href={qrDownloadUrl}
-        download={`qr-${sku}.png`}
+      <button
+        onClick={handleDownload}
+        disabled={isDownloading}
         title="Tải QR về máy"
-        className="text-gray-400 hover:text-primary transition-colors"
+        className="text-gray-400 hover:text-primary transition-colors disabled:opacity-50"
       >
-        <Download size={14} />
-      </a>
+        <Download size={14} className={isDownloading ? "animate-pulse" : ""} />
+      </button>
     </div>
   );
 }
