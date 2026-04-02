@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
-import "html5-qrcode/html5-qrcode.min.css";
+import "html5-qrcode/dist/html5-qrcode.min.css";
 
 const SCANNER_ID = "qr-scanner-container";
 
