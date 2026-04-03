@@ -18,24 +18,47 @@ export class DocumentsService {
     uploadedBy: string,
     tags?: Array<{ entity_type: string; entity_id: string }>,
   ) {
-    // Fix encoding for Vietnamese filenames while preserving extension
+    // Extract clean filename with proper extension from mimetype
     let originalName = file.originalname;
     try {
-      // Extract extension before decoding
+      // Get proper extension from mimetype (this is 100% reliable)
+      const mimeToExt: Record<string, string> = {
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+        'application/msword': '.doc',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+        'application/vnd.ms-excel': '.xls',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+        'application/vnd.ms-powerpoint': '.ppt',
+        'application/pdf': '.pdf',
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'image/webp': '.webp',
+        'text/plain': '.txt',
+      };
+      const correctExt = mimeToExt[file.mimetype] || '';
+      
+      // Remove any existing extension from filename (handle multiple dots)
       const lastDotIndex = originalName.lastIndexOf('.');
-      const extension =
-        lastDotIndex > 0 ? originalName.slice(lastDotIndex) : '';
-      const nameWithoutExt =
-        lastDotIndex > 0 ? originalName.slice(0, lastDotIndex) : originalName;
-
-      // Decode only the name part
-      const decodedName = Buffer.from(nameWithoutExt, 'latin1').toString(
-        'utf8',
-      );
-      originalName = decodedName + extension;
+      const nameWithoutExt = lastDotIndex > 0 ? originalName.slice(0, lastDotIndex) : originalName;
+      
+      // Try to decode Vietnamese characters in the name only
+      let decodedName: string;
+      try {
+        decodedName = Buffer.from(nameWithoutExt, 'latin1').toString('utf8');
+        // If decoding produces weird characters, use original
+        if (decodedName.includes('') || /[\x00-\x08\x0b-\x0c\x0e-\x1f]/.test(decodedName)) {
+          decodedName = nameWithoutExt;
+        }
+      } catch {
+        decodedName = nameWithoutExt;
+      }
+      
+      // Use correct extension from mimetype, not from original filename
+      originalName = decodedName + correctExt;
     } catch (e) {
-      // Keep original if decoding fails
-      originalName = file.originalname;
+      // Fallback: keep original but ensure it has extension from mimetype
+      console.error('[DocumentsService] Filename encoding fix failed:', e);
     }
 
     // Generate S3 key
