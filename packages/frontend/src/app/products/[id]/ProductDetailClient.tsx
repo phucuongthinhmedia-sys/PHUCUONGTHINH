@@ -283,10 +283,10 @@ type StockStatus = "in_stock" | "pre_order" | "coming_soon" | "out_of_stock";
 
 // Helper: Optimize Cloudinary URL for faster loading
 function optimizeCloudinaryUrl(url: string, width?: number): string {
-  if (!url?.includes('cloudinary.com')) return url;
-  if (url.includes('/upload/')) {
-    const transform = width ? `w_${width},q_auto,f_auto` : 'q_auto,f_auto';
-    return url.replace('/upload/', `/upload/${transform}/`);
+  if (!url?.includes("cloudinary.com")) return url;
+  if (url.includes("/upload/")) {
+    const transform = width ? `w_${width},q_auto,f_auto` : "q_auto,f_auto";
+    return url.replace("/upload/", `/upload/${transform}/`);
   }
   return url;
 }
@@ -468,7 +468,9 @@ interface ProductDetailClientProps {
   productId: string;
 }
 
-export default function ProductDetailClient({ productId }: ProductDetailClientProps) {
+export default function ProductDetailClient({
+  productId,
+}: ProductDetailClientProps) {
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
@@ -524,13 +526,12 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
     // Always bust cache on mount to ensure fresh data
     // This handles F5 refresh and navigation from other pages
     const hasCacheBuster =
-      typeof window !== "undefined" &&
-      window.location.search.includes("_cb=");
-    
+      typeof window !== "undefined" && window.location.search.includes("_cb=");
+
     // If coming from edit, use the cache buster from URL
     // Otherwise, still bust cache to ensure fresh data
     loadProduct(true); // Always bust cache for fresh data
-    
+
     // Clean up cache buster from URL if present
     if (hasCacheBuster && typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -608,11 +609,16 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               m.file_url?.match(/\.(jpg|jpeg|png|webp|svg)$/i)))) &&
         m.file_url?.startsWith("http"),
     ) ?? [];
-  
+
   // DEBUG: Log media info
   console.log("📸 Media debug:", {
     total: product.media?.length,
-    media: product.media?.map(m => ({ id: m.id, type: m.media_type, file_type: m.file_type, url: m.file_url?.slice(0, 50) })),
+    media: product.media?.map((m) => ({
+      id: m.id,
+      type: m.media_type,
+      file_type: m.file_type,
+      url: m.file_url?.slice(0, 50),
+    })),
     filteredImages: images.length,
   });
   const videos =
@@ -628,7 +634,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
       (m) => m.media_type === "pdf" || m.file_url?.endsWith(".pdf"),
     ) ?? [];
   const activeImage = images[activeImageIndex]?.file_url || null;
-  const optimizedActiveImage = optimizeCloudinaryUrl(activeImage || '', 800);
+  const optimizedActiveImage = optimizeCloudinaryUrl(activeImage || "", 800);
 
   const handlePrevImage = () =>
     setActiveImageIndex((p) => (p > 0 ? p - 1 : images.length - 1));
@@ -826,14 +832,7 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
                   </h1>
                   {product.sku && (
                     <div className="shrink-0 hidden md:block bg-gray-50 p-1.5 rounded-lg border border-gray-100">
-                      <QRSection
-                        sku={product.sku}
-                        productUrl={
-                          typeof window !== "undefined"
-                            ? window.location.href
-                            : ""
-                        }
-                      />
+                      <QRSection sku={product.sku} productUrl={product.sku} />
                     </div>
                   )}
                 </div>
@@ -1036,7 +1035,9 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <h3 className="text-sm font-bold text-gray-800">Quét mã QR sản phẩm</h3>
+                <h3 className="text-sm font-bold text-gray-800">
+                  Quét mã QR sản phẩm
+                </h3>
                 <button
                   onClick={() => setShowQRScanner(false)}
                   className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1055,7 +1056,10 @@ export default function ProductDetailClient({ productId }: ProductDetailClientPr
         )}
       </AnimatePresence>
       {showSticky && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-3.5 flex gap-2 sm:gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] lg:hidden" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-3.5 flex gap-2 sm:gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] lg:hidden"
+          style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+        >
           <AddToQuoteButton product={product} compact />
           <Link
             href={`/contact?type=appointment&product=${product.id}`}

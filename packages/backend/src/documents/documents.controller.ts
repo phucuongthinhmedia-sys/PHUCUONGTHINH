@@ -40,6 +40,14 @@ export class DocumentsController {
     @Body('tags') tagsRaw: string,
     @Request() req,
   ) {
+    // DEBUG: Log exactly what multer received
+    console.log('[DEBUG] ========== FILE UPLOAD DEBUG ==========');
+    console.log('[DEBUG] file.originalname:', file?.originalname);
+    console.log('[DEBUG] file.originalname hex:', Buffer.from(file?.originalname || '').toString('hex'));
+    console.log('[DEBUG] file.mimetype:', file?.mimetype);
+    console.log('[DEBUG] file.encoding:', file?.encoding);
+    console.log('[DEBUG] ========================================');
+    
     if (!file) {
       throw new BadRequestException('File is required');
     }
