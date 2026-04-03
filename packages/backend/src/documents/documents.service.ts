@@ -18,11 +18,23 @@ export class DocumentsService {
     uploadedBy: string,
     tags?: Array<{ entity_type: string; entity_id: string }>,
   ) {
-    // Fix encoding for Vietnamese filenames
+    // Fix encoding for Vietnamese filenames while preserving extension
     let originalName = file.originalname;
     try {
-      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      // Extract extension before decoding
+      const lastDotIndex = originalName.lastIndexOf('.');
+      const extension =
+        lastDotIndex > 0 ? originalName.slice(lastDotIndex) : '';
+      const nameWithoutExt =
+        lastDotIndex > 0 ? originalName.slice(0, lastDotIndex) : originalName;
+
+      // Decode only the name part
+      const decodedName = Buffer.from(nameWithoutExt, 'latin1').toString(
+        'utf8',
+      );
+      originalName = decodedName + extension;
     } catch (e) {
+      // Keep original if decoding fails
       originalName = file.originalname;
     }
 
@@ -190,8 +202,16 @@ export class DocumentsService {
       throw new NotFoundException('Document not found');
     }
 
-    // TODO: Delete from S3/R2
-    // await this.s3Service.deleteFile(document.file_name);
+    // Delete file from S3/R2 cloud storage
+    try {
+      await this.s3Service.deleteFile(document.file_name);
+    } catch (err) {
+      // Log but don't block DB deletion if storage deletion fails
+      console.error(
+        `[DocumentsService] Failed to delete file from storage: ${document.file_name}`,
+        err,
+      );
+    }
 
     // Delete from database (tags will cascade delete)
     await this.prisma.document.delete({

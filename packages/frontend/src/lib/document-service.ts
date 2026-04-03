@@ -49,6 +49,7 @@ export const documentService = {
       "/documents/upload",
       formData,
       // Do NOT set Content-Type manually — let browser set it with boundary
+      { params: { _t: Date.now() } } // cache-busting
     );
     return response;
   },
@@ -80,8 +81,12 @@ export const documentService = {
     entity_id?: string;
     search?: string;
   }): Promise<Document[]> {
+    // Add cache-busting timestamp to prevent browser/CDN caching
     const response = await adminApiClient.get<Document[]>("/documents", {
-      params: filters,
+      params: {
+        ...filters,
+        _t: Date.now(), // cache-busting
+      },
     });
     return Array.isArray(response) ? response : [];
   },

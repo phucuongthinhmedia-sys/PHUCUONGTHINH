@@ -21,6 +21,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CombinedFilterService } from './services/combined-filter.service';
 import { ProductsEventService } from './products-events.service';
 
+function safeParseInt(value: any, fallback: number): number {
+  const n = parseInt(value, 10);
+  return isNaN(n) ? fallback : n;
+}
+
+function safeParseJson(value: any): any {
+  if (!value) return undefined;
+  try {
+    return typeof value === 'string' ? JSON.parse(value) : value;
+  } catch {
+    return undefined;
+  }
+}
+
 @Controller('products')
 export class ProductsController {
   constructor(
@@ -74,7 +88,6 @@ export class ProductsController {
 
   @Get('filters/enhanced')
   async findAllWithEnhancedFilters(@Query() query: any) {
-    // Parse query parameters for enhanced filtering
     const filters = {
       categories: query.categories
         ? Array.isArray(query.categories)
@@ -83,8 +96,8 @@ export class ProductsController {
         : undefined,
       search: query.search,
       published: query.published || 'true',
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 20,
+      page: safeParseInt(query.page, 1),
+      limit: safeParseInt(query.limit, 20),
       inspiration: {
         styles: query.styles
           ? Array.isArray(query.styles)
@@ -97,7 +110,7 @@ export class ProductsController {
             : [query.spaces]
           : undefined,
       },
-      technical: query.technical ? JSON.parse(query.technical) : undefined,
+      technical: safeParseJson(query.technical),
     };
 
     return this.combinedFilterService.filterProducts(filters);
@@ -106,17 +119,7 @@ export class ProductsController {
   @Get('search')
   async searchProducts(@Query() query: any) {
     const searchQuery = query.q || query.query || '';
-    const filters = {
-      categories: query.categories
-        ? Array.isArray(query.categories)
-          ? query.categories
-          : [query.categories]
-        : undefined,
-      published: query.published || 'true',
-    };
-    const limit = query.limit ? parseInt(query.limit) : 20;
-    const offset = query.offset ? parseInt(query.offset) : 0;
-
+    const limit = safeParseInt(query.limit, 20);
     return this.combinedFilterService.getSearchSuggestions(searchQuery, limit);
   }
 
@@ -125,13 +128,13 @@ export class ProductsController {
     @Query('q') query: string,
     @Query('limit') limit?: string,
   ) {
-    const limitNum = limit ? parseInt(limit) : 10;
+    const limitNum = safeParseInt(limit, 10);
     return this.combinedFilterService.getSearchSuggestions(query, limitNum);
   }
 
   @Get('search/popular')
   getPopularSearchTerms(@Query('limit') limit?: string) {
-    const limitNum = limit ? parseInt(limit) : 10;
+    const limitNum = safeParseInt(limit, 10);
     return this.combinedFilterService.getPopularSearchTerms(limitNum);
   }
 
@@ -145,8 +148,8 @@ export class ProductsController {
           : [query.categories]
         : undefined,
       published: query.published || 'true',
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 20,
+      page: safeParseInt(query.page, 1),
+      limit: safeParseInt(query.limit, 20),
       inspiration: {
         styles: query.styles
           ? Array.isArray(query.styles)
@@ -159,7 +162,7 @@ export class ProductsController {
             : [query.spaces]
           : undefined,
       },
-      technical: query.technical ? JSON.parse(query.technical) : undefined,
+      technical: safeParseJson(query.technical),
     };
 
     return this.combinedFilterService.filterProductsWithSearch(filters);
@@ -167,7 +170,6 @@ export class ProductsController {
 
   @Get('filters/optimized')
   async findAllWithOptimizedFilters(@Query() query: any) {
-    // Parse query parameters for optimized filtering
     const filters = {
       categories: query.categories
         ? Array.isArray(query.categories)
@@ -176,8 +178,8 @@ export class ProductsController {
         : undefined,
       search: query.search,
       published: query.published || 'true',
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 20,
+      page: safeParseInt(query.page, 1),
+      limit: safeParseInt(query.limit, 20),
       inspiration: {
         styles: query.styles
           ? Array.isArray(query.styles)
@@ -190,7 +192,7 @@ export class ProductsController {
             : [query.spaces]
           : undefined,
       },
-      technical: query.technical ? JSON.parse(query.technical) : undefined,
+      technical: safeParseJson(query.technical),
     };
 
     return this.combinedFilterService.filterProductsOptimized(filters);

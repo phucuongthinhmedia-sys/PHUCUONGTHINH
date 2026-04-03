@@ -379,9 +379,11 @@ export default function DocumentsPage() {
         <DocumentUploadModal
           isOpen={isUploadModalOpen}
           onClose={() => setIsUploadModalOpen(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setSelectedCategory(""); // Reset filter để hiển thị document mới
-            loadData();
+            // Small delay to ensure DB transaction is fully committed (handles replication lag)
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await loadData();
           }}
           categories={categories}
         />

@@ -40,12 +40,6 @@ export class DocumentsController {
     @Body('tags') tagsRaw: string,
     @Request() req,
   ) {
-    console.log('[DEBUG] uploadDocument called');
-    console.log('[DEBUG] req.headers:', JSON.stringify(req.headers, null, 2));
-    console.log('[DEBUG] req.file:', req.file);
-    console.log('[DEBUG] req.files:', req.files);
-    console.log('[DEBUG] req.body:', req.body);
-    console.log('[DEBUG] file param:', file);
     if (!file) {
       throw new BadRequestException('File is required');
     }

@@ -282,7 +282,7 @@ model Document {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  category DocumentCategory @relation(fields: [category_id], references: [id])
+  category DocumentCategory @relation(fields: [category_id], references: [id], onDelete: Restrict)
   tags     DocumentTag[]
 
   @@index([category_id])
@@ -305,5 +305,6 @@ model DocumentTag {
   @@unique([document_id, entity_type, entity_id])
   @@index([document_id])
   @@index([entity_type, entity_id])
+  @@index([entity_id])
   @@map("document_tags")
 }

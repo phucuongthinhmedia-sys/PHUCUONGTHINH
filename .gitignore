@@ -1,2 +1,9 @@
 node_modules
 r2-cors.json
+
+# Environment variables - NEVER commit secrets
+.env
+.env.local
+.env.*.local
+packages/**/.env
+packages/**/.env.local

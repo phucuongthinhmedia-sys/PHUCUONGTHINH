@@ -105,35 +105,38 @@ async function withRetry<T>(
   fn: () => Promise<T>,
   options: { maxRetries?: number; delayMs?: number; context?: string } = {},
 ): Promise<T> {
-  const { maxRetries = 2, delayMs = 1000, context } = options;
+  const { maxRetries = 2, delayMs = 1000 } = options;
   let lastError: Error | undefined;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (err: any) {
       lastError = err;
-      const isRetryable = err?.response?.status >= 500 || err?.code === 'ECONNABORTED' || err?.code === 'ETIMEDOUT';
-      
+      const isRetryable =
+        err?.response?.status >= 500 ||
+        err?.code === "ECONNABORTED" ||
+        err?.code === "ETIMEDOUT";
+
       if (!isRetryable || attempt >= maxRetries) {
         throw err;
       }
-      
-      console.log(`🔄 [${context || 'API'}] Retry ${attempt + 1}/${maxRetries} after ${delayMs}ms...`);
-      await new Promise(r => setTimeout(r, delayMs * Math.pow(2, attempt)));
+
+      await new Promise((r) => setTimeout(r, delayMs * Math.pow(2, attempt)));
     }
   }
-  
+
   throw lastError;
 }
 
 // Helper: Format API error message
 function formatApiError(err: any, defaultMsg: string): string {
   const data = err?.response?.data as ApiErrorResponse;
-  const msg = data?.error?.message || 
-              (Array.isArray(data?.message) ? data.message.join(', ') : data?.message) ||
-              err?.message || 
-              defaultMsg;
+  const msg =
+    data?.error?.message ||
+    (Array.isArray(data?.message) ? data.message.join(", ") : data?.message) ||
+    err?.message ||
+    defaultMsg;
   return msg;
 }
 
@@ -141,10 +144,10 @@ function formatApiError(err: any, defaultMsg: string): string {
 async function safeApiCall<T>(
   fn: () => Promise<T>,
   context: string,
-  options: { logError?: boolean; throwOnError?: boolean } = {}
+  options: { logError?: boolean; throwOnError?: boolean } = {},
 ): Promise<{ success: boolean; data?: T; error?: string }> {
   const { logError = true, throwOnError = false } = options;
-  
+
   try {
     const data = await fn();
     return { success: true, data };
@@ -292,19 +295,19 @@ function Toast({
     const t = setTimeout(onClose, 4000);
     return () => clearTimeout(t);
   }, [onClose]);
-  
+
   const colors = {
     success: "bg-emerald-600",
     error: "bg-red-600",
     info: "bg-blue-600",
   };
-  
+
   const icons = {
     success: <CheckCircle2 size={16} />,
     error: <AlertCircle size={16} />,
     info: <Radio size={16} className="animate-pulse" />,
   };
-  
+
   return (
     <div
       className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-white text-sm font-medium max-w-sm ${colors[type]}`}
@@ -345,15 +348,8 @@ export function ProductForm({
       const d = initFormData(product);
       setFormData(d);
       originalMediaRef.current = d.pendingMedia;
-      setErrors({}); // Reset errors
-      setSeoOpen(false); // Reset SEO panel
-      console.log(
-        "🔄 [ProductForm] Product loaded, originalMediaRef:",
-        originalMediaRef.current.map((m) => ({
-          id: m.clientId,
-          status: m.status,
-        })),
-      );
+      setErrors({});
+      setSeoOpen(false);
     }
   }, [product]);
 
@@ -362,17 +358,21 @@ export function ProductForm({
       (product?.technical_specs?.product_type as ProductType) ??
       detectProductType(product?.category_id ?? ""),
   );
-  
+
   // Update productType when product changes
   useEffect(() => {
     if (product?.id) {
       setProductType(
         (product?.technical_specs?.product_type as ProductType) ??
-        detectProductType(product?.category_id ?? ""),
+          detectProductType(product?.category_id ?? ""),
       );
     }
-  }, [product?.id, product?.technical_specs?.product_type, product?.category_id]);
-  
+  }, [
+    product?.id,
+    product?.technical_specs?.product_type,
+    product?.category_id,
+  ]);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{
@@ -381,7 +381,10 @@ export function ProductForm({
   } | null>(null);
   const [internalData, setInternalData] = useState<InternalInfoData>({});
   const [seoOpen, setSeoOpen] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<{ isSyncing: boolean; lastSync: Date | null }>({ isSyncing: false, lastSync: null });
+  const [syncStatus, setSyncStatus] = useState<{
+    isSyncing: boolean;
+    lastSync: Date | null;
+  }>({ isSyncing: false, lastSync: null });
   const nameRef = useRef<HTMLInputElement>(null);
   const skuRef = useRef<HTMLInputElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
@@ -389,39 +392,59 @@ export function ProductForm({
   // Real-time sync: Subscribe to events from other tabs
   useEffect(() => {
     if (!product?.id || !realtimeService) return;
-    
-    console.log(`📡 [ProductForm] Subscribing to real-time events for product ${product.id}`);
-    
+
     // Listen for media upload events from other tabs
-    const unsubscribeUploadStart = realtimeService.subscribe('media_upload_start', (data) => {
-      console.log('📡 [Real-time] Media upload started in another tab:', data);
-      setToast({ message: `📤 ${data.fileName} đang được upload ở tab khác`, type: "info" });
-    });
-    
-    const unsubscribeUploadComplete = realtimeService.subscribe('media_upload_complete', (data) => {
-      console.log('📡 [Real-time] Media upload completed:', data);
-      // Refresh media list if needed
-      setSyncStatus({ isSyncing: true, lastSync: new Date() });
-      setTimeout(() => setSyncStatus(prev => ({ ...prev, isSyncing: false })), 1000);
-    });
-    
-    const unsubscribeProductSaved = realtimeService.subscribe('product_saved', (data) => {
-      console.log('📡 [Real-time] Product saved in another tab:', data);
-      setToast({ message: `💾 Sản phẩm vừa được lưu ở tab khác. Đồng bộ...`, type: "info" });
-      // Trigger refresh
-      setSyncStatus({ isSyncing: true, lastSync: new Date() });
-      setTimeout(() => setSyncStatus(prev => ({ ...prev, isSyncing: false })), 1500);
-    });
-    
-    const unsubscribeMediaDelete = realtimeService.subscribe('media_delete', (data) => {
-      console.log('📡 [Real-time] Media deleted in another tab:', data);
-      // Update local state if the deleted media exists
-      setFormData(prev => ({
-        ...prev,
-        pendingMedia: prev.pendingMedia.filter(m => m.clientId !== data.mediaId)
-      }));
-    });
-    
+    const unsubscribeUploadStart = realtimeService.subscribe(
+      "media_upload_start",
+      (data) => {
+        setToast({
+          message: `📤 ${data.fileName} đang được upload ở tab khác`,
+          type: "info",
+        });
+      },
+    );
+
+    const unsubscribeUploadComplete = realtimeService.subscribe(
+      "media_upload_complete",
+      (_data) => {
+        // Refresh media list if needed
+        setSyncStatus({ isSyncing: true, lastSync: new Date() });
+        setTimeout(
+          () => setSyncStatus((prev) => ({ ...prev, isSyncing: false })),
+          1000,
+        );
+      },
+    );
+
+    const unsubscribeProductSaved = realtimeService.subscribe(
+      "product_saved",
+      (_data) => {
+        setToast({
+          message: `💾 Sản phẩm vừa được lưu ở tab khác. Đồng bộ...`,
+          type: "info",
+        });
+        // Trigger refresh
+        setSyncStatus({ isSyncing: true, lastSync: new Date() });
+        setTimeout(
+          () => setSyncStatus((prev) => ({ ...prev, isSyncing: false })),
+          1500,
+        );
+      },
+    );
+
+    const unsubscribeMediaDelete = realtimeService.subscribe(
+      "media_delete",
+      (data) => {
+        // Update local state if the deleted media exists
+        setFormData((prev) => ({
+          ...prev,
+          pendingMedia: prev.pendingMedia.filter(
+            (m) => m.clientId !== data.mediaId,
+          ),
+        }));
+      },
+    );
+
     return () => {
       unsubscribeUploadStart?.();
       unsubscribeUploadComplete?.();
@@ -432,11 +455,11 @@ export function ProductForm({
 
   useEffect(() => {
     if (!product?.id) return;
-    
+
     safeApiCall(
       () => apiClient.get<any>(`/products/${product.id}/internal`),
-      'Lấy thông tin nội bộ',
-      { logError: false }
+      "Lấy thông tin nội bộ",
+      { logError: false },
     ).then((result) => {
       if (result.success && result.data) {
         const d = result.data;
@@ -471,13 +494,6 @@ export function ProductForm({
   const setField = useCallback(
     <K extends keyof FormState>(key: K, value: FormState[K]) => {
       if (key === "pendingMedia") {
-        console.log(
-          "📝 [ProductForm] setField pendingMedia:",
-          (value as PendingMedia[]).map((m) => ({
-            id: m.clientId,
-            status: m.status,
-          })),
-        );
       }
       setFormData((p) => ({ ...p, [key]: value }));
       setErrors((p) => {
@@ -527,7 +543,7 @@ export function ProductForm({
 
     setIsSaving(true);
     const errors: string[] = [];
-    
+
     try {
       // 1. Save product (CREATE or UPDATE)
       const payload: CreateProductRequest | UpdateProductRequest = {
@@ -547,10 +563,10 @@ export function ProductForm({
         space_ids: formData.space_ids,
       };
 
-      const result = await withRetry(
-        () => onSubmit(payload),
-        { maxRetries: 2, context: 'Lưu sản phẩm' }
-      );
+      const result = await withRetry(() => onSubmit(payload), {
+        maxRetries: 2,
+        context: "Lưu sản phẩm",
+      });
       const productId = product?.id ?? (result as any)?.id;
 
       if (!productId) throw new Error("Không lấy được product ID sau khi lưu");
@@ -565,23 +581,24 @@ export function ProductForm({
         const toDelete = originalMediaRef.current.filter(
           (m) => m.status === "done" && !currentIds.has(m.clientId),
         );
-        
+
         if (toDelete.length > 0) {
-          console.log(`🗑️ [API] Deleting ${toDelete.length} media items...`);
           const deleteResults = await Promise.all(
             toDelete.map(async (m) => {
               const result = await safeApiCall(
                 () => deleteMedia(m.clientId),
                 `Xóa media ${m.clientId}`,
-                { throwOnError: false }
+                { throwOnError: false },
               );
               return { id: m.clientId, ...result };
-            })
+            }),
           );
-          
-          const failedDeletes = deleteResults.filter(r => !r.success);
+
+          const failedDeletes = deleteResults.filter((r) => !r.success);
           if (failedDeletes.length > 0) {
-            console.warn(`⚠️ [API] Failed to delete ${failedDeletes.length} media items`);
+            console.warn(
+              `⚠️ [API] Failed to delete ${failedDeletes.length} media items`,
+            );
             errors.push(`Không thể xóa ${failedDeletes.length} file cũ`);
           }
         }
@@ -593,7 +610,6 @@ export function ProductForm({
       );
 
       if (pending.length > 0) {
-        console.log(`⬆️ [API] Uploading ${pending.length} files...`);
         const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
           setFormData((p) => ({
             ...p,
@@ -605,54 +621,63 @@ export function ProductForm({
         const uploadResults = await Promise.all(
           pending.map(async (item) => {
             if (!item.file) return { clientId: item.clientId, success: true };
-            
+
             updateStatus(item.clientId, { status: "uploading", progress: 0 });
-            
+
             try {
               // Upload with retry
               const fileUrl = await withRetry(
-                () => uploadMedia(
-                  productId,
-                  item.file!,
-                  item.media_type as any,
-                  (pct) => updateStatus(item.clientId, { progress: pct }),
-                ),
-                { maxRetries: 2, delayMs: 2000, context: `Upload ${item.file!.name}` }
+                () =>
+                  uploadMedia(
+                    productId,
+                    item.file!,
+                    item.media_type as any,
+                    (pct) => updateStatus(item.clientId, { progress: pct }),
+                  ),
+                {
+                  maxRetries: 2,
+                  delayMs: 2000,
+                  context: `Upload ${item.file!.name}`,
+                },
               );
-              
-              console.log(`✅ [API] Upload success: ${item.file!.name}`);
-              
+
               // Create media record with retry
-              const mediaRecord = await withRetry(
-                () => createMediaRecord({
-                  product_id: productId,
-                  file_url: fileUrl,
-                  file_type: item.file!.type,
-                  media_type: item.media_type,
-                  is_cover: item.is_cover,
-                  sort_order: item.sort_order,
-                  alt_text: item.alt_text,
-                }),
-                { maxRetries: 2, context: `Create media record for ${item.file!.name}` }
+              await withRetry(
+                () =>
+                  createMediaRecord({
+                    product_id: productId,
+                    file_url: fileUrl,
+                    file_type: item.file!.type,
+                    media_type: item.media_type,
+                    is_cover: item.is_cover,
+                    sort_order: item.sort_order,
+                    alt_text: item.alt_text,
+                  }),
+                {
+                  maxRetries: 2,
+                  context: `Create media record for ${item.file!.name}`,
+                },
               );
-              
-              console.log(`✅ [API] Media record created:`, mediaRecord.id);
+
               updateStatus(item.clientId, { status: "done", progress: 100 });
               return { clientId: item.clientId, success: true };
             } catch (err: any) {
               console.error(`❌ [API] Upload failed:`, err);
-              const msg = formatApiError(err, `Upload "${item.file!.name}" thất bại`);
+              const msg = formatApiError(
+                err,
+                `Upload "${item.file!.name}" thất bại`,
+              );
               updateStatus(item.clientId, { status: "error", error: msg });
               return { clientId: item.clientId, success: false, error: msg };
             }
           }),
         );
 
-        const failedUploads = uploadResults.filter(r => !r.success);
+        const failedUploads = uploadResults.filter((r) => !r.success);
         if (failedUploads.length > 0) {
           errors.push(`${failedUploads.length} file upload thất bại`);
         }
-        
+
         // Continue even if some uploads failed
         if (failedUploads.length === pending.length) {
           throw new Error("Tất cả file upload thất bại");
@@ -673,44 +698,47 @@ export function ProductForm({
           );
           return orig && orig.sort_order !== item.sort_order;
         });
-        
+
         if (doneItems.length > 0 && orderChanged) {
           const sortResult = await safeApiCall(
-            () => updateSortOrder(
-              productId,
-              doneItems.map((m) => ({
-                id: m.clientId,
-                sort_order: m.sort_order,
-              })),
-            ),
-            'Cập nhật thứ tự media',
-            { throwOnError: false }
+            () =>
+              updateSortOrder(
+                productId,
+                doneItems.map((m) => ({
+                  id: m.clientId,
+                  sort_order: m.sort_order,
+                })),
+              ),
+            "Cập nhật thứ tự media",
+            { throwOnError: false },
           );
-          
+
           if (!sortResult.success) {
-            console.warn(`⚠️ [API] Sort order update failed:`, sortResult.error);
+            console.warn(
+              `⚠️ [API] Sort order update failed:`,
+              sortResult.error,
+            );
           }
         }
       }
 
       // 5. SAVE internal info (always call to allow clearing fields)
-      console.log('[DEBUG] Saving internal data:', internalData);
-      console.log('[DEBUG] Product ID:', productId);
-      
+
       const internalResult = await safeApiCall(
         () => apiClient.patch(`/products/${productId}/internal`, internalData),
-        'Lưu thông tin nội bộ'
+        "Lưu thông tin nội bộ",
       );
-      
-      console.log('[DEBUG] Internal save result:', internalResult);
-      
+
       if (!internalResult.success) {
-        console.warn(`⚠️ [API] Internal info save failed:`, internalResult.error);
+        console.warn(
+          `⚠️ [API] Internal info save failed:`,
+          internalResult.error,
+        );
       }
 
       // Invalidate cache immediately for real-time effect
       invalidateProductMediaCache(productId);
-      
+
       // Broadcast product saved to other tabs
       if (productId && realtimeService) {
         realtimeService.broadcastProductSaved(productId, {
@@ -722,19 +750,18 @@ export function ProductForm({
 
       // Show success or partial success message
       if (errors.length > 0) {
-        setToast({ 
-          message: `✅ Sản phẩm đã lưu, nhưng: ${errors.join(', ')}`, 
-          type: "success" 
+        setToast({
+          message: `✅ Sản phẩm đã lưu, nhưng: ${errors.join(", ")}`,
+          type: "success",
         });
       } else {
         setToast({ message: "✅ Đã lưu sản phẩm thành công", type: "success" });
       }
-      
+
       // Redirect with cache buster to force fresh load
       setTimeout(() => {
         window.location.href = `/products/${productId}?_cb=${Date.now()}`;
       }, 800);
-      
     } catch (err: any) {
       const msg = formatApiError(err, "Lưu sản phẩm thất bại");
       console.error(`❌ [API] Submit error:`, err);

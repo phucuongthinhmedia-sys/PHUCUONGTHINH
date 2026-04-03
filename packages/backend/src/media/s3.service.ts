@@ -4,6 +4,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -69,6 +70,14 @@ export class S3Service {
   ): string {
     const sanitized = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
     return `products/${productId}/${mediaType}/${Date.now()}_${sanitized}`;
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+    await this.s3Client.send(command);
   }
 
   getPublicUrl(key: string): string {

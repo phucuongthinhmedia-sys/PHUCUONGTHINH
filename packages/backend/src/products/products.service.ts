@@ -398,12 +398,17 @@ export class ProductsService {
       );
     }
 
-    // Check if product has at least one media asset
-    const mediaCount = await this.prisma.media.count({
-      where: { product_id: id },
-    });
+    // Check if product has at least one media asset (from Media table or Document tags)
+    const [mediaCount, documentCount] = await Promise.all([
+      this.prisma.media.count({
+        where: { product_id: id },
+      }),
+      this.prisma.documentTag.count({
+        where: { entity_type: 'PRODUCT', entity_id: id },
+      }),
+    ]);
 
-    if (mediaCount === 0) {
+    if (mediaCount === 0 && documentCount === 0) {
       throw new BadRequestException(
         'Product must have at least one media asset before publishing',
       );
