@@ -97,8 +97,12 @@ export default function DocumentUploadModal({
       onSuccess();
       handleClose();
     } catch (err: any) {
-      console.error("[Upload] failed:", err);
-      setError(err.message || "Upload thất bại. Vui lòng thử lại sau.");
+      const detail = err?.response?.data;
+      console.error("[Upload] failed:", detail || err?.message || err);
+      const msg = Array.isArray(detail?.message)
+        ? detail.message.join(", ")
+        : detail?.message || err?.message || "Upload thất bại.";
+      setError(msg);
     } finally {
       setIsUploading(false);
     }

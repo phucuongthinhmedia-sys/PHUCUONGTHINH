@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UploadDocumentDto {
@@ -6,14 +6,14 @@ export class UploadDocumentDto {
   @IsNotEmpty()
   category_id: string;
 
-  @IsArray()
   @IsOptional()
   @Transform(({ value }) => {
+    if (!value || value === '') return undefined;
     if (typeof value === 'string') {
       try {
         return JSON.parse(value);
       } catch {
-        return [];
+        return undefined;
       }
     }
     return value;
