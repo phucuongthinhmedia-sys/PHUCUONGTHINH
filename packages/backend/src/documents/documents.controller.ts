@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
   Request,
   Response,
   HttpCode,
@@ -32,6 +34,13 @@ export class DocumentsController {
    */
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   async uploadDocument(
     @UploadedFile() file: Express.Multer.File,
     @Body('category_id') categoryId: string,
