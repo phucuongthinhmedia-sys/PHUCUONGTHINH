@@ -51,6 +51,14 @@ export default function DocumentsPage() {
         documentService.getDocuments(),
         documentService.getCategories(),
       ]);
+      console.log(
+        "[Documents] loaded:",
+        docs.length,
+        "docs,",
+        cats.length,
+        "categories",
+        cats,
+      );
       setDocuments(docs);
       setCategories(cats);
     } catch (error) {
