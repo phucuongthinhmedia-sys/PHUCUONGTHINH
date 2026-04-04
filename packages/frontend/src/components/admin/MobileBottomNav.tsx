@@ -13,7 +13,7 @@ import {
   ScanLine,
   FolderTree,
   Tags,
-  ImageIcon,
+  Calculator,
   FileText,
   Users,
   Eye,
@@ -25,7 +25,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const MORE_ITEMS = [
   { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
   { href: "/admin/tags", label: "Tags", icon: Tags },
-  { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/documents", label: "Chứng từ", icon: FileText },
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/products", label: "Xem như khách", icon: Eye, target: "_blank" },

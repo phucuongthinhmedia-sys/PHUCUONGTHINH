@@ -109,39 +109,39 @@ export function QRSection({
   productUrl: string;
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=56x56&data=${encodeURIComponent(productUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(productUrl)}`;
   const qrDownloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(productUrl)}`;
-  
+
   const handleDownload = async (e: React.MouseEvent) => {
     e.preventDefault();
     if (isDownloading) return;
-    
+
     setIsDownloading(true);
     try {
       // Fetch the image as blob to enable download
       const response = await fetch(qrDownloadUrl);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      
+
       // Create temporary link and trigger download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = blobUrl;
       link.download = `qr-${sku}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Cleanup
       URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      console.error('Failed to download QR:', err);
+      console.error("Failed to download QR:", err);
       // Fallback: open in new tab
-      window.open(qrDownloadUrl, '_blank');
+      window.open(qrDownloadUrl, "_blank");
     } finally {
       setIsDownloading(false);
     }
   };
-  
+
   return (
     <div className="flex flex-col items-center gap-1">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -444,9 +444,7 @@ function TBVSSpecs({ specs }: { specs: Record<string, any> }) {
           {installType && (
             <StatCard label="Kiểu lắp" value={fmt(installType)!} />
           )}
-          {roughIn && (
-            <StatCard label="K/cách lắp" value={fmt(roughIn)!} />
-          )}
+          {roughIn && <StatCard label="K/cách lắp" value={fmt(roughIn)!} />}
         </div>
       )}
 
@@ -575,25 +573,15 @@ function BepSpecs({ specs }: { specs: Record<string, any> }) {
       {/* Thông số chính */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 min-w-0">
         {sizeOverall && (
-          <StatCard
-            label="Kích thước phủ"
-            value={fmt(sizeOverall)!}
-            accent
-          />
+          <StatCard label="Kích thước phủ" value={fmt(sizeOverall)!} accent />
         )}
         {sizeCutout && (
-          <StatCard
-            label="Kích thước khoét"
-            value={fmt(sizeCutout)!}
-            accent
-          />
+          <StatCard label="Kích thước khoét" value={fmt(sizeCutout)!} accent />
         )}
         {burnerCount && (
           <StatCard label="Số vùng nấu" value={`${burnerCount} vùng`} />
         )}
-        {powerTotal && (
-          <StatCard label="Công suất" value={`${powerTotal} W`} />
-        )}
+        {powerTotal && <StatCard label="Công suất" value={`${powerTotal} W`} />}
       </div>
       {sizeCutout && (
         <p className="text-[10px] text-amber-600 px-1">

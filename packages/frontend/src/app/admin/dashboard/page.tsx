@@ -11,7 +11,7 @@ import {
   Package,
   FolderTree,
   FileText,
-  ImageIcon,
+  Calculator,
   Warehouse,
   Bell,
   Search,
@@ -52,13 +52,16 @@ const QUICK_ACTIONS = [
     border: "border-purple-100",
   },
   {
-    label: "Sản phẩm",
-    icon: Package,
-    href: "/admin/products",
-    bg: "bg-amber-50",
-    color: "text-amber-600",
-    border: "border-amber-100",
+    label: "Máy tính",
+    icon: Calculator,
+    href: "/calculator",
+    bg: "bg-orange-50",
+    color: "text-orange-600",
+    border: "border-orange-100",
   },
+];
+
+const SECONDARY_ACTIONS = [
   {
     label: "Danh mục",
     icon: FolderTree,
@@ -82,14 +85,6 @@ const QUICK_ACTIONS = [
     bg: "bg-teal-50",
     color: "text-teal-600",
     border: "border-teal-100",
-  },
-  {
-    label: "Media",
-    icon: ImageIcon,
-    href: "/admin/media",
-    bg: "bg-sky-50",
-    color: "text-sky-600",
-    border: "border-sky-100",
   },
 ];
 

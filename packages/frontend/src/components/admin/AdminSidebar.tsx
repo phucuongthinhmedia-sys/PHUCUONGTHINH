@@ -15,7 +15,7 @@ import {
   ScanLine,
   FolderTree,
   Tags,
-  ImageIcon,
+  Calculator,
   FileText,
   Users,
   LogOut,
@@ -32,7 +32,7 @@ const MAIN_NAV = [
   { href: "/admin/dashboard", label: "Trang chính", icon: Home },
   { href: "/admin/products", label: "Sản phẩm", icon: ShoppingBag },
   // index 2 = nút "+"  (handled separately)
-  { href: "/warehouse", label: "Kho hàng", icon: Warehouse },
+  { href: "/calculator", label: "Máy tính", icon: Calculator },
   // index 4 = nút "..." (handled separately)
 ];
 
@@ -40,9 +40,9 @@ const MAIN_NAV = [
 const MORE_ITEMS = [
   { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
   { href: "/admin/tags", label: "Tags", icon: Tags },
-  { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/documents", label: "Chứng từ", icon: FileText },
   { href: "/admin/leads", label: "Leads", icon: Users },
+  { href: "/warehouse", label: "Kho hàng", icon: Warehouse },
   { href: "/products", label: "Xem như khách", icon: Eye, target: "_blank" },
 ];
 
