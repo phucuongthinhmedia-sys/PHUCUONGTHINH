@@ -4,10 +4,10 @@ import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
-import { ProductMedia } from "@/types";
+import { Media } from "@/types";
 
 interface ProductImageGalleryProps {
-  images: ProductMedia[];
+  images: Media[];
   productName: string;
   stockBadge?: React.ReactNode;
   badges?: string[];
@@ -85,17 +85,19 @@ export function ProductImageGallery({
         </div>
 
         {/* Share button */}
-        <div
-          className="absolute top-2 sm:top-3 right-2 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <ShareButton
-            url={activeImage}
-            title={`${productName} - Ảnh sản phẩm`}
-            compact
-            className="bg-white/90 backdrop-blur-sm rounded-full shadow-md"
-          />
-        </div>
+        {activeImage && (
+          <div
+            className="absolute top-2 sm:top-3 right-2 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ShareButton
+              url={activeImage}
+              title={`${productName} - Ảnh sản phẩm`}
+              compact
+              className="bg-white/90 backdrop-blur-sm rounded-full shadow-md"
+            />
+          </div>
+        )}
 
         {/* Navigation arrows */}
         {images.length > 1 && (
