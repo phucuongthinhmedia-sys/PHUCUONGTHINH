@@ -7,8 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { productService, Product } from "@/lib/product-service";
 import {
   ImageIcon,
-  Eye,
-  EyeOff,
+  Globe, // Thay cho Eye
+  Archive, // Thay cho EyeOff
   Plus,
   Search,
   Copy,
@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   Circle,
   X,
-  MoreHorizontal,
 } from "lucide-react";
 
 // ── Thumbnail helper ──────────────────────────────────────────────────────────
@@ -63,13 +62,13 @@ function BulkActionBar({
           onClick={onPublish}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759]/20 rounded-[10px] text-[14px] font-semibold transition-colors active:scale-95"
         >
-          <Eye size={16} strokeWidth={2} /> Đăng
+          <Globe size={16} strokeWidth={2} /> Đăng lên
         </button>
         <button
           onClick={onUnpublish}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-[#8E8E93]/10 text-[#8E8E93] hover:bg-[#8E8E93]/20 rounded-[10px] text-[14px] font-semibold transition-colors active:scale-95"
         >
-          <EyeOff size={16} strokeWidth={2} /> Ẩn
+          <Archive size={16} strokeWidth={2} /> Lưu nháp
         </button>
         <button
           onClick={onDelete}
@@ -90,7 +89,7 @@ function BulkActionBar({
   );
 }
 
-// ── Desktop table (Kiểu macOS Finder) ─────────────────────────────────────────
+// ── Desktop table (Kiểu macOS) với Status Dot ──────────────────────────────────
 function DesktopTable({
   products,
   selected,
@@ -189,22 +188,29 @@ function DesktopTable({
                 <td className="px-4 py-3 text-[14px] text-[#8E8E93] font-mono">
                   {product.sku}
                 </td>
+
+                {/* MAC OS STATUS DOT */}
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onPublish(product.id, product.is_published)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold transition-transform active:scale-95 ${product.is_published ? "bg-[#34C759]/10 text-[#34C759] hover:bg-[#34C759]/20" : "bg-[#8E8E93]/10 text-[#8E8E93] hover:bg-[#8E8E93]/20"}`}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-[8px] hover:bg-[#F2F2F7] active:bg-[#E5E5EA] transition-colors"
                   >
-                    {product.is_published ? (
-                      <>
-                        <Eye size={14} strokeWidth={2} /> Đã đăng
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff size={14} strokeWidth={2} /> Nháp
-                      </>
-                    )}
+                    <span className="relative flex items-center justify-center w-2.5 h-2.5">
+                      {product.is_published && (
+                        <span className="absolute inline-flex w-full h-full rounded-full bg-[#34C759] opacity-40 blur-[2px]" />
+                      )}
+                      <span
+                        className={`relative inline-flex rounded-full w-2.5 h-2.5 ${product.is_published ? "bg-[#34C759]" : "bg-[#C7C7CC]"}`}
+                      />
+                    </span>
+                    <span
+                      className={`text-[13px] font-medium transition-colors ${product.is_published ? "text-black" : "text-[#8E8E93]"}`}
+                    >
+                      {product.is_published ? "Đang hiển thị" : "Bản nháp"}
+                    </span>
                   </button>
                 </td>
+
                 <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Link
@@ -236,7 +242,7 @@ function DesktopTable({
   );
 }
 
-// ── Mobile Card List (Tối giản + Long Press Context Menu) ──────────────────────
+// ── Mobile Card List với Công tắc iOS (Toggle Switch) ──────────────────────
 function MobileCardList({
   products,
   selected,
@@ -253,13 +259,12 @@ function MobileCardList({
   );
   const touchTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Logic nhấn giữ (Long Press)
   const handleTouchStart = (product: Product) => {
     if (isSelectionMode) return;
     touchTimer.current = setTimeout(() => {
-      if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback (Rung nhẹ)
+      if (navigator.vibrate) navigator.vibrate(50);
       setContextMenuProduct(product);
-    }, 400); // Đợi 400ms
+    }, 400);
   };
 
   const handleTouchEnd = () => {
@@ -276,7 +281,7 @@ function MobileCardList({
               key={product.id}
               onTouchStart={() => handleTouchStart(product)}
               onTouchEnd={handleTouchEnd}
-              onTouchMove={handleTouchEnd} // Hủy nếu người dùng đang cuộn trang
+              onTouchMove={handleTouchEnd}
               onClick={(e) => {
                 if (isSelectionMode) {
                   e.preventDefault();
@@ -289,7 +294,6 @@ function MobileCardList({
                 isSelected ? "bg-[#007AFF]/[0.05]" : "active:bg-[#F2F2F7]"
               } ${index !== products.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
             >
-              {/* Checkbox (Chỉ hiện khi ở chế độ chọn nhiều) */}
               <AnimatePresence>
                 {isSelectionMode && (
                   <motion.div
@@ -312,11 +316,9 @@ function MobileCardList({
                 )}
               </AnimatePresence>
 
-              {/* Thumbnail siêu sạch */}
               <ProductAvatar url={getCoverUrl(product)} />
 
-              {/* Thông tin */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-2">
                 <p className="text-[17px] font-semibold text-black leading-snug line-clamp-1">
                   {product.name}
                 </p>
@@ -325,23 +327,23 @@ function MobileCardList({
                 </p>
               </div>
 
-              {/* Icon Trạng thái */}
+              {/* CÔNG TẮC iOS (TOGGLE SWITCH) */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onPublish(product.id, product.is_published);
                 }}
-                className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform ${
-                  product.is_published
-                    ? "bg-[#34C759]/10 text-[#34C759]"
-                    : "bg-[#8E8E93]/10 text-[#8E8E93]"
+                className={`relative w-[44px] h-[24px] rounded-full transition-colors duration-300 ease-in-out shrink-0 outline-none ${
+                  product.is_published ? "bg-[#34C759]" : "bg-[#E5E5EA]"
                 }`}
               >
-                {product.is_published ? (
-                  <Eye size={18} strokeWidth={2} />
-                ) : (
-                  <EyeOff size={18} strokeWidth={2} />
-                )}
+                <div
+                  className={`absolute top-[2px] left-[2px] w-[20px] h-[20px] bg-white rounded-full shadow-[0_3px_8px_rgba(0,0,0,0.15),0_1px_1px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                    product.is_published
+                      ? "translate-x-[20px]"
+                      : "translate-x-0"
+                  }`}
+                />
               </button>
             </div>
           );
@@ -366,7 +368,6 @@ function MobileCardList({
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed bottom-0 inset-x-0 z-[70] bg-[#F2F2F7] rounded-t-[32px] p-5 pb-10 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]"
             >
-              {/* Preview nhỏ trên đỉnh Menu */}
               <div className="bg-white rounded-[20px] p-4 mb-4 flex items-center gap-4 shadow-sm">
                 <ProductAvatar url={getCoverUrl(contextMenuProduct)} />
                 <div className="flex-1 min-w-0">
@@ -379,7 +380,6 @@ function MobileCardList({
                 </div>
               </div>
 
-              {/* Các thao tác chức năng */}
               <div className="bg-white rounded-[20px] overflow-hidden flex flex-col shadow-sm">
                 <button
                   onClick={() => {
@@ -388,7 +388,7 @@ function MobileCardList({
                   }}
                   className="p-4 text-[17px] font-medium text-black border-b border-[#E5E5EA] active:bg-[#F2F2F7] flex items-center justify-between"
                 >
-                  Chỉnh sửa sản phẩm
+                  Chỉnh sửa sản phẩm{" "}
                   <Pencil size={20} className="text-[#8E8E93]" />
                 </button>
                 <button
@@ -398,7 +398,7 @@ function MobileCardList({
                   }}
                   className="p-4 text-[17px] font-medium text-black border-b border-[#E5E5EA] active:bg-[#F2F2F7] flex items-center justify-between"
                 >
-                  Nhân bản sản phẩm
+                  Nhân bản sản phẩm{" "}
                   <Copy size={20} className="text-[#8E8E93]" />
                 </button>
                 <button
@@ -409,12 +409,11 @@ function MobileCardList({
                   }}
                   className="p-4 text-[17px] font-medium text-black active:bg-[#F2F2F7] flex items-center justify-between"
                 >
-                  Chọn nhiều sản phẩm
+                  Chọn nhiều sản phẩm{" "}
                   <CheckCircle2 size={20} className="text-[#8E8E93]" />
                 </button>
               </div>
 
-              {/* Khu vực Xóa */}
               <div className="bg-white rounded-[20px] overflow-hidden mt-4 shadow-sm">
                 <button
                   onClick={() => {
@@ -444,7 +443,7 @@ export default function AdminProductsPage() {
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isBulkLoading, setIsBulkLoading] = useState(false);
-  const [isSelectionMode, setIsSelectionMode] = useState(false); // State quản lý chọn nhiều trên Mobile
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const limit = 20;
 
   const isLoadingRef = useRef(false);
@@ -611,9 +610,8 @@ export default function AdminProductsPage() {
   return (
     <div className="min-h-screen bg-[#F2F2F7] font-sans pb-24">
       <div className="p-5 md:p-8 max-w-[1400px] mx-auto">
-        {/* ── HEADER ĐỘNG (THAY ĐỔI THEO CHẾ ĐỘ CHỌN) ── */}
+        {/* ── HEADER ── */}
         <div className="flex items-center justify-between mb-6 h-12">
-          {/* Header Mobile khi đang Chọn Nhiều */}
           {isSelectionMode ? (
             <div className="w-full flex items-center justify-between md:hidden animate-in fade-in">
               <button
@@ -635,7 +633,6 @@ export default function AdminProductsPage() {
               </button>
             </div>
           ) : (
-            /* Header Chuẩn */
             <div className="w-full flex items-center justify-between animate-in fade-in">
               <div>
                 <h1 className="text-[34px] font-bold text-black tracking-tight leading-none mb-1">
@@ -655,7 +652,6 @@ export default function AdminProductsPage() {
           )}
         </div>
 
-        {/* Cảnh báo lỗi */}
         {error && (
           <div className="mb-6 p-4 bg-[#FF3B30]/10 rounded-[16px] text-[#FF3B30] text-[15px] font-medium flex items-center justify-between">
             <span>{error}</span>
@@ -668,7 +664,6 @@ export default function AdminProductsPage() {
           </div>
         )}
 
-        {/* Thanh thao tác nhanh (Chỉ hiện khi có item được chọn) */}
         {selected.size > 0 && (
           <BulkActionBar
             count={selected.size}
@@ -679,7 +674,6 @@ export default function AdminProductsPage() {
           />
         )}
 
-        {/* Thanh Tìm kiếm */}
         <div className="relative mb-6">
           <Search
             size={18}
@@ -698,7 +692,6 @@ export default function AdminProductsPage() {
           />
         </div>
 
-        {/* Nội dung List Sản phẩm */}
         {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-10 h-10 border-4 border-[#007AFF]/20 border-t-[#007AFF] rounded-full animate-spin" />
@@ -718,7 +711,6 @@ export default function AdminProductsPage() {
                 : "transition-opacity"
             }
           >
-            {/* ── MOBILE: List tối giản có Long Press Context Menu ── */}
             <div className="md:hidden">
               <MobileCardList
                 products={products}
@@ -731,8 +723,6 @@ export default function AdminProductsPage() {
                 setIsSelectionMode={setIsSelectionMode}
               />
             </div>
-
-            {/* ── DESKTOP: Bảng tính truyền thống ── */}
             <div className="hidden md:block">
               <DesktopTable
                 products={products}
@@ -747,7 +737,6 @@ export default function AdminProductsPage() {
           </div>
         )}
 
-        {/* Phân trang */}
         {totalPages > 1 && (
           <div className="mt-8 flex items-center justify-between text-[15px]">
             <span className="text-[#8E8E93] font-medium">
