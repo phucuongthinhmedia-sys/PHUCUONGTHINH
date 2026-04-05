@@ -13,7 +13,7 @@ import {
   Copy,
   Trash2,
   Pencil,
-  SlidersHorizontal
+  SlidersHorizontal,
 } from "lucide-react";
 import { FilterTabs } from "@/components/FilterTabs";
 import { InspirationFilters } from "@/components/InspirationFilters";
@@ -25,7 +25,9 @@ import { Product, Style, Space, FilterState } from "@/types";
 import { useAuth } from "@repo/shared-utils";
 
 // Định nghĩa mở rộng FilterState để sử dụng type checking an toàn cho property 'published'
-type ExtendedFilterState = FilterState & { published?: "all" | "true" | "false" };
+type ExtendedFilterState = FilterState & {
+  published?: "all" | "true" | "false";
+};
 
 // ─── ADMIN TABLE (inline) ────────────────────────────────────────────────────
 function AdminProductRow({
@@ -104,7 +106,10 @@ export default function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Áp dụng kiểu ExtendedFilterState
-  const [filters, setFilters] = useState<ExtendedFilterState>({ page: 1, limit: 20 });
+  const [filters, setFilters] = useState<ExtendedFilterState>({
+    page: 1,
+    limit: 20,
+  });
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedSpaces, setSelectedSpaces] = useState<string[]>([]);
   const [technicalSpecs, setTechnicalSpecs] = useState<Record<string, any>>({});
@@ -112,7 +117,7 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  
+
   // FIX: Thêm totalItems state cho logic phân trang đúng chuẩn
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -149,7 +154,7 @@ export default function ProductsPage() {
       setStyles(response.available_filters?.inspiration?.styles || []);
       setSpaces(response.available_filters?.inspiration?.spaces || []);
       setTotalPages(response.pagination?.total_pages || 1);
-      
+
       // FIX: Cập nhật tổng items từ API trả về
       setTotalItems(response.pagination?.total_items || 0);
     } catch (err) {
@@ -722,17 +727,17 @@ export default function ProductsPage() {
           <p className="text-xs md:text-sm font-medium text-gray-600">
             Hiển thị{" "}
             <span className="font-bold text-gray-900">
-              {totalItems > 0 ? (filters.page! - 1) * (filters.limit || 20) + 1 : 0}
+              {totalItems > 0
+                ? (filters.page! - 1) * (filters.limit || 20) + 1
+                : 0}
             </span>{" "}
             -{" "}
             <span className="font-bold text-gray-900">
               {Math.min(filters.page! * (filters.limit || 20), totalItems)}
             </span>{" "}
             trên tổng số{" "}
-            <span className="text-emerald-600 font-black">
-              {totalItems}
-            </span>{" "}
-            mã hàng
+            <span className="text-emerald-600 font-black">{totalItems}</span> mã
+            hàng
           </p>
         </div>
 

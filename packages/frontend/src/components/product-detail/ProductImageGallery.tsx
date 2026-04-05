@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
+import { ProductQRCode } from "./ProductQRCode";
 import { Media } from "@/types";
 
 interface ProductImageGalleryProps {
   images: Media[];
   productName: string;
+  productSku?: string;
+  productUrl?: string;
   stockBadge?: React.ReactNode;
   badges?: string[];
   onImageClick: (url: string) => void;
@@ -26,6 +29,8 @@ function optimizeCloudinaryUrl(url: string, width?: number): string {
 export function ProductImageGallery({
   images,
   productName,
+  productSku,
+  productUrl,
   stockBadge,
   badges,
   onImageClick,
@@ -107,10 +112,21 @@ export function ProductImageGallery({
             ))}
           </div>
 
+          {/* QR Code - Góc phải trên */}
+          {productSku && productUrl && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <ProductQRCode
+                sku={productSku}
+                productUrl={productUrl}
+                productName={productName}
+              />
+            </div>
+          )}
+
           {/* Nút Share - Kính phủ sương */}
           {activeImage && (
             <div
-              className="absolute top-3 sm:top-4 right-3 sm:right-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"
               onClick={(e) => e.stopPropagation()}
             >
               <ShareButton

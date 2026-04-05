@@ -39,11 +39,18 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const isProductsPage =
+    pathname === "/products" ||
+    pathname.startsWith("/products/") ||
+    pathname.startsWith("/p/");
+
   // Khách chưa đăng nhập: layout bình thường
   return (
     <>
       <Header />
-      {children}
+      <div className={isProductsPage ? "pt-[52px] sm:pt-0" : ""}>
+        {children}
+      </div>
       <Footer />
     </>
   );

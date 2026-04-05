@@ -22,174 +22,128 @@ import {
   X,
   ChevronRight,
   Eye,
+  ChevronDown,
+  CheckCircle2,
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ─── 5 MAIN NAV ITEMS ───
+// ─── NAV ITEMS ───
 const MAIN_NAV = [
   { href: "/admin/dashboard", label: "Trang chính", icon: Home },
   { href: "/admin/products", label: "Sản phẩm", icon: ShoppingBag },
   { href: "/calculator", label: "Máy tính", icon: Calculator },
 ];
 
-// ─── MORE MENU ITEMS ───
+const PLUS_ITEMS = [
+  { href: "/admin/orders/new", label: "Thêm đơn hàng", icon: ShoppingCart },
+  { href: "/admin/leads/new", label: "Thêm khách", icon: UserPlus },
+  { href: "/admin/scan", label: "Quét mã QR", icon: ScanLine },
+];
+
 const MORE_ITEMS = [
   { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
   { href: "/admin/tags", label: "Tags", icon: Tags },
   { href: "/admin/documents", label: "Chứng từ", icon: FileText },
-  { href: "/admin/leads", label: "Leads", icon: Users },
+  { href: "/admin/leads", label: "Khách hàng", icon: Users },
   { href: "/warehouse", label: "Kho hàng", icon: Warehouse },
   { href: "/products", label: "Xem như khách", icon: Eye, target: "_blank" },
 ];
 
-function NavItem({
-  item,
-  isActive,
-  onClick,
-}: {
-  item: {
-    href: string;
-    label: string;
-    icon: React.ElementType;
-    target?: string;
-  };
-  isActive: boolean;
-  onClick?: () => void;
-}) {
+// ─── COMPONENT: ITEM ĐƠN LẺ ───
+function NavItem({ item, isActive, onClick, isSubItem = false }: any) {
   const Icon = item.icon;
   return (
     <Link
       href={item.href}
       target={item.target}
       onClick={onClick}
-      className={`flex items-center gap-3 px-3.5 py-3 rounded-[14px] text-[15px] font-bold transition-all duration-300 group relative overflow-hidden active:scale-[0.98] ${
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[15px] transition-colors cursor-pointer active:scale-[0.98] ${
         isActive
-          ? "text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-          : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
-      }`}
+          ? "bg-[#007AFF] text-white font-semibold shadow-[0_2px_8px_rgba(0,122,255,0.25)]"
+          : "text-black hover:bg-[#E5E5EA]/70 font-medium"
+      } ${isSubItem ? "ml-7 pl-3" : ""}`}
     >
-      {isActive && (
-        <motion.div
-          layoutId="activeNavSidebar"
-          className="absolute inset-0 bg-gray-900 rounded-[14px]"
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        />
-      )}
       <Icon
-        size={20}
-        strokeWidth={2.5}
-        className={`relative z-10 transition-all duration-300 ${
-          isActive
-            ? "text-white scale-105"
-            : "text-gray-500 group-hover:text-gray-900"
-        }`}
+        size={isSubItem ? 18 : 20}
+        strokeWidth={isActive ? 2.5 : 2}
+        className={isActive ? "text-white" : "text-[#8E8E93]"}
       />
-      <span className="relative z-10 flex-1 tracking-tight">{item.label}</span>
-      {isActive && (
-        <ChevronRight
-          size={16}
-          strokeWidth={2.5}
-          className="relative z-10 text-white/50"
-        />
-      )}
+      <span className="flex-1 tracking-tight">{item.label}</span>
     </Link>
   );
 }
 
-// ─── PLUS POPUP (Apple Frosted Glass) ───
-function PlusMenu({ onClose }: { onClose: () => void }) {
-  const menuItems = [
-    { icon: ShoppingCart, label: "Thêm đơn hàng", href: "/admin/orders/new" },
-    { icon: UserPlus, label: "Thêm khách", href: "/admin/leads/new" },
-    { icon: ScanLine, label: "Quét mã QR", href: "/admin/scan" },
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -10, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-      className="absolute left-full top-0 ml-4 z-50 bg-white/80 backdrop-blur-[32px] saturate-[1.8] rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-white/60 p-2.5 w-[220px] overflow-hidden"
-    >
-      <div className="px-3 py-2 border-b border-black/5 mb-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-          Thêm mới nhanh
-        </span>
-      </div>
-      {menuItems.map((item) => (
-        <Link
-          key={item.label}
-          href={item.href}
-          onClick={onClose}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-[12px] text-[14px] font-bold text-gray-700 hover:bg-black/5 hover:text-gray-900 transition-all active:scale-95"
-        >
-          <div className="w-8 h-8 rounded-[10px] bg-black/5 flex items-center justify-center">
-            <item.icon size={16} strokeWidth={2.5} className="text-gray-900" />
-          </div>
-          {item.label}
-        </Link>
-      ))}
-    </motion.div>
-  );
-}
-
-// ─── MORE POPUP (Apple Frosted Glass) ───
-function MoreMenu({
+// ─── COMPONENT: MENU XỔ XUỐNG (ACCORDION) ───
+function AccordionNav({
+  icon: Icon,
+  label,
+  items,
+  isOpen,
+  onToggle,
   onClose,
-  onNavClose,
-}: {
-  onClose: () => void;
-  onNavClose?: () => void;
-}) {
-  const pathname = usePathname();
+  pathname,
+}: any) {
+  // Kiểm tra xem có item con nào đang active không
+  const hasActiveChild = items.some(
+    (item: any) =>
+      pathname === item.href || pathname.startsWith(item.href + "/"),
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -10, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-      className="absolute left-full top-0 ml-4 z-50 bg-white/80 backdrop-blur-[32px] saturate-[1.8] rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-white/60 p-2.5 w-[220px] max-h-[70vh] overflow-y-auto"
-    >
-      <div className="px-3 py-2 border-b border-black/5 mb-2">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
-          Mở rộng
-        </span>
-      </div>
-      {MORE_ITEMS.map((item) => {
-        const Icon = item.icon;
-        const active =
-          pathname === item.href || pathname.startsWith(item.href + "/");
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            target={item.target}
-            onClick={() => {
-              onClose();
-              onNavClose?.();
-            }}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-[12px] text-[14px] font-bold transition-all active:scale-95 ${
-              active
-                ? "bg-black/5 text-gray-900"
-                : "text-gray-700 hover:bg-black/5 hover:text-gray-900"
-            }`}
+    <div className="flex flex-col">
+      <button
+        onClick={onToggle}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[15px] font-medium transition-colors cursor-pointer active:scale-[0.98] ${
+          isOpen
+            ? "bg-[#E5E5EA]/50 text-black"
+            : "text-black hover:bg-[#E5E5EA]/70"
+        }`}
+      >
+        <Icon
+          size={20}
+          strokeWidth={2}
+          className={
+            hasActiveChild && !isOpen ? "text-[#007AFF]" : "text-[#8E8E93]"
+          }
+        />
+        <span className="flex-1 tracking-tight text-left">{label}</span>
+        <ChevronDown
+          size={16}
+          className={`text-[#8E8E93] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {/* Hiệu ứng trượt xuống mượt mà của Apple */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            className="overflow-hidden"
           >
-            <div
-              className={`w-8 h-8 rounded-[10px] flex items-center justify-center ${active ? "bg-white shadow-sm" : "bg-black/5"}`}
-            >
-              <Icon
-                size={16}
-                strokeWidth={2.5}
-                className={active ? "text-gray-900" : "text-gray-600"}
-              />
+            <div className="flex flex-col gap-1 mt-1 relative">
+              {/* Đường line mờ dọc theo các item con */}
+              <div className="absolute left-[21px] top-2 bottom-2 w-[1.5px] bg-[#E5E5EA] rounded-full" />
+              {items.map((item: any) => (
+                <NavItem
+                  key={item.href}
+                  item={item}
+                  isSubItem={true}
+                  isActive={
+                    pathname === item.href ||
+                    pathname.startsWith(item.href + "/")
+                  }
+                  onClick={onClose}
+                />
+              ))}
             </div>
-            {item.label}
-          </Link>
-        );
-      })}
-    </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -198,8 +152,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [plusOpen, setPlusOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+
+  // Quản lý state mở/đóng của các Accordion
+  const [openSection, setOpenSection] = useState<"plus" | "more" | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -211,42 +166,45 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="h-full w-64 bg-[#F5F5F7] flex flex-col border-r border-black/5 shadow-[20px_0_60px_rgba(0,0,0,0.02)]">
-      {/* Logo */}
-      <div className="px-6 py-6 shrink-0 flex items-center justify-between">
+    <aside className="h-full w-64 bg-[#F2F2F7] flex flex-col border-r border-[#E5E5EA] font-sans">
+      {/* Logo Area */}
+      <div className="px-5 py-6 shrink-0 flex items-center justify-between">
         <Link
           href="/"
           onClick={onClose}
-          className="flex items-center gap-3 group active:scale-95 transition-transform"
+          className="flex items-center gap-3 active:scale-95 transition-transform"
         >
-          <div className="w-10 h-10 rounded-[12px] bg-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center justify-center overflow-hidden">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              className="object-contain w-full h-full p-1.5 filter grayscale invert group-hover:scale-110 transition-transform duration-500"
-            />
+          <div className="w-10 h-10 rounded-[10px] bg-black shadow-[0_2px_8px_rgba(0,0,0,0.1)] flex items-center justify-center overflow-hidden">
+            {/* Nếu có logo thật hãy dùng <img />, ở đây dùng Icon chữ tạm */}
+            <span className="text-white font-bold text-[18px]">PC</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-black text-[14px] uppercase tracking-tight text-gray-900 leading-none">
+            <span className="font-semibold text-[15px] tracking-tight text-black leading-tight">
               Phú Cường
             </span>
-            <span className="font-bold text-[12px] uppercase tracking-widest text-gray-500 leading-tight">
-              Thịnh
+            <span className="font-medium text-[13px] tracking-wide text-[#8E8E93] leading-tight uppercase">
+              Thịnh CMS
             </span>
           </div>
         </Link>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-900 bg-black/5 hover:bg-black/10 p-2 rounded-full transition-all active:scale-90"
+            className="text-[#8E8E93] hover:text-black bg-[#E5E5EA]/50 hover:bg-[#E5E5EA] p-2 rounded-full transition-colors active:scale-90"
           >
-            <X size={18} strokeWidth={2.5} />
+            <X size={18} strokeWidth={2} />
           </button>
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 no-scrollbar">
+      {/* Navigation List */}
+      <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 no-scrollbar">
+        <div className="px-3 mb-2 mt-2">
+          <span className="text-[12px] font-semibold uppercase tracking-wider text-[#8E8E93]">
+            Hệ thống
+          </span>
+        </div>
+
         <NavItem
           item={MAIN_NAV[0]}
           isActive={isActive(MAIN_NAV[0].href)}
@@ -257,101 +215,68 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           isActive={isActive(MAIN_NAV[1].href)}
           onClick={onClose}
         />
-
-        {/* Nút + */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setPlusOpen((v) => !v);
-              setMoreOpen(false);
-            }}
-            className={`flex items-center gap-3 w-full px-3.5 py-3 rounded-[14px] text-[15px] font-bold transition-all duration-300 active:scale-[0.98] ${
-              plusOpen
-                ? "bg-gray-900 text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-                : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
-            }`}
-          >
-            <div
-              className={`w-7 h-7 rounded-[8px] flex items-center justify-center transition-all ${plusOpen ? "bg-white/20" : "bg-black/5"}`}
-            >
-              <Plus
-                size={18}
-                strokeWidth={2.5}
-                className={plusOpen ? "text-white" : "text-gray-700"}
-              />
-            </div>
-            <span className="flex-1 tracking-tight text-left">Thêm mới</span>
-          </button>
-          <AnimatePresence>
-            {plusOpen && <PlusMenu onClose={() => setPlusOpen(false)} />}
-          </AnimatePresence>
-        </div>
-
         <NavItem
           item={MAIN_NAV[2]}
           isActive={isActive(MAIN_NAV[2].href)}
           onClick={onClose}
         />
 
-        {/* Nút ... */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setMoreOpen((v) => !v);
-              setPlusOpen(false);
-            }}
-            className={`flex items-center gap-3 w-full px-3.5 py-3 rounded-[14px] text-[15px] font-bold transition-all duration-300 active:scale-[0.98] ${
-              moreOpen
-                ? "bg-gray-900 text-white shadow-[0_4px_16px_rgba(0,0,0,0.15)]"
-                : "text-gray-600 hover:bg-black/5 hover:text-gray-900"
-            }`}
-          >
-            <div
-              className={`w-7 h-7 rounded-[8px] flex items-center justify-center transition-all ${moreOpen ? "bg-white/20" : "bg-black/5"}`}
-            >
-              <MoreHorizontal
-                size={18}
-                strokeWidth={2.5}
-                className={moreOpen ? "text-white" : "text-gray-700"}
-              />
-            </div>
-            <span className="flex-1 tracking-tight text-left">Thêm</span>
-          </button>
-          <AnimatePresence>
-            {moreOpen && (
-              <MoreMenu
-                onClose={() => setMoreOpen(false)}
-                onNavClose={onClose}
-              />
-            )}
-          </AnimatePresence>
+        <div className="mt-4 mb-2 px-3 pt-4 border-t border-[#E5E5EA]">
+          <span className="text-[12px] font-semibold uppercase tracking-wider text-[#8E8E93]">
+            Tiện ích
+          </span>
         </div>
+
+        {/* Nút Thêm mới - Accordion */}
+        <AccordionNav
+          icon={Plus}
+          label="Thêm mới"
+          items={PLUS_ITEMS}
+          isOpen={openSection === "plus"}
+          onToggle={() =>
+            setOpenSection(openSection === "plus" ? null : "plus")
+          }
+          onClose={onClose}
+          pathname={pathname}
+        />
+
+        {/* Nút Mở rộng - Accordion */}
+        <AccordionNav
+          icon={MoreHorizontal}
+          label="Mở rộng"
+          items={MORE_ITEMS}
+          isOpen={openSection === "more"}
+          onToggle={() =>
+            setOpenSection(openSection === "more" ? null : "more")
+          }
+          onClose={onClose}
+          pathname={pathname}
+        />
       </nav>
 
-      {/* Footer Profile */}
+      {/* Footer Profile - Chuẩn thẻ Settings iOS */}
       <div className="p-4 shrink-0">
-        <div className="bg-white rounded-[20px] p-3 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-2">
-          <div className="flex items-center gap-3 px-2 py-1">
-            <div className="w-9 h-9 rounded-full bg-gray-900 flex items-center justify-center shrink-0 shadow-sm">
-              <span className="text-white text-sm font-black uppercase">
+        <div className="bg-white rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.05)] border border-[#E5E5EA] overflow-hidden">
+          <div className="flex items-center gap-3 p-3 border-b border-[#E5E5EA]">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center shrink-0">
+              <span className="text-white text-[16px] font-semibold uppercase">
                 {user?.email?.[0] ?? "A"}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-gray-900 text-[14px] font-bold truncate tracking-tight">
-                {user?.email}
+              <p className="text-[14px] font-semibold text-black truncate tracking-tight">
+                {user?.email?.split("@")[0] || "Admin User"}
               </p>
-              <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider">
-                {user?.role ?? "admin"}
+              <p className="text-[12px] font-medium text-[#8E8E93] uppercase">
+                {user?.role ?? "Quản trị viên"}
               </p>
             </div>
           </div>
-          <div className="h-px w-full bg-gray-100" />
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-[12px] text-[13px] font-bold text-red-600 hover:bg-red-50 hover:text-red-700 active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-2 px-3 py-3 text-[14px] font-medium text-[#FF3B30] hover:bg-[#FF3B30]/10 transition-colors active:bg-[#FF3B30]/20"
           >
-            <LogOut size={16} strokeWidth={2.5} />
+            <LogOut size={16} strokeWidth={2} />
             Đăng xuất
           </button>
         </div>
@@ -380,10 +305,10 @@ export function MobileSidebarDrawer({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/20 backdrop-blur-md z-40 lg:hidden animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300"
         onClick={onClose}
       />
-      <div className="fixed top-0 left-0 h-full z-50 lg:hidden shadow-2xl animate-in slide-in-from-left duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
+      <div className="fixed top-0 left-0 h-full z-50 lg:hidden shadow-[20px_0_40px_rgba(0,0,0,0.2)] animate-in slide-in-from-left duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]">
         <SidebarContent onClose={onClose} />
       </div>
     </>

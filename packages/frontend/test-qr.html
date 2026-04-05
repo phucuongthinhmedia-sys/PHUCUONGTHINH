@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test QR Code - Phú Cường Thịnh</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #0a192f;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+
+      p {
+        color: #666;
+        margin-bottom: 30px;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        color: #0a192f;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 16px;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      #qr-result {
+        margin-top: 30px;
+        padding: 30px;
+        background: #f9fafb;
+        border-radius: 16px;
+        text-align: center;
+        display: none;
+      }
+
+      #qr-result.show {
+        display: block;
+      }
+
+      #qrcode {
+        display: inline-block;
+        padding: 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .sku-label {
+        margin-top: 15px;
+        font-family: "Courier New", monospace;
+        font-weight: bold;
+        color: #0a192f;
+        font-size: 18px;
+      }
+
+      .download-btn {
+        margin-top: 20px;
+        background: #10b981;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      .url-display {
+        margin-top: 15px;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #666;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎨 Test QR Code Generator</h1>
+      <p>Tạo mã QR cho sản phẩm Phú Cường Thịnh</p>
+
+      <div class="input-group">
+        <label for="sku">Mã SKU sản phẩm:</label>
+        <input
+          type="text"
+          id="sku"
+          placeholder="Ví dụ: GACH-WALL-004"
+          value="GACH-WALL-004"
+        />
+      </div>
+
+      <button onclick="generateQR()">Tạo mã QR</button>
+
+      <div id="qr-result">
+        <div id="qrcode"></div>
+        <div class="sku-label" id="sku-display"></div>
+        <div class="url-display" id="url-display"></div>
+        <button class="download-btn" onclick="downloadQR()">
+          📥 Tải xuống QR Code
+        </button>
+      </div>
+    </div>
+
+    <script>
+      let currentQR = null;
+      let currentSKU = "";
+      let currentURL = "";
+
+      function generateQR() {
+        const sku = document.getElementById("sku").value.trim();
+
+        if (!sku) {
+          alert("Vui lòng nhập mã SKU!");
+          return;
+        }
+
+        currentSKU = sku;
+        currentURL = `https://phucuongthinh.net/p/${sku}`;
+
+        // Clear previous QR
+        const qrcodeDiv = document.getElementById("qrcode");
+        qrcodeDiv.innerHTML = "";
+
+        // Generate new QR
+        currentQR = new QRCode(qrcodeDiv, {
+          text: currentURL,
+          width: 256,
+          height: 256,
+          colorDark: "#0a192f",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        // Update display
+        document.getElementById("sku-display").textContent = sku;
+        document.getElementById("url-display").textContent = currentURL;
+        document.getElementById("qr-result").classList.add("show");
+      }
+
+      function downloadQR() {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Canvas size
+        const qrSize = 400;
+        const padding = 40;
+        const textHeight = 60;
+        canvas.width = qrSize + padding * 2;
+        canvas.height = qrSize + padding * 2 + textHeight;
+
+        // White background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Get QR image
+        const qrImg = document.querySelector("#qrcode img");
+        if (!qrImg) {
+          alert("Vui lòng tạo mã QR trước!");
+          return;
+        }
+
+        // Draw QR
+        ctx.drawImage(qrImg, padding, padding, qrSize, qrSize);
+
+        // Draw SKU text
+        ctx.fillStyle = "#0a192f";
+        ctx.font = "bold 32px system-ui, -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          currentSKU,
+          canvas.width / 2,
+          qrSize + padding + textHeight / 2,
+        );
+
+        // Download
+        const link = document.createElement("a");
+        link.download = `QR-${currentSKU}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }
+
+      // Generate on Enter key
+      document.getElementById("sku").addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          generateQR();
+        }
+      });
+
+      // Auto-generate on load
+      window.addEventListener("load", function () {
+        generateQR();
+      });
+    </script>
+  </body>
+</html>

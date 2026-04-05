@@ -21,12 +21,20 @@ import { authService } from "@/lib/auth-service";
 import { useQuoteCart } from "@/lib/wishlist-context";
 import { LeadNotificationBadge } from "@/components/admin/LeadNotificationBadge";
 
+// Mảng đầy đủ (Dùng khi chưa cuộn)
 const navLinks = [
   { href: "/thiet-ke", label: "Thiết kế" },
   { href: "/thi-cong", label: "Thi công" },
   { href: "/du-an", label: "Dự án" },
   { href: "/ve-chung-toi", label: "Về chúng tôi" },
   { href: "/lien-he", label: "Liên hệ" },
+];
+
+// Mảng rút gọn (Dùng khi đã cuộn)
+const compactNavLinks = [
+  { href: "/thiet-ke", label: "Thiết kế" },
+  { href: "/thi-cong", label: "Thi công" },
+  { href: "/du-an", label: "Dự án" },
 ];
 
 export function Header() {
@@ -58,12 +66,6 @@ export function Header() {
     logout();
     authService.logout();
   };
-
-  const compactNavLinks = [
-    { href: "/thiet-ke", label: "Thiết kế" },
-    { href: "/thi-cong", label: "Thi công" },
-    { href: "/du-an", label: "Dự án" },
-  ];
 
   // Màu chữ: Trắng khi chưa cuộn, Đen xám khi đã cuộn (Chuẩn iOS Monochrome)
   const textColor = isScrolled ? "#111827" : "#FFFFFF";
@@ -142,7 +144,7 @@ export function Header() {
               </button>
               {compactMenuOpen && (
                 <div className="absolute top-full left-0 mt-3 bg-white/60 backdrop-blur-[24px] saturate-[1.8] border border-white/60 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] py-2 min-w-[140px] sm:min-w-[160px] z-10 overflow-hidden">
-                  {compactNavLinks.map(({ href, label }) => (
+                  {navLinks.map(({ href, label }) => (
                     <Link
                       key={href}
                       href={href}
@@ -202,6 +204,9 @@ export function Header() {
   }
 
   // =================== TRANG CHỦ & CÁC TRANG KHÁC ===================
+  // Lựa chọn mảng link dựa vào trạng thái cuộn
+  const currentNavLinks = isScrolled ? compactNavLinks : navLinks;
+
   return (
     <>
       {isAuthenticated && (
@@ -243,7 +248,7 @@ export function Header() {
       <div
         className={`fixed z-40 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isAuthenticated ? "top-8" : "top-2 sm:top-4"} ${
           isScrolled
-            ? "left-1/2 -translate-x-1/2 w-[95%] max-w-[900px]"
+            ? "left-1/2 -translate-x-1/2 w-[98%] max-w-[1200px]" // Không gian rộng rãi, không bị thắt cổ chai
             : "left-0 right-0 px-2 sm:px-4 w-full"
         }`}
       >
@@ -254,8 +259,8 @@ export function Header() {
               : "bg-transparent backdrop-blur-sm border border-transparent rounded-2xl h-[60px] sm:h-[80px] px-2 sm:px-6"
           }`}
         >
-          {/* CỘT TRÁI: LOGO ĐÃ ĐƯỢC RESPONSIVE SIÊU NHỎ CHO MOBILE */}
-          <div className="flex shrink-0 items-center lg:w-[200px]">
+          {/* CỘT TRÁI: LOGO */}
+          <div className="flex-1 flex justify-start items-center">
             <Link
               href="/"
               className="flex items-center active:scale-95 transition-transform duration-200"
@@ -263,64 +268,51 @@ export function Header() {
               <img
                 src={isScrolled ? "/dacuon.png" : "/chuacuon.png"}
                 alt="Logo"
-                className={`object-contain transition-all duration-500 w-auto ${
+                className={`object-contain transition-all duration-500 ${
                   isScrolled
-                    ? "h-[22px] min-[380px]:h-[26px] sm:h-[30px]" // Siêu gọn trên mobile khi cuộn
-                    : "h-[32px] min-[380px]:h-[36px] sm:h-[48px] lg:h-[56px]" // Cân đối, không bị vỡ layout trên mobile khi nhả cuộn
+                    ? "h-[16px] w-[50px] sm:h-[26px] sm:w-auto"
+                    : "h-[20px] w-[60px] sm:h-[40px] sm:w-auto lg:h-[56px]"
                 }`}
               />
             </Link>
           </div>
 
           {/* CỘT GIỮA: NAV LINKS */}
-          <div className="flex-1 flex justify-center items-center overflow-hidden px-1 sm:px-2">
-            {!isScrolled && (
-              <nav className="hidden lg:flex items-center justify-center gap-1 opacity-100 transition-opacity duration-300">
-                <div className="group/products h-full flex items-center">
-                  <Link
-                    href="/products"
-                    style={{ color: textColor }}
-                    className="group relative flex items-center gap-1 px-4 py-2 text-[14px] font-bold transition-opacity hover:opacity-70 whitespace-nowrap"
-                  >
-                    Sản phẩm{" "}
-                    <ChevronDown
-                      size={16}
-                      strokeWidth={2.5}
-                      className="mt-px group-hover/products:rotate-180 transition-transform duration-200"
-                    />
-                  </Link>
-                  <MegaMenu />
-                </div>
-                {navLinks.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    style={{ color: textColor }}
-                    className="group relative flex items-center gap-0.5 px-4 py-2 text-[14px] font-bold transition-opacity hover:opacity-70 whitespace-nowrap"
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+          <div className="flex-none flex justify-center items-center px-1">
+            <nav className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 opacity-100 transition-opacity duration-300">
+              {/* Nút Sản phẩm (Luôn hiển thị) */}
+              <div className="group/products h-full flex items-center">
+                <Link
+                  href="/products"
+                  style={{ color: textColor }}
+                  className={`group relative flex items-center gap-1 px-2 py-2 font-bold transition-all hover:opacity-70 whitespace-nowrap ${isScrolled ? "text-[13px]" : "text-[14px]"}`}
+                >
+                  Sản phẩm{" "}
+                  <ChevronDown
+                    size={isScrolled ? 14 : 16}
+                    strokeWidth={2.5}
+                    className="mt-px group-hover/products:rotate-180 transition-transform duration-200"
+                  />
+                </Link>
+                <MegaMenu />
+              </div>
 
-            {isScrolled && (
-              <nav className="hidden lg:flex items-center gap-5 opacity-100 transition-opacity duration-300">
-                {compactNavLinks.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="text-[13px] font-bold text-gray-900 hover:opacity-70 active:scale-95 transition-all whitespace-nowrap"
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+              {/* Các menu khác (Động: 5 mục khi chưa cuộn, 3 mục khi cuộn) */}
+              {currentNavLinks.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  style={{ color: textColor }}
+                  className={`group relative flex items-center gap-0.5 px-2 py-2 font-bold transition-all hover:opacity-70 whitespace-nowrap ${isScrolled ? "text-[13px]" : "text-[14px]"}`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
-          {/* CỘT PHẢI: ACTIONS (Tự động thu hẹp margin padding trên mobile) */}
-          <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0 lg:w-[200px]">
+          {/* CỘT PHẢI: ACTIONS */}
+          <div className="flex-1 flex items-center justify-end gap-1 sm:gap-2">
             <button
               onClick={() => setSearchOpen((v) => !v)}
               style={{ color: textColor }}
@@ -363,11 +355,12 @@ export function Header() {
               className="hidden sm:block w-px h-4 mx-1 transition-colors duration-300"
             />
 
+            {/* Chỉ hiện Đăng nhập khi KHÔNG cuộn (!isScrolled) */}
             {!isAuthenticated && !isScrolled && (
               <Link
                 href="/admin/login"
                 style={{ color: textColor, borderColor: "#FFFFFF" }}
-                className="hidden xl:flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-bold rounded-full border transition-all active:scale-95 whitespace-nowrap hover:bg-white/10"
+                className="hidden xl:flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-bold rounded-full border transition-all active:scale-95 whitespace-nowrap hover:opacity-70"
               >
                 <LogOut size={14} strokeWidth={2.5} className="rotate-180" />{" "}
                 Đăng nhập
@@ -430,7 +423,7 @@ export function Header() {
             <img
               src="/dacuon.png"
               alt="Logo"
-              className="h-[28px] sm:h-[36px] object-contain"
+              className="h-[18px] w-[55px] sm:h-[28px] sm:w-auto object-contain"
             />
             <button
               onClick={() => setMobileOpen(false)}

@@ -4,63 +4,26 @@ import Link from "next/link";
 import { useAuth } from "@repo/shared-utils";
 import { useState, useEffect } from "react";
 import {
-  ShoppingCart,
-  UserPlus,
-  ScanLine,
   Package,
   FolderTree,
   FileText,
-  Calculator,
   Warehouse,
   Bell,
   Search,
   Activity,
   Plus,
-  Users,
-  ShoppingBag,
-  ArrowRight,
   AlertCircle,
   Star,
   ChevronRight,
   Loader2,
 } from "lucide-react";
 import { productService } from "@/lib/product-service";
+import { MobileHero } from "@/components/admin/MobileHero";
 
-const QUICK_ACTIONS = [
-  {
-    label: "Đơn hàng",
-    icon: ShoppingCart,
-    href: "/admin/orders",
-    color: "text-[#007AFF]",
-    bg: "bg-[#007AFF]/10",
-  },
-  {
-    label: "Thêm khách",
-    icon: UserPlus,
-    href: "/admin/leads",
-    color: "text-[#34C759]",
-    bg: "bg-[#34C759]/10",
-  },
-  {
-    label: "Quét mã",
-    icon: ScanLine,
-    href: "/admin/scan",
-    color: "text-[#AF52DE]",
-    bg: "bg-[#AF52DE]/10",
-  },
-  {
-    label: "Máy tính",
-    icon: Calculator,
-    href: "/calculator",
-    color: "text-[#FF9500]",
-    bg: "bg-[#FF9500]/10",
-  },
-];
-
-function AppleStatCard({
+// ── COMPONENT MỚI: Ô THỐNG KÊ LIỀN MẠCH (SEAMLESS CELL) ──
+function AppleStatCell({
   label,
   value,
-  sub,
   icon: Icon,
   colorClass,
   bgClass,
@@ -69,19 +32,27 @@ function AppleStatCard({
   return (
     <Link
       href={href}
-      className="group block bg-white rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] active:scale-[0.98] transition-transform duration-200"
+      className="bg-white p-5 md:p-6 flex flex-col justify-between min-h-[130px] group hover:bg-[#F9F9F9] active:bg-[#F2F2F7] transition-colors relative"
     >
-      <div
-        className="w-12 h-12 rounded-[14px] flex items-center justify-center mb-4 transition-colors group-hover:opacity-80"
-        className={bgClass}
-      >
-        <Icon size={24} className={colorClass} strokeWidth={1.5} />
+      <div className="flex justify-between items-start">
+        <div
+          className={`w-11 h-11 rounded-[12px] flex items-center justify-center ${bgClass}`}
+        >
+          <Icon size={22} className={colorClass} strokeWidth={2} />
+        </div>
+        <ChevronRight
+          size={18}
+          className="text-[#C7C7CC] opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
+        />
       </div>
-      <p className="text-[28px] font-semibold text-black tracking-tight leading-none mb-1">
-        {value}
-      </p>
-      <p className="text-[15px] font-medium text-[#8E8E93]">{label}</p>
-      {sub && <p className="text-[13px] text-[#C7C7CC] mt-1">{sub}</p>}
+      <div className="mt-4">
+        <p className="text-[28px] md:text-[32px] font-bold text-black tracking-tight leading-none mb-1.5">
+          {value}
+        </p>
+        <p className="text-[13px] md:text-[14px] font-medium text-[#8E8E93]">
+          {label}
+        </p>
+      </div>
     </Link>
   );
 }
@@ -145,9 +116,12 @@ export default function DashboardPage() {
         : "Chào buổi tối";
 
   return (
-    <div className="min-h-screen bg-[#F2F2F7] font-sans pb-20">
-      {/* ── TOP HERO ── */}
-      <div className="px-5 md:px-8 pt-8 md:pt-10 pb-6 max-w-[1400px] mx-auto">
+    <div className="min-h-screen bg-[#F2F2F7] font-sans pb-24">
+      {/* ── MOBILE HERO ── */}
+      <MobileHero />
+
+      {/* ── DESKTOP HERO ── */}
+      <div className="hidden md:block px-8 pt-10 pb-6 max-w-[1400px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-[15px] font-medium text-[#8E8E93]">{greeting}</p>
@@ -174,74 +148,59 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="px-5 md:px-8 max-w-[1400px] mx-auto space-y-6">
-        {/* STATS BENTO */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          <AppleStatCard
-            label="Tổng sản phẩm"
-            value={loading ? "…" : stats.total}
-            icon={Package}
-            colorClass="text-[#007AFF]"
-            bgClass="bg-[#007AFF]/10"
-            href="/admin/products"
-          />
-          <AppleStatCard
-            label="Đã đăng"
-            value={loading ? "…" : stats.published}
-            icon={Activity}
-            colorClass="text-[#34C759]"
-            bgClass="bg-[#34C759]/10"
-            href="/admin/products"
-          />
-          <AppleStatCard
-            label="Bản nháp"
-            value={loading ? "…" : stats.draft}
-            icon={AlertCircle}
-            colorClass="text-[#FF9500]"
-            bgClass="bg-[#FF9500]/10"
-            href="/admin/products"
-          />
-          <AppleStatCard
-            label="Danh mục"
-            value="—"
-            icon={FolderTree}
-            colorClass="text-[#AF52DE]"
-            bgClass="bg-[#AF52DE]/10"
-            href="/admin/categories"
-          />
-        </div>
-
-        {/* THAO TÁC NHANH MOBILE */}
-        <div className="md:hidden pt-4">
-          <p className="text-[13px] font-semibold uppercase tracking-wider text-[#8E8E93] mb-3 px-1">
-            Lối tắt
-          </p>
-          <div className="grid grid-cols-4 gap-3">
-            {QUICK_ACTIONS.map((action, i) => (
-              <Link
-                key={i}
-                href={action.href}
-                className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
-              >
-                <div
-                  className={`w-14 h-14 rounded-[16px] flex items-center justify-center ${action.bg}`}
-                >
-                  <action.icon
-                    size={26}
-                    className={action.color}
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <span className="text-[12px] font-medium text-[#8E8E93] text-center">
-                  {action.label}
-                </span>
-              </Link>
-            ))}
+      {/* ── NỘI DUNG CHÍNH ── */}
+      <div className="px-4 md:px-8 max-w-[1400px] mx-auto space-y-6 md:space-y-8 mt-6 md:mt-0">
+        {/* ── SECTION TỔNG QUAN (SEAMLESS WIDGET) ── */}
+        <section>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="text-[20px] font-semibold text-black tracking-tight">
+              Tổng quan hệ thống
+            </h2>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
-          {/* SP GẦN ĐÂY - INSET GROUPED LIST */}
+          {/* Vỏ ngoài bọc lưới */}
+          <div className="bg-[#E5E5EA] rounded-[24px] md:rounded-[32px] shadow-[0_4px_24px_rgba(0,0,0,0.02)] border border-[#E5E5EA] overflow-hidden">
+            {/* Lưới phân chia 1px */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px]">
+              <AppleStatCell
+                label="Tổng sản phẩm"
+                value={loading ? "…" : stats.total}
+                icon={Package}
+                colorClass="text-[#007AFF]"
+                bgClass="bg-[#007AFF]/10"
+                href="/admin/products"
+              />
+              <AppleStatCell
+                label="Đã đăng"
+                value={loading ? "…" : stats.published}
+                icon={Activity}
+                colorClass="text-[#34C759]"
+                bgClass="bg-[#34C759]/10"
+                href="/admin/products"
+              />
+              <AppleStatCell
+                label="Bản nháp"
+                value={loading ? "…" : stats.draft}
+                icon={AlertCircle}
+                colorClass="text-[#FF9500]"
+                bgClass="bg-[#FF9500]/10"
+                href="/admin/products"
+              />
+              <AppleStatCell
+                label="Danh mục"
+                value="—" // Bạn có thể call API tổng danh mục để điền vào đây
+                icon={FolderTree}
+                colorClass="text-[#AF52DE]"
+                bgClass="bg-[#AF52DE]/10"
+                href="/admin/categories"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ── CÁC WIDGET KHÁC ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* DANH SÁCH SẢN PHẨM GẦN ĐÂY */}
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-[20px] font-semibold text-black tracking-tight">
@@ -255,7 +214,7 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="bg-white rounded-[20px] overflow-hidden shadow-[0_1px_5px_rgba(0,0,0,0.02)]">
+            <div className="bg-white rounded-[24px] overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.01)] border border-[#E5E5EA]">
               {loading ? (
                 <div className="p-8 flex justify-center">
                   <Loader2 className="animate-spin text-[#8E8E93]" />
@@ -269,29 +228,32 @@ export default function DashboardPage() {
                   {recentProducts.map((p, index) => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-4 p-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="flex items-center gap-4 p-3 pl-4 hover:bg-[#F9F9F9] active:bg-[#F2F2F7] transition-colors cursor-pointer group"
                     >
-                      <div className="w-12 h-12 rounded-[10px] bg-gray-100 flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-[12px] bg-[#F2F2F7] flex items-center justify-center shrink-0">
                         <span className="text-[13px] font-semibold text-[#8E8E93] uppercase">
                           {p.sku?.slice(0, 2)}
                         </span>
                       </div>
                       <div
-                        className={`flex-1 flex justify-between items-center pb-3 ${index !== recentProducts.length - 1 ? "border-b border-[#E5E5EA] -mb-3" : ""}`}
+                        className={`flex-1 flex justify-between items-center py-2 ${index !== recentProducts.length - 1 ? "border-b border-[#E5E5EA] -mb-5 pb-5" : ""}`}
                       >
-                        <div>
-                          <p className="text-[17px] font-medium text-black line-clamp-1">
+                        <div className="pr-4">
+                          <p className="text-[17px] font-medium text-black line-clamp-1 group-hover:text-[#007AFF] transition-colors">
                             {p.name}
                           </p>
                           <p className="text-[14px] text-[#8E8E93] mt-0.5">
                             {p.sku}
                           </p>
                         </div>
-                        <span
-                          className={`text-[13px] font-medium px-2 py-0.5 rounded-[6px] ${p.is_published ? "bg-[#34C759]/10 text-[#34C759]" : "bg-[#8E8E93]/10 text-[#8E8E93]"}`}
-                        >
-                          {p.is_published ? "Đăng" : "Nháp"}
-                        </span>
+                        <div className="flex items-center gap-3 shrink-0 mr-2">
+                          <span
+                            className={`text-[13px] font-semibold px-2.5 py-1 rounded-[8px] ${p.is_published ? "bg-[#34C759]/10 text-[#34C759]" : "bg-[#8E8E93]/10 text-[#8E8E93]"}`}
+                          >
+                            {p.is_published ? "Đăng" : "Nháp"}
+                          </span>
+                          <ChevronRight size={20} className="text-[#C7C7CC]" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -300,13 +262,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* CÔNG CỤ - INSET GROUPED LIST */}
+          {/* CÔNG CỤ & WIDGET HỖ TRỢ */}
           <div className="space-y-6">
             <div>
               <h2 className="text-[20px] font-semibold text-black tracking-tight mb-3 px-1">
                 Công cụ
               </h2>
-              <div className="bg-white rounded-[20px] shadow-[0_1px_5px_rgba(0,0,0,0.02)] flex flex-col py-1 overflow-hidden">
+              <div className="bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.01)] border border-[#E5E5EA] flex flex-col py-1.5 overflow-hidden">
                 <AppleActionRow
                   href="/admin/products/new"
                   icon={Plus}
@@ -336,8 +298,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Support Widget */}
-            <div className="rounded-[24px] p-6 bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white shadow-lg relative overflow-hidden">
+            {/* Support Widget - Apple Wallet Card Style */}
+            <div className="rounded-[24px] p-6 bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white shadow-[0_8px_24px_rgba(0,122,255,0.2)] relative overflow-hidden">
               <Star
                 size={24}
                 className="mb-2 text-white/80"
@@ -346,12 +308,12 @@ export default function DashboardPage() {
               <h3 className="text-[20px] font-semibold tracking-tight mb-1">
                 Cần hỗ trợ?
               </h3>
-              <p className="text-[15px] text-white/80 mb-5 leading-relaxed">
-                Đội ngũ kỹ thuật luôn sẵn sàng hỗ trợ bạn.
+              <p className="text-[15px] text-white/80 mb-5 leading-relaxed font-medium">
+                Đội ngũ kỹ thuật luôn sẵn sàng hỗ trợ bạn vận hành.
               </p>
               <a
                 href="tel:0901234567"
-                className="block w-full py-3 bg-white text-[#007AFF] text-center rounded-[14px] font-semibold text-[15px] active:scale-[0.97] transition-transform"
+                className="flex items-center justify-center w-full py-3.5 bg-white text-[#007AFF] rounded-[14px] font-semibold text-[15px] active:scale-[0.97] transition-transform shadow-sm"
               >
                 Liên hệ ngay
               </a>

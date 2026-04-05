@@ -38,137 +38,99 @@ export function AddToQuoteButton({
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-  const handleIncrease = () => setQuantity((q) => q + 1);
-  const handleDecrease = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
-
-  // ================= Bản thu gọn (Cho Card/Danh sách) =================
   if (compact) {
     return (
       <button
         onClick={handleAdd}
-        className={`flex-1 h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 font-bold rounded-full transition-all duration-300 shadow-sm text-xs sm:text-sm active:scale-95 ${
+        className={`flex-1 h-9 flex items-center justify-center gap-1.5 font-semibold rounded-full transition-all active:scale-95 text-[14px] ${
           isAdded
-            ? "bg-gray-200 text-gray-900 pointer-events-none"
-            : "bg-gray-900 text-white hover:bg-black hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
+            ? "bg-[#E5E5EA] text-[#8E8E93] pointer-events-none"
+            : "bg-[#F2F2F7] text-[#007AFF] hover:bg-[#E5E5EA]"
         }`}
       >
         {isAdded ? (
-          <Check size={16} strokeWidth={3} />
+          <Check size={16} strokeWidth={2.5} />
         ) : (
-          <ShoppingCart size={16} strokeWidth={2.5} />
+          <ShoppingCart size={16} strokeWidth={2} />
         )}
-        <span className="hidden xs:inline">
-          {isAdded ? "Đã thêm" : "Thêm báo giá"}
-        </span>
-        <span className="xs:hidden">{isAdded ? "Xong" : "Báo giá"}</span>
+        <span>{isAdded ? "Đã thêm" : "Thêm"}</span>
       </button>
     );
   }
 
-  // ================= Bản đầy đủ (Cho Trang Chi tiết) =================
   return (
-    <div className="w-full rounded-[32px] bg-white/80 backdrop-blur-[32px] saturate-150 p-4 sm:p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white">
+    <div className="w-full rounded-[32px] bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-[#E5E5EA] font-sans">
       <div className="flex flex-col gap-4">
-        {/* Khối Số Lượng & Nút Thêm (Hàng ngang trên Desktop, dọc trên Mobile) */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
-          {/* Bộ đếm số lượng: Apple Control Center Style */}
-          <div className="rounded-[24px] bg-black/5 p-1.5">
-            <div className="flex items-center justify-between bg-transparent">
-              <button
-                onClick={handleDecrease}
-                className="flex h-12 w-12 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm active:scale-90"
-              >
-                <Minus size={20} strokeWidth={2.5} />
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) =>
-                  setQuantity(Math.max(1, Number(e.target.value) || 1))
-                }
-                className="h-12 min-w-0 flex-1 bg-transparent px-1 text-center text-[17px] font-bold text-gray-900 outline-none [appearance:textfield]"
-              />
-              <button
-                onClick={handleIncrease}
-                className="flex h-12 w-12 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm active:scale-90"
-              >
-                <Plus size={20} strokeWidth={2.5} />
-              </button>
-            </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[140px_minmax(0,1fr)]">
+          {/* Apple Stepper */}
+          <div className="rounded-[16px] bg-[#F2F2F7] p-1 flex items-center justify-between">
+            <button
+              onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
+              className="w-10 h-10 flex items-center justify-center rounded-[12px] bg-white text-black shadow-sm active:scale-90 transition-transform"
+            >
+              <Minus size={18} strokeWidth={2} />
+            </button>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(Math.max(1, Number(e.target.value) || 1))
+              }
+              className="w-12 bg-transparent text-center text-[17px] font-semibold text-black outline-none [appearance:textfield]"
+            />
+            <button
+              onClick={() => setQuantity((q) => q + 1)}
+              className="w-10 h-10 flex items-center justify-center rounded-[12px] bg-white text-black shadow-sm active:scale-90 transition-transform"
+            >
+              <Plus size={18} strokeWidth={2} />
+            </button>
           </div>
 
-          {/* Nút chính Add to Cart - Monochrome */}
+          {/* Apple Primary Button */}
           <button
             onClick={handleAdd}
-            className={`group relative flex h-[60px] w-full items-center justify-center gap-2.5 overflow-hidden rounded-[24px] px-4 shadow-lg transition-all duration-300 active:scale-[0.98] sm:h-auto sm:min-h-[60px] ${
+            className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-[16px] transition-all active:scale-[0.98] ${
               isAdded
-                ? "bg-gray-100 text-gray-900 shadow-none pointer-events-none"
-                : "bg-gray-900 text-white hover:bg-black hover:shadow-[0_12px_24px_rgba(0,0,0,0.15)]"
+                ? "bg-[#34C759] text-white pointer-events-none"
+                : "bg-[#007AFF] text-white shadow-[0_4px_14px_rgba(0,122,255,0.3)]"
             }`}
           >
             {isAdded ? (
-              <Check size={20} strokeWidth={3} className="text-green-600" />
+              <Check size={20} strokeWidth={2.5} />
             ) : (
-              <ShoppingCart
-                size={20}
-                strokeWidth={2.5}
-                className="relative z-10 shrink-0"
-              />
+              <ShoppingCart size={20} strokeWidth={2} />
             )}
-            <div className="relative z-10 flex flex-col items-center">
-              <span className="text-[15px] font-bold tracking-tight">
-                {isAdded ? "Đã thêm vào giỏ báo giá" : "Thêm vào báo giá"}
-              </span>
-              {!isAdded && (
-                <span className="text-[12px] font-medium text-white/70">
-                  {quantity} {unit === "m2" ? "m²" : unit}
-                </span>
-              )}
-            </div>
+            <span className="text-[17px] font-semibold tracking-tight">
+              {isAdded ? "Đã thêm" : "Thêm vào báo giá"}
+            </span>
           </button>
         </div>
 
-        {/* Khối Đơn vị tính: Segmented Control (iOS Style) */}
-        <div className="rounded-[24px] bg-black/5 p-1.5 relative flex">
+        {/* Apple Segmented Control */}
+        <div className="rounded-[12px] bg-[#E5E5EA]/60 p-1 relative flex">
           {UNIT_OPTIONS.map((option) => {
             const isActive = unit === option.value;
             return (
               <button
                 key={option.value}
                 onClick={() => setUnit(option.value)}
-                className={`relative flex-1 min-h-[44px] items-center justify-center rounded-[20px] text-[14px] sm:text-[15px] font-bold transition-all z-10 ${
-                  isActive
-                    ? "text-gray-900"
-                    : "text-gray-500 hover:text-gray-700 active:scale-95"
-                }`}
+                className={`relative flex-1 py-1.5 rounded-[8px] text-[15px] font-medium transition-all z-10 ${isActive ? "text-black shadow-[0_1px_4px_rgba(0,0,0,0.1)] bg-white" : "text-[#8E8E93]"}`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="unitActiveTab"
-                    className="absolute inset-0 bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  />
-                )}
-                <span className="relative z-10 sm:hidden">
-                  {option.shortLabel}
-                </span>
-                <span className="relative z-10 hidden sm:inline">
-                  {option.label}
-                </span>
+                <span className="sm:hidden">{option.shortLabel}</span>
+                <span className="hidden sm:inline">{option.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Nút Công cụ tính gạch - Frosted Glass Button */}
         {onOpenCalculator && (
           <button
             onClick={onOpenCalculator}
-            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[24px] bg-black/5 px-4 text-[14px] font-bold text-gray-900 transition-all hover:bg-black/10 active:scale-[0.98]"
+            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-[16px] bg-[#F2F2F7] text-[15px] font-medium text-black transition-all active:bg-[#E5E5EA]"
           >
-            <Calculator size={18} strokeWidth={2.5} className="text-gray-700" />
-            <span>Tính số lượng gạch dự kiến</span>
+            <Calculator size={18} className="text-[#007AFF]" />
+            <span>Công cụ tính gạch</span>
           </button>
         )}
       </div>

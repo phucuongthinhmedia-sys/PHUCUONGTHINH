@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/admin-api-client";
+import { Lock } from "lucide-react";
 
 interface InternalProductBlockProps {
   productId: string;
@@ -22,98 +23,100 @@ export function InternalProductBlock({ productId }: InternalProductBlockProps) {
   if (loading) return null;
   if (!data)
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
-        Chưa có thông tin nội bộ — thêm từ trang chỉnh sửa sản phẩm.
+      <div className="bg-[#F2F2F7] rounded-[16px] px-4 py-3 text-[13px] font-medium text-[#8E8E93] text-center border border-[#E5E5EA]">
+        Chưa có thông tin nội bộ — thêm từ trang chỉnh sửa.
       </div>
     );
 
   const fmt = (v: number) => new Intl.NumberFormat("vi-VN").format(v) + "đ";
   const stockLabels: Record<string, { label: string; cls: string }> = {
-    in_stock: {
-      label: "Còn hàng",
-      cls: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    },
-    low_stock: {
-      label: "Sắp hết",
-      cls: "text-amber-700 bg-amber-50 border-amber-200",
-    },
-    out_of_stock: {
-      label: "Hết hàng",
-      cls: "text-red-700 bg-red-50 border-red-200",
-    },
-    pre_order: {
-      label: "Đặt trước",
-      cls: "text-blue-700 bg-blue-50 border-blue-200",
-    },
+    in_stock: { label: "Còn hàng", cls: "text-[#34C759] bg-[#34C759]/10" },
+    low_stock: { label: "Sắp hết", cls: "text-[#FF9500] bg-[#FF9500]/10" },
+    out_of_stock: { label: "Hết hàng", cls: "text-[#FF3B30] bg-[#FF3B30]/10" },
+    pre_order: { label: "Đặt trước", cls: "text-[#007AFF] bg-[#007AFF]/10" },
     discontinued: {
       label: "Ngừng kinh doanh",
-      cls: "text-gray-700 bg-gray-50 border-gray-200",
+      cls: "text-[#8E8E93] bg-[#E5E5EA]",
     },
   };
   const stock = data.stock_status ? stockLabels[data.stock_status] : null;
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-amber-200 bg-amber-100/60 flex items-center justify-between">
-        <span className="text-xs font-bold text-amber-800 uppercase tracking-wider">
-          🔒 Thông tin nội bộ
-        </span>
+    <div className="bg-white rounded-[24px] border border-[#E5E5EA] shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden font-sans">
+      <div className="px-5 py-3.5 border-b border-[#E5E5EA] bg-[#F9F9F9] flex items-center justify-between">
+        <div className="flex items-center gap-2 text-[#007AFF]">
+          <Lock size={16} strokeWidth={2.5} />
+          <span className="text-[14px] font-bold uppercase tracking-wider">
+            Thông tin nội bộ
+          </span>
+        </div>
         {stock && (
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${stock.cls}`}
+            className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${stock.cls}`}
           >
             {stock.label}
           </span>
         )}
       </div>
-      <div className="px-4 py-3 space-y-4">
+
+      <div className="flex flex-col">
         {/* Giá bán */}
         {(data.price_retail != null ||
           data.price_wholesale != null ||
           data.price_dealer != null ||
           data.price_promo != null) && (
-          <div>
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
+          <div className="p-4 border-b border-[#E5E5EA]">
+            <p className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-3">
               Giá bán
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+            <div className="grid grid-cols-2 gap-4">
               {data.price_retail != null && (
-                <div className="text-xs">
-                  <p className="text-amber-600 mb-0.5">Giá bán lẻ</p>
-                  <p className="font-bold text-amber-900">
+                <div>
+                  <p className="text-[13px] text-[#8E8E93] mb-0.5">
+                    Giá bán lẻ
+                  </p>
+                  <p className="font-bold text-[15px] text-black">
                     {fmt(data.price_retail)}
                   </p>
                 </div>
               )}
               {data.price_dealer != null && (
-                <div className="text-xs">
-                  <p className="text-amber-600 mb-0.5">Giá đại lý</p>
-                  <p className="font-bold text-amber-900">
+                <div>
+                  <p className="text-[13px] text-[#8E8E93] mb-0.5">
+                    Giá đại lý
+                  </p>
+                  <p className="font-bold text-[15px] text-black">
                     {fmt(data.price_dealer)}
                   </p>
                 </div>
               )}
               {data.price_wholesale != null && (
-                <div className="text-xs">
-                  <p className="text-amber-600 mb-0.5">Giá bán sỉ</p>
-                  <p className="font-bold text-amber-900">
+                <div>
+                  <p className="text-[13px] text-[#8E8E93] mb-0.5">
+                    Giá bán sỉ
+                  </p>
+                  <p className="font-bold text-[15px] text-black">
                     {fmt(data.price_wholesale)}
                   </p>
                 </div>
               )}
               {data.price_promo != null && (
-                <div className="text-xs">
-                  <p className="text-amber-600 mb-0.5">Giá khuyến mãi</p>
-                  <p className="font-bold text-red-700">
+                <div>
+                  <p className="text-[13px] text-[#8E8E93] mb-0.5">
+                    Khuyến mãi
+                  </p>
+                  <p className="font-bold text-[15px] text-[#FF3B30]">
                     {fmt(data.price_promo)}
                   </p>
                 </div>
               )}
             </div>
             {data.wholesale_discount_tiers && (
-              <div className="text-xs mt-2 pt-2 border-t border-amber-200">
-                <p className="text-amber-600 mb-0.5">Khung chiết khấu</p>
-                <p className="text-amber-900 text-[11px] leading-relaxed">
+              <div className="mt-3 pt-3 border-t border-[#F2F2F7]">
+                <p className="text-[13px] text-[#8E8E93] mb-0.5">
+                  Khung chiết khấu
+                </p>
+                <p className="text-[13px] text-black font-medium">
                   {data.wholesale_discount_tiers}
                 </p>
               </div>
@@ -123,21 +126,23 @@ export function InternalProductBlock({ productId }: InternalProductBlockProps) {
 
         {/* Khuyến mãi */}
         {(data.promo_start_date || data.promo_end_date || data.promo_note) && (
-          <div className="pt-3 border-t border-amber-200">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
+          <div className="p-4 border-b border-[#E5E5EA]">
+            <p className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-2">
               Khuyến mãi
             </p>
-            <div className="text-xs space-y-1">
+            <div className="text-[13px] space-y-1">
               {(data.promo_start_date || data.promo_end_date) && (
-                <p className="text-amber-900">
-                  <span className="text-amber-600">Thời gian: </span>
+                <p className="text-black font-medium">
+                  <span className="text-[#8E8E93] font-normal">
+                    Thời gian:{" "}
+                  </span>
                   {data.promo_start_date || "..."} →{" "}
                   {data.promo_end_date || "..."}
                 </p>
               )}
               {data.promo_note && (
-                <p className="text-amber-900">
-                  <span className="text-amber-600">Ghi chú: </span>
+                <p className="text-black font-medium">
+                  <span className="text-[#8E8E93] font-normal">Ghi chú: </span>
                   {data.promo_note}
                 </p>
               )}
@@ -145,88 +150,53 @@ export function InternalProductBlock({ productId }: InternalProductBlockProps) {
           </div>
         )}
 
-        {/* Kho hàng */}
-        {(data.warehouse_location ||
-          data.stock_quantity != null ||
-          data.stock_levels?.length > 0) && (
-          <div className="pt-3 border-t border-amber-200">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
-              Kho hàng
-            </p>
-            <div className="text-xs space-y-1.5">
+        {/* Nhà cung cấp & Kho */}
+        <div className="p-4 border-b border-[#E5E5EA] grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {(data.supplier_name || data.supplier_phone) && (
+            <div>
+              <p className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-2">
+                Nhà cung cấp
+              </p>
+              {data.supplier_name && (
+                <p className="text-[13px] text-black font-medium">
+                  {data.supplier_name}
+                </p>
+              )}
+              {data.supplier_phone && (
+                <p className="text-[13px] text-[#007AFF] font-medium">
+                  {data.supplier_phone}
+                </p>
+              )}
+            </div>
+          )}
+          {(data.warehouse_location || data.stock_quantity != null) && (
+            <div>
+              <p className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-2">
+                Kho hàng
+              </p>
               {data.warehouse_location && (
-                <p className="text-amber-900">
-                  <span className="text-amber-600">Vị trí: </span>
+                <p className="text-[13px] text-black font-medium">
+                  <span className="text-[#8E8E93] font-normal">Vị trí: </span>
                   {data.warehouse_location}
                 </p>
               )}
               {data.stock_quantity != null && (
-                <p className="text-amber-900">
-                  <span className="text-amber-600">Số lượng: </span>
-                  <span className="font-bold">{data.stock_quantity}</span>
+                <p className="text-[13px] text-black font-medium">
+                  <span className="text-[#8E8E93] font-normal">Số lượng: </span>
+                  {data.stock_quantity}
                 </p>
               )}
-              {data.stock_levels?.length > 0 && (
-                <div>
-                  <p className="text-amber-600 mb-1">Tồn kho chi tiết:</p>
-                  {data.stock_levels.map((sl: any) => (
-                    <div
-                      key={sl.id}
-                      className="flex justify-between text-[11px] ml-2"
-                    >
-                      <span className="text-amber-700">
-                        {sl.warehouse?.name}
-                        {sl.warehouse?.location
-                          ? ` — ${sl.warehouse.location}`
-                          : ""}
-                      </span>
-                      <span
-                        className={`font-bold ${sl.quantity > 0 ? "text-emerald-700" : "text-red-600"}`}
-                      >
-                        {sl.quantity}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          </div>
-        )}
-
-        {/* Nhà cung cấp */}
-        {(data.supplier_name || data.supplier_phone) && (
-          <div className="pt-3 border-t border-amber-200">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-2">
-              Nhà cung cấp
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-xs">
-              {data.supplier_name && (
-                <div>
-                  <p className="text-amber-600 mb-0.5">Tên</p>
-                  <p className="font-semibold text-amber-900">
-                    {data.supplier_name}
-                  </p>
-                </div>
-              )}
-              {data.supplier_phone && (
-                <div>
-                  <p className="text-amber-600 mb-0.5">Số điện thoại</p>
-                  <p className="font-semibold text-amber-900">
-                    {data.supplier_phone}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Ghi chú */}
         {data.internal_notes && (
-          <div className="pt-3 border-t border-amber-200">
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">
+          <div className="p-4">
+            <p className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1">
               Ghi chú nội bộ
             </p>
-            <p className="text-xs text-amber-900 leading-relaxed">
+            <p className="text-[14px] text-black font-medium bg-[#F2F2F7] p-3 rounded-[12px]">
               {data.internal_notes}
             </p>
           </div>
