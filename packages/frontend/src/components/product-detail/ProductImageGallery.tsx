@@ -113,6 +113,15 @@ export function ProductImageGallery({
             ))}
           </div>
 
+          {/* TEST QR - Always show */}
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-50 bg-red-500 text-white p-4 rounded-lg font-bold">
+            TEST QR HERE
+            <br />
+            SKU: {productSku || "NULL"}
+            <br />
+            URL: {productUrl ? "YES" : "NO"}
+          </div>
+
           {/* QR Code - Góc phải trên (BÊN TRONG ảnh) */}
           {productSku && productUrl && (
             <ProductQRCode
