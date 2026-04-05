@@ -64,7 +64,7 @@ export default function QRScanner() {
           `/products/sku/${encodeURIComponent(text.trim())}`,
         );
         if (product?.id) {
-          router.push(`/products/${product.id}`);
+          router.push(`/p/${product.sku}`);
           return;
         }
       } catch {

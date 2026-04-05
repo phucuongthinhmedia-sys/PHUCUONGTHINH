@@ -13,14 +13,13 @@ import {
   ScanLine,
   FolderTree,
   Tags,
-  Calculator,
   FileText,
   Users,
   Eye,
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
 const MORE_ITEMS = [
   { href: "/admin/categories", label: "Danh mục", icon: FolderTree },
@@ -52,59 +51,67 @@ export function MobileBottomNav({
   return (
     <>
       {/* Overlay khi popup mở */}
-      {(plusOpen || moreOpen) && (
-        <div className="fixed inset-0 z-30" onClick={closeAll} />
-      )}
+      <AnimatePresence>
+        {(plusOpen || moreOpen) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 bg-black/10 backdrop-blur-[2px]"
+            onClick={closeAll}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Popup nút + */}
       <AnimatePresence>
         {plusOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 p-3 w-60"
+            initial={{ opacity: 0, y: 20, scale: 0.9, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 20, scale: 0.9, filter: "blur(4px)" }}
+            transition={{ duration: 0.25, type: "spring", bounce: 0.3 }}
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 bg-white/40 backdrop-blur-[24px] saturate-[1.8] rounded-[32px] shadow-[0_24px_48px_rgba(0,0,0,0.12)] border border-white/60 p-3 w-64"
           >
-            <div className="flex items-center justify-between px-3 pb-2 pt-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center justify-between px-3 pb-2 pt-1 border-b border-black/5 mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                 Thêm mới
               </span>
               <button
                 onClick={closeAll}
-                className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
               >
-                <X size={14} className="text-slate-400" />
+                <X size={16} className="text-gray-900" />
               </button>
             </div>
             <div className="space-y-1">
               <Link
                 href="/admin/orders/new"
                 onClick={closeAll}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-all"
+                className="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold text-gray-900 hover:bg-black/5 transition-all active:scale-95"
               >
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <ShoppingCart size={16} className="text-blue-600" />
+                <div className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center">
+                  <ShoppingCart size={18} className="text-gray-900" />
                 </div>
                 Thêm đơn hàng
               </Link>
               <Link
                 href="/admin/leads/new"
                 onClick={closeAll}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all"
+                className="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold text-gray-900 hover:bg-black/5 transition-all active:scale-95"
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <UserPlus size={16} className="text-emerald-600" />
+                <div className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center">
+                  <UserPlus size={18} className="text-gray-900" />
                 </div>
                 Thêm khách
               </Link>
               <Link
                 href="/admin/scan"
                 onClick={closeAll}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-700 transition-all"
+                className="flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold text-gray-900 hover:bg-black/5 transition-all active:scale-95"
               >
-                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <ScanLine size={16} className="text-purple-600" />
+                <div className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center">
+                  <ScanLine size={18} className="text-gray-900" />
                 </div>
                 Quét mã QR
               </Link>
@@ -117,21 +124,21 @@ export function MobileBottomNav({
       <AnimatePresence>
         {moreOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9, x: 20 }}
-            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-            exit={{ opacity: 0, y: 20, scale: 0.9, x: 20 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="fixed bottom-28 right-4 z-40 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/50 p-3 w-56 max-h-[60vh] overflow-y-auto"
+            initial={{ opacity: 0, y: 20, scale: 0.9, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 20, scale: 0.9, filter: "blur(4px)" }}
+            transition={{ duration: 0.25, type: "spring", bounce: 0.3 }}
+            className="fixed bottom-28 right-4 lg:left-1/2 lg:-translate-x-1/2 z-40 bg-white/40 backdrop-blur-[24px] saturate-[1.8] rounded-[32px] shadow-[0_24px_48px_rgba(0,0,0,0.12)] border border-white/60 p-3 w-64 max-h-[60vh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between px-3 pb-2 pt-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <div className="flex items-center justify-between px-3 pb-2 pt-1 border-b border-black/5 mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                 Khác
               </span>
               <button
                 onClick={closeAll}
-                className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 bg-black/5 hover:bg-black/10 rounded-full transition-colors"
               >
-                <X size={14} className="text-slate-400" />
+                <X size={16} className="text-gray-900" />
               </button>
             </div>
             <div className="space-y-1">
@@ -144,18 +151,18 @@ export function MobileBottomNav({
                     href={item.href}
                     target={item.target}
                     onClick={closeAll}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all active:scale-95 ${
                       active
-                        ? "bg-amber-100 text-amber-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-black/5 text-black"
+                        : "text-gray-800 hover:bg-black/5"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center ${active ? "bg-amber-200" : "bg-slate-100"}`}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center ${active ? "bg-transparent" : "bg-white/40"}`}
                     >
                       <Icon
-                        size={16}
-                        className={active ? "text-amber-700" : "text-slate-500"}
+                        size={18}
+                        className={active ? "text-black" : "text-gray-600"}
                       />
                     </div>
                     {item.label}
@@ -167,52 +174,46 @@ export function MobileBottomNav({
         )}
       </AnimatePresence>
 
-      {/* Bottom Nav Bar - Floating Style */}
-      <nav className="fixed bottom-4 left-4 right-4 z-40 lg:hidden">
-        <div className="bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-900/30 border border-slate-700/50 px-2 py-2">
-          <div className="flex items-center h-16">
-            {/* Trang chính */}
+      {/* CHUẨN IOS 18 PURE GLASS */}
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 lg:hidden w-auto">
+        <LayoutGroup>
+          {/* Nền kính hoàn toàn trong suốt, không pha vàng/nâu */}
+          <div className="flex items-center gap-1 bg-white/20 backdrop-blur-[24px] saturate-[1.8] p-1.5 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.08),0_0_0_1px_rgba(255,255,255,0.4)_inset] border border-white/50">
             <NavTab
               href="/admin/dashboard"
-              label="Trang chính"
               icon={Home}
-              active={isActive("/admin/dashboard")}
+              active={isActive("/admin/dashboard", true)}
             />
 
-            {/* Sản phẩm */}
             <NavTab
               href="/admin/products"
-              label="Sản phẩm"
               icon={ShoppingBag}
               active={isActive("/admin/products")}
             />
 
-            {/* Nút + - Floating Action */}
-            <div className="relative -mt-6">
+            {/* Nút + phong cách nổi bật (Đen tuyền chuẩn Apple) */}
+            <div className="relative px-1">
               <button
                 onClick={() => {
                   setPlusOpen((v) => !v);
                   setMoreOpen(false);
                 }}
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                className={`w-[50px] h-[50px] rounded-full flex items-center justify-center transition-all duration-300 active:scale-90 ${
                   plusOpen
-                    ? "bg-gradient-to-br from-rose-500 to-rose-600 rotate-45 shadow-rose-500/40"
-                    : "bg-gradient-to-br from-amber-500 to-amber-600 shadow-amber-500/40 hover:scale-105"
+                    ? "bg-gray-900 rotate-45"
+                    : "bg-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:scale-105"
                 }`}
               >
-                <Plus size={26} strokeWidth={2.5} className="text-white" />
+                <Plus size={24} strokeWidth={2.5} className="text-white" />
               </button>
             </div>
 
-            {/* Kho hàng */}
             <NavTab
               href="/warehouse"
-              label="Kho hàng"
               icon={Warehouse}
               active={isActive("/warehouse")}
             />
 
-            {/* Nút ... */}
             <NavTabButton
               active={moreOpen}
               onClick={() => {
@@ -220,10 +221,9 @@ export function MobileBottomNav({
                 setPlusOpen(false);
               }}
               icon={MoreHorizontal}
-              label="Thêm"
             />
           </div>
-        </div>
+        </LayoutGroup>
       </nav>
     </>
   );
@@ -231,33 +231,30 @@ export function MobileBottomNav({
 
 function NavTab({
   href,
-  label,
   icon: Icon,
   active,
 }: {
   href: string;
-  label: string;
   icon: React.ElementType;
   active: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
-        active ? "text-amber-400" : "text-slate-400 hover:text-slate-300"
-      }`}
+      className="relative flex items-center justify-center w-[50px] h-[50px] rounded-full transition-all active:scale-85"
     >
-      <motion.div
-        animate={active ? { scale: 1.1 } : { scale: 1 }}
-        className={`p-2 rounded-xl transition-all ${active ? "bg-amber-500/20" : ""}`}
-      >
-        <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-      </motion.div>
-      <span
-        className={`text-[10px] font-bold leading-none tracking-wide transition-all ${active ? "opacity-100" : "opacity-0"}`}
-      >
-        {label}
-      </span>
+      {active && (
+        <motion.div
+          layoutId="activeTabIndicator"
+          className="absolute inset-0 bg-black/5 rounded-full"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
+      )}
+      <Icon
+        size={22}
+        strokeWidth={active ? 2.5 : 2}
+        className={`relative z-10 transition-colors duration-200 ${active ? "text-gray-900" : "text-gray-500"}`}
+      />
     </Link>
   );
 }
@@ -266,31 +263,28 @@ function NavTabButton({
   active,
   onClick,
   icon: Icon,
-  label,
 }: {
   active: boolean;
   onClick: () => void;
   icon: React.ElementType;
-  label: string;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
-        active ? "text-amber-400" : "text-slate-400 hover:text-slate-300"
-      }`}
+      className="relative flex items-center justify-center w-[50px] h-[50px] rounded-full transition-all active:scale-85"
     >
-      <motion.div
-        animate={active ? { scale: 1.1 } : { scale: 1 }}
-        className={`p-2 rounded-xl transition-all ${active ? "bg-amber-500/20" : ""}`}
-      >
-        <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-      </motion.div>
-      <span
-        className={`text-[10px] font-bold leading-none tracking-wide transition-all ${active ? "opacity-100" : "opacity-0"}`}
-      >
-        {label}
-      </span>
+      {active && (
+        <motion.div
+          layoutId="activeTabIndicator"
+          className="absolute inset-0 bg-black/5 rounded-full"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
+      )}
+      <Icon
+        size={22}
+        strokeWidth={active ? 2.5 : 2}
+        className={`relative z-10 transition-colors duration-200 ${active ? "text-gray-900" : "text-gray-500"}`}
+      />
     </button>
   );
 }

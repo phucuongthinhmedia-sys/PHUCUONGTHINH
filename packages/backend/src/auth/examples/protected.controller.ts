@@ -12,7 +12,6 @@ import { CurrentUser } from '../decorators/user.decorator';
  */
 @Controller('protected')
 export class ProtectedController {
-  
   /**
    * Endpoint protected by JWT authentication only
    * Any authenticated user can access this

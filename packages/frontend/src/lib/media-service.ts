@@ -93,6 +93,62 @@ export function validateFile(
 }
 
 /**
+ * Client-side image compression using Canvas API.
+ * Reduces file size before upload to improve performance and save bandwidth.
+ */
+export async function compressImage(
+  file: File,
+  maxWidth = 1600,
+  quality = 0.8,
+): Promise<File> {
+  // Only compress images
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(file);
+            const compressedFile = new File([blob], file.name, {
+              type: "image/jpeg", // Always convert to JPEG for best compression
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+}
+
+/**
  * Upload file to Cloudinary via backend endpoint.
  * Returns the real Cloudinary URL.
  */
@@ -102,8 +158,21 @@ export async function uploadMedia(
   mediaType: MediaType = "lifestyle",
   onProgress?: (percent: number) => void,
 ): Promise<string> {
+  // Compress images before upload if it's an image
+  let fileToUpload = file;
+  if (
+    ["lifestyle", "cutout", "showcase"].includes(mediaType) &&
+    file.type.startsWith("image/")
+  ) {
+    try {
+      fileToUpload = await compressImage(file);
+    } catch (e) {
+      console.warn("Image compression failed, uploading original:", e);
+    }
+  }
+
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", fileToUpload);
   formData.append("media_type", mediaType);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";

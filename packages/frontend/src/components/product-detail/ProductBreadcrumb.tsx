@@ -18,7 +18,7 @@ export function ProductBreadcrumb({
   onScanClick,
 }: ProductBreadcrumbProps) {
   return (
-    <nav className="lg:col-span-12 flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide sm:tracking-widest overflow-hidden">
+    <nav className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wide sm:tracking-widest overflow-hidden w-full">
       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
         <Link
           href="/"
@@ -46,7 +46,7 @@ export function ProductBreadcrumb({
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2 sm:ml-auto shrink-0">
         <ShareButton
-          url={`/products/${productId}`}
+          url={`/p/${productSku}`}
           title={productName}
           text={`Xem sản phẩm ${productName} (SKU: ${productSku})`}
           className="normal-case tracking-normal text-[10px] sm:text-xs"

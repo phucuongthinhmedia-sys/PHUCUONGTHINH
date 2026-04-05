@@ -24,7 +24,7 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
 
     service = module.get<CategoriesService>(CategoriesService);
     prisma = module.get<PrismaService>(PrismaService);
-    
+
     await prisma.$connect();
   });
 
@@ -46,8 +46,14 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
         fc.asyncProperty(
           fc.record({
             rootCategoryName: fc.string({ minLength: 1, maxLength: 50 }),
-            childCategoryNames: fc.array(fc.string({ minLength: 1, maxLength: 50 }), { minLength: 1, maxLength: 3 }),
-            productNames: fc.array(fc.string({ minLength: 1, maxLength: 50 }), { minLength: 1, maxLength: 5 }),
+            childCategoryNames: fc.array(
+              fc.string({ minLength: 1, maxLength: 50 }),
+              { minLength: 1, maxLength: 3 },
+            ),
+            productNames: fc.array(fc.string({ minLength: 1, maxLength: 50 }), {
+              minLength: 1,
+              maxLength: 5,
+            }),
           }),
           async ({ rootCategoryName, childCategoryNames, productNames }) => {
             // Create root category
@@ -72,7 +78,7 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
             for (let i = 0; i < productNames.length; i++) {
               const categoryIndex = i % allCategories.length;
               const category = allCategories[categoryIndex];
-              
+
               const product = await prisma.product.create({
                 data: {
                   name: productNames[i],
@@ -86,7 +92,7 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
 
             // Get hierarchy for root category
             const hierarchy = await service.findHierarchy(rootCategory.id);
-            const hierarchyCategoryIds = hierarchy.map(cat => cat.id);
+            const hierarchyCategoryIds = hierarchy.map((cat) => cat.id);
 
             // Query products in the hierarchy
             const productsInHierarchy = await prisma.product.findMany({
@@ -99,9 +105,9 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
 
             // All created products should be found in the hierarchy
             expect(productsInHierarchy).toHaveLength(createdProducts.length);
-            
+
             // Verify each product is in the hierarchy
-            const foundProductIds = productsInHierarchy.map(p => p.id);
+            const foundProductIds = productsInHierarchy.map((p) => p.id);
             for (const product of createdProducts) {
               expect(foundProductIds).toContain(product.id);
             }
@@ -121,7 +127,10 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
       await fc.assert(
         fc.asyncProperty(
           fc.record({
-            levels: fc.array(fc.string({ minLength: 1, maxLength: 30 }), { minLength: 2, maxLength: 4 }),
+            levels: fc.array(fc.string({ minLength: 1, maxLength: 30 }), {
+              minLength: 2,
+              maxLength: 4,
+            }),
           }),
           async ({ levels }) => {
             // Create nested category hierarchy
@@ -145,7 +154,7 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
             expect(hierarchy).toHaveLength(createdCategories.length);
 
             // Verify each category is in the hierarchy
-            const hierarchyIds = hierarchy.map(cat => cat.id);
+            const hierarchyIds = hierarchy.map((cat) => cat.id);
             for (const category of createdCategories) {
               expect(hierarchyIds).toContain(category.id);
             }
@@ -166,7 +175,10 @@ describe('Feature: digital-showroom-cms, Category Management Properties', () => 
       await fc.assert(
         fc.asyncProperty(
           fc.record({
-            categoryNames: fc.array(fc.string({ minLength: 1, maxLength: 30 }), { minLength: 2, maxLength: 3 }),
+            categoryNames: fc.array(
+              fc.string({ minLength: 1, maxLength: 30 }),
+              { minLength: 2, maxLength: 3 },
+            ),
           }),
           async ({ categoryNames }) => {
             // Create categories in a chain

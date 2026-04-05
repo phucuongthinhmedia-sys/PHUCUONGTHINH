@@ -1,19 +1,13 @@
 "use client";
 
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Product,
   CreateProductRequest,
   UpdateProductRequest,
 } from "@/lib/product-service";
-import { Category } from "@/lib/category-service";
-import { Tag } from "@/lib/tag-service";
+
 import { CategoryPicker } from "@/components/admin/category-picker";
 import { MediaUploader, PendingMedia } from "@/components/admin/media-uploader";
 import {
@@ -32,300 +26,25 @@ import {
 import { apiClient } from "@/lib/api-client";
 import { realtimeService } from "@/lib/realtime-service";
 import { invalidateProductMediaCache } from "@/lib/cache-utils";
+import { Save, Copy, Eye, ChevronDown, Radio } from "lucide-react";
+
 import {
-  Save,
-  Copy,
-  Eye,
-  ChevronDown,
-  AlertCircle,
-  CheckCircle2,
-  Radio,
-} from "lucide-react";
+  debounce,
+  toSlug,
+  withRetry,
+  formatApiError,
+  safeApiCall,
+  initFormData,
+  Field,
+  Card,
+  Input,
+  Textarea,
+  Toast,
+  FormState,
+  ProductFormProps,
+  BADGES,
+} from "./product-form-utils";
 
-function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
-  let t: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
-  };
-}
-
-export interface ProductFormProps {
-  product?: Product & { media?: MediaRecord[] };
-  categories: Category[];
-  styles: Tag[];
-  spaces: Tag[];
-  onSubmit: (
-    data: CreateProductRequest | UpdateProductRequest,
-  ) => Promise<Product | void>;
-  isLoading?: boolean;
-  onClone?: (productId: string) => void;
-}
-
-interface FormState {
-  name: string;
-  sku: string;
-  slug: string;
-  description: string;
-  category_id: string;
-  technical_specs: Record<string, any>;
-  style_ids: string[];
-  space_ids: string[];
-  pendingMedia: PendingMedia[];
-  meta_title: string;
-  meta_description: string;
-  badges: string[];
-}
-
-function toSlug(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-const BADGES = ["Mới về", "Best Seller", "Xả kho", "Hàng hiếm", "Độc quyền"];
-
-// API Error types
-interface ApiErrorResponse {
-  error?: {
-    message?: string;
-    code?: string;
-  };
-  message?: string | string[];
-}
-
-// Helper: Retry API call with exponential backoff
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  options: { maxRetries?: number; delayMs?: number; context?: string } = {},
-): Promise<T> {
-  const { maxRetries = 2, delayMs = 1000 } = options;
-  let lastError: Error | undefined;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err: any) {
-      lastError = err;
-      const isRetryable =
-        err?.response?.status >= 500 ||
-        err?.code === "ECONNABORTED" ||
-        err?.code === "ETIMEDOUT";
-
-      if (!isRetryable || attempt >= maxRetries) {
-        throw err;
-      }
-
-      await new Promise((r) => setTimeout(r, delayMs * Math.pow(2, attempt)));
-    }
-  }
-
-  throw lastError;
-}
-
-// Helper: Format API error message
-function formatApiError(err: any, defaultMsg: string): string {
-  const data = err?.response?.data as ApiErrorResponse;
-  const msg =
-    data?.error?.message ||
-    (Array.isArray(data?.message) ? data.message.join(", ") : data?.message) ||
-    err?.message ||
-    defaultMsg;
-  return msg;
-}
-
-// Helper: Safe API call with error logging
-async function safeApiCall<T>(
-  fn: () => Promise<T>,
-  context: string,
-  options: { logError?: boolean; throwOnError?: boolean } = {},
-): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { logError = true, throwOnError = false } = options;
-
-  try {
-    const data = await fn();
-    return { success: true, data };
-  } catch (err: any) {
-    const errorMsg = formatApiError(err, `${context} thất bại`);
-    if (logError) {
-      console.error(`❌ [${context}]`, err);
-    }
-    if (throwOnError) {
-      throw new Error(errorMsg);
-    }
-    return { success: false, error: errorMsg };
-  }
-}
-
-export function initFormData(
-  product?: Product & { media?: MediaRecord[] },
-): FormState {
-  if (!product)
-    return {
-      name: "",
-      sku: "",
-      slug: "",
-      description: "",
-      category_id: "",
-      technical_specs: {},
-      style_ids: [],
-      space_ids: [],
-      pendingMedia: [],
-      meta_title: "",
-      meta_description: "",
-      badges: [],
-    };
-  return {
-    name: product.name,
-    sku: product.sku,
-    slug: toSlug(product.name),
-    description: product.description ?? "",
-    category_id: product.category_id,
-    technical_specs: product.technical_specs ?? {},
-    style_ids: (product as any).style_tags?.map((t: any) => t.id) ?? [],
-    space_ids: (product as any).space_tags?.map((t: any) => t.id) ?? [],
-    pendingMedia: (product.media ?? []).map((m, i) => ({
-      clientId: m.id,
-      url: m.file_url,
-      preview_url: m.file_url,
-      media_type: m.media_type as any,
-      is_cover: m.is_cover,
-      sort_order: m.sort_order ?? i,
-      status: "done" as const,
-    })),
-    meta_title: (product.technical_specs?.meta_title as string) ?? "",
-    meta_description:
-      (product.technical_specs?.meta_description as string) ?? "",
-    badges: (product.technical_specs?.badges as string[]) ?? [],
-  };
-}
-
-// ── Reusable field components ─────────────────────────────────────────────────
-function Field({
-  label,
-  required,
-  error,
-  hint,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  error?: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-        {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
-      </label>
-      {children}
-      {hint && !error && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
-      {error && (
-        <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-          <AlertCircle size={11} />
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Card({
-  title,
-  children,
-  action,
-}: {
-  title: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-gray-800">{title}</h3>
-        {action}
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
-
-const Input = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ className = "", ...props }, ref) => (
-  <input
-    ref={ref}
-    {...props}
-    className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-colors ${className}`}
-  />
-));
-Input.displayName = "Input";
-
-function Textarea({
-  className = "",
-  ...props
-}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      {...props}
-      className={`w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-colors resize-none ${className}`}
-    />
-  );
-}
-
-function Toast({
-  message,
-  type,
-  onClose,
-}: {
-  message: string;
-  type: "success" | "error" | "info";
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 4000);
-    return () => clearTimeout(t);
-  }, [onClose]);
-
-  const colors = {
-    success: "bg-emerald-600",
-    error: "bg-red-600",
-    info: "bg-blue-600",
-  };
-
-  const icons = {
-    success: <CheckCircle2 size={16} />,
-    error: <AlertCircle size={16} />,
-    info: <Radio size={16} className="animate-pulse" />,
-  };
-
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-white text-sm font-medium max-w-sm ${colors[type]}`}
-    >
-      {icons[type]}
-      <span className="flex-1">{message}</span>
-      <button
-        type="button"
-        onClick={onClose}
-        className="opacity-60 hover:opacity-100 ml-1"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
-// ── Main ProductForm ──────────────────────────────────────────────────────────
 export function ProductForm({
   product,
   categories,
@@ -341,7 +60,12 @@ export function ProductForm({
   const originalMediaRef = useRef<PendingMedia[]>([]);
   const initializedId = useRef<string | undefined>(undefined);
 
-  // Re-init when product loads async
+  const [productType, setProductType] = useState<ProductType>(
+    () =>
+      (product?.technical_specs?.product_type as ProductType) ??
+      detectProductType(product?.category_id ?? ""),
+  );
+
   useEffect(() => {
     if (product?.id && product.id !== initializedId.current) {
       initializedId.current = product.id;
@@ -350,29 +74,14 @@ export function ProductForm({
       originalMediaRef.current = d.pendingMedia;
       setErrors({});
       setSeoOpen(false);
-    }
-  }, [product]);
-
-  const [productType, setProductType] = useState<ProductType>(
-    () =>
-      (product?.technical_specs?.product_type as ProductType) ??
-      detectProductType(product?.category_id ?? ""),
-  );
-
-  // Update productType when product changes
-  useEffect(() => {
-    if (product?.id) {
       setProductType(
         (product?.technical_specs?.product_type as ProductType) ??
           detectProductType(product?.category_id ?? ""),
       );
     }
-  }, [
-    product?.id,
-    product?.technical_specs?.product_type,
-    product?.category_id,
-  ]);
+  }, [product]);
 
+  const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{
@@ -389,60 +98,47 @@ export function ProductForm({
   const skuRef = useRef<HTMLInputElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
 
-  // Real-time sync: Subscribe to events from other tabs
+  // Real-time sync
   useEffect(() => {
     if (!product?.id || !realtimeService) return;
-
-    // Listen for media upload events from other tabs
     const unsubscribeUploadStart = realtimeService.subscribe(
       "media_upload_start",
-      (data) => {
+      (data) =>
         setToast({
-          message: `📤 ${data.fileName} đang được upload ở tab khác`,
+          message: `📤 ${data.fileName} đang upload...`,
           type: "info",
-        });
-      },
+        }),
     );
-
     const unsubscribeUploadComplete = realtimeService.subscribe(
       "media_upload_complete",
-      (_data) => {
-        // Refresh media list if needed
+      () => {
         setSyncStatus({ isSyncing: true, lastSync: new Date() });
         setTimeout(
-          () => setSyncStatus((prev) => ({ ...prev, isSyncing: false })),
+          () => setSyncStatus((p) => ({ ...p, isSyncing: false })),
           1000,
         );
       },
     );
-
     const unsubscribeProductSaved = realtimeService.subscribe(
       "product_saved",
-      (_data) => {
-        setToast({
-          message: `💾 Sản phẩm vừa được lưu ở tab khác. Đồng bộ...`,
-          type: "info",
-        });
-        // Trigger refresh
+      () => {
+        setToast({ message: `💾 SP vừa được lưu tab khác.`, type: "info" });
         setSyncStatus({ isSyncing: true, lastSync: new Date() });
         setTimeout(
-          () => setSyncStatus((prev) => ({ ...prev, isSyncing: false })),
+          () => setSyncStatus((p) => ({ ...p, isSyncing: false })),
           1500,
         );
       },
     );
-
     const unsubscribeMediaDelete = realtimeService.subscribe(
       "media_delete",
-      (data) => {
-        // Update local state if the deleted media exists
+      (data) =>
         setFormData((prev) => ({
           ...prev,
           pendingMedia: prev.pendingMedia.filter(
             (m) => m.clientId !== data.mediaId,
           ),
-        }));
-      },
+        })),
     );
 
     return () => {
@@ -455,46 +151,27 @@ export function ProductForm({
 
   useEffect(() => {
     if (!product?.id) return;
-
     safeApiCall(
-      () => apiClient.get<any>(`/products/${product.id}/internal`),
-      "Lấy thông tin nội bộ",
+      () => apiClient.get<any>(`/p/${product.sku}/internal`),
+      "Lấy thông tin",
       { logError: false },
-    ).then((result) => {
-      if (result.success && result.data) {
-        const d = result.data;
-        setInternalData({
-          price_retail: d.price_retail ?? undefined,
-          price_wholesale: d.price_wholesale ?? undefined,
-          wholesale_discount_tiers: d.wholesale_discount_tiers ?? undefined,
-          price_dealer: d.price_dealer ?? undefined,
-          price_promo: d.price_promo ?? undefined,
-          promo_start_date: d.promo_start_date ?? undefined,
-          promo_end_date: d.promo_end_date ?? undefined,
-          promo_note: d.promo_note ?? undefined,
-          warehouse_location: d.warehouse_location ?? undefined,
-          stock_status: d.stock_status ?? undefined,
-          stock_quantity: d.stock_quantity ?? undefined,
-          supplier_name: d.supplier_name ?? undefined,
-          supplier_phone: d.supplier_phone ?? undefined,
-          internal_notes: d.internal_notes ?? undefined,
-        });
+    ).then((res) => {
+      if (res.success && res.data) {
+        setInternalData(res.data);
       }
     });
   }, [product?.id]);
 
   const debouncedSlug = useMemo(
     () =>
-      debounce((name: string) => {
-        setFormData((p) => ({ ...p, slug: toSlug(name) }));
-      }, 300),
+      debounce(
+        (name: string) => setFormData((p) => ({ ...p, slug: toSlug(name) })),
+        300,
+      ),
     [],
   );
-
   const setField = useCallback(
     <K extends keyof FormState>(key: K, value: FormState[K]) => {
-      if (key === "pendingMedia") {
-      }
       setFormData((p) => ({ ...p, [key]: value }));
       setErrors((p) => {
         if (!p[key]) return p;
@@ -510,7 +187,7 @@ export function ProductForm({
     const e: Record<string, string> = {};
     if (!formData.name.trim()) e.name = "Bắt buộc";
     if (!formData.sku.trim()) e.sku = "Bắt buộc";
-    if (!formData.category_id) e.category_id = "Vui lòng chọn danh mục";
+    if (!formData.category_id) e.category_id = "Vui lòng chọn";
     setErrors(e);
     if (Object.keys(e).length > 0) {
       setTimeout(() => {
@@ -540,17 +217,17 @@ export function ProductForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-
     setIsSaving(true);
-    const errors: string[] = [];
+    const apiErrors: string[] = [];
 
     try {
-      // 1. Save product (CREATE or UPDATE)
       const payload: CreateProductRequest | UpdateProductRequest = {
         name: formData.name.trim(),
         sku: formData.sku.trim(),
         description: formData.description.trim() || undefined,
         category_id: formData.category_id,
+        style_ids: formData.style_ids,
+        space_ids: formData.space_ids,
         technical_specs: {
           ...formData.technical_specs,
           slug: formData.slug,
@@ -559,19 +236,18 @@ export function ProductForm({
             formData.meta_description || formData.description || undefined,
           badges: formData.badges.length > 0 ? formData.badges : undefined,
         },
-        style_ids: formData.style_ids,
-        space_ids: formData.space_ids,
       };
 
-      const result = await withRetry(() => onSubmit(payload), {
+      const productResult = await withRetry(() => onSubmit(payload), {
         maxRetries: 2,
         context: "Lưu sản phẩm",
       });
-      const productId = product?.id ?? (result as any)?.id;
+      const productId = product?.id ?? (productResult as any)?.id;
+      if (!productId) throw new Error("Lỗi lưu SP");
 
-      if (!productId) throw new Error("Không lấy được product ID sau khi lưu");
+      const operations: Promise<any>[] = [];
 
-      // 2. DELETE removed media (edit mode only)
+      // A. Xóa media
       if (product?.id) {
         const currentIds = new Set(
           formData.pendingMedia
@@ -581,110 +257,34 @@ export function ProductForm({
         const toDelete = originalMediaRef.current.filter(
           (m) => m.status === "done" && !currentIds.has(m.clientId),
         );
-
         if (toDelete.length > 0) {
-          const deleteResults = await Promise.all(
-            toDelete.map(async (m) => {
-              const result = await safeApiCall(
-                () => deleteMedia(m.clientId),
-                `Xóa media ${m.clientId}`,
-                { throwOnError: false },
-              );
-              return { id: m.clientId, ...result };
+          operations.push(
+            Promise.all(
+              toDelete.map((m) =>
+                safeApiCall(() => deleteMedia(m.clientId), `Xóa media`, {
+                  throwOnError: false,
+                }),
+              ),
+            ).then((res) => {
+              const fail = res.filter((r) => !r.success);
+              if (fail.length > 0)
+                apiErrors.push(`Lỗi xóa ${fail.length} file`);
             }),
           );
-
-          const failedDeletes = deleteResults.filter((r) => !r.success);
-          if (failedDeletes.length > 0) {
-            console.warn(
-              `⚠️ [API] Failed to delete ${failedDeletes.length} media items`,
-            );
-            errors.push(`Không thể xóa ${failedDeletes.length} file cũ`);
-          }
         }
       }
 
-      // 3. UPLOAD new files with retry
-      const pending = formData.pendingMedia.filter(
-        (m) => m.status === "pending" && m.file,
+      // B. Internal info
+      operations.push(
+        safeApiCall(
+          () =>
+            apiClient.patch(`/products/${productId}/internal`, internalData),
+          "Lưu info nội bộ",
+          { throwOnError: false },
+        ),
       );
 
-      if (pending.length > 0) {
-        const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
-          setFormData((p) => ({
-            ...p,
-            pendingMedia: p.pendingMedia.map((m) =>
-              m.clientId === clientId ? { ...m, ...patch } : m,
-            ),
-          }));
-
-        const uploadResults = await Promise.all(
-          pending.map(async (item) => {
-            if (!item.file) return { clientId: item.clientId, success: true };
-
-            updateStatus(item.clientId, { status: "uploading", progress: 0 });
-
-            try {
-              // Upload with retry
-              const fileUrl = await withRetry(
-                () =>
-                  uploadMedia(
-                    productId,
-                    item.file!,
-                    item.media_type as any,
-                    (pct) => updateStatus(item.clientId, { progress: pct }),
-                  ),
-                {
-                  maxRetries: 2,
-                  delayMs: 2000,
-                  context: `Upload ${item.file!.name}`,
-                },
-              );
-
-              // Create media record with retry
-              await withRetry(
-                () =>
-                  createMediaRecord({
-                    product_id: productId,
-                    file_url: fileUrl,
-                    file_type: item.file!.type,
-                    media_type: item.media_type,
-                    is_cover: item.is_cover,
-                    sort_order: item.sort_order,
-                    alt_text: item.alt_text,
-                  }),
-                {
-                  maxRetries: 2,
-                  context: `Create media record for ${item.file!.name}`,
-                },
-              );
-
-              updateStatus(item.clientId, { status: "done", progress: 100 });
-              return { clientId: item.clientId, success: true };
-            } catch (err: any) {
-              console.error(`❌ [API] Upload failed:`, err);
-              const msg = formatApiError(
-                err,
-                `Upload "${item.file!.name}" thất bại`,
-              );
-              updateStatus(item.clientId, { status: "error", error: msg });
-              return { clientId: item.clientId, success: false, error: msg };
-            }
-          }),
-        );
-
-        const failedUploads = uploadResults.filter((r) => !r.success);
-        if (failedUploads.length > 0) {
-          errors.push(`${failedUploads.length} file upload thất bại`);
-        }
-
-        // Continue even if some uploads failed
-        if (failedUploads.length === pending.length) {
-          throw new Error("Tất cả file upload thất bại");
-        }
-      }
-
-      // 4. UPDATE sort order if changed (edit mode)
+      // C. Sort order
       if (product?.id) {
         const existingIds = new Set(
           originalMediaRef.current.map((m) => m.clientId),
@@ -698,49 +298,84 @@ export function ProductForm({
           );
           return orig && orig.sort_order !== item.sort_order;
         });
-
         if (doneItems.length > 0 && orderChanged) {
-          const sortResult = await safeApiCall(
-            () =>
-              updateSortOrder(
-                productId,
-                doneItems.map((m) => ({
-                  id: m.clientId,
-                  sort_order: m.sort_order,
-                })),
-              ),
-            "Cập nhật thứ tự media",
-            { throwOnError: false },
+          operations.push(
+            safeApiCall(
+              () =>
+                updateSortOrder(
+                  productId,
+                  doneItems.map((m) => ({
+                    id: m.clientId,
+                    sort_order: m.sort_order,
+                  })),
+                ),
+              "Sắp xếp media",
+              { throwOnError: false },
+            ),
           );
-
-          if (!sortResult.success) {
-            console.warn(
-              `⚠️ [API] Sort order update failed:`,
-              sortResult.error,
-            );
-          }
         }
       }
 
-      // 5. SAVE internal info (always call to allow clearing fields)
-
-      const internalResult = await safeApiCall(
-        () => apiClient.patch(`/products/${productId}/internal`, internalData),
-        "Lưu thông tin nội bộ",
+      // D. Upload
+      const pending = formData.pendingMedia.filter(
+        (m) => m.status === "pending" && m.file,
       );
-
-      if (!internalResult.success) {
-        console.warn(
-          `⚠️ [API] Internal info save failed:`,
-          internalResult.error,
+      if (pending.length > 0) {
+        const updateStatus = (clientId: string, patch: Partial<PendingMedia>) =>
+          setFormData((p) => ({
+            ...p,
+            pendingMedia: p.pendingMedia.map((m) =>
+              m.clientId === clientId ? { ...m, ...patch } : m,
+            ),
+          }));
+        operations.push(
+          Promise.all(
+            pending.map(async (item) => {
+              if (!item.file) return { success: true };
+              updateStatus(item.clientId, { status: "uploading", progress: 0 });
+              try {
+                const fileUrl = await withRetry(
+                  () =>
+                    uploadMedia(
+                      productId,
+                      item.file!,
+                      item.media_type as any,
+                      (pct) => updateStatus(item.clientId, { progress: pct }),
+                    ),
+                  { maxRetries: 2, context: `Upload` },
+                );
+                await withRetry(
+                  () =>
+                    createMediaRecord({
+                      product_id: productId,
+                      file_url: fileUrl,
+                      file_type: item.file!.type,
+                      media_type: item.media_type as any,
+                      is_cover: item.is_cover,
+                      sort_order: item.sort_order,
+                      alt_text: item.alt_text,
+                    }),
+                  { maxRetries: 2, context: `Record` },
+                );
+                updateStatus(item.clientId, { status: "done", progress: 100 });
+                return { success: true };
+              } catch (err) {
+                updateStatus(item.clientId, { status: "error" });
+                return { success: false };
+              }
+            }),
+          ).then((res) => {
+            const fail = res.filter((r) => !r.success);
+            if (fail.length > 0)
+              apiErrors.push(`Lỗi upload ${fail.length} file`);
+          }),
         );
       }
 
-      // Invalidate cache immediately for real-time effect
-      invalidateProductMediaCache(productId);
+      await Promise.all(operations);
 
-      // Broadcast product saved to other tabs
-      if (productId && realtimeService) {
+      invalidateProductMediaCache(productId);
+      if (realtimeService) {
         realtimeService.broadcastProductSaved(productId, {
           id: productId,
           name: formData.name,
@@ -748,24 +383,19 @@ export function ProductForm({
         });
       }
 
-      // Show success or partial success message
-      if (errors.length > 0) {
-        setToast({
-          message: `✅ Sản phẩm đã lưu, nhưng: ${errors.join(", ")}`,
-          type: "success",
-        });
-      } else {
-        setToast({ message: "✅ Đã lưu sản phẩm thành công", type: "success" });
-      }
-
-      // Redirect with cache buster to force fresh load
+      setToast({
+        message:
+          apiErrors.length > 0
+            ? `Xong, nhưng có lỗi: ${apiErrors.join(", ")}`
+            : "Lưu thành công!",
+        type: apiErrors.length > 0 ? "info" : "success",
+      });
       setTimeout(() => {
-        window.location.href = `/products/${productId}?_cb=${Date.now()}`;
+        router.push(`/products/${productId}`);
+        router.refresh();
       }, 800);
     } catch (err: any) {
-      const msg = formatApiError(err, "Lưu sản phẩm thất bại");
-      console.error(`❌ [API] Submit error:`, err);
-      setToast({ message: msg, type: "error" });
+      setToast({ message: formatApiError(err, "Lưu thất bại"), type: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -776,93 +406,74 @@ export function ProductForm({
   return (
     <>
       <form onSubmit={handleSubmit} noValidate>
-        {/* ── Top bar ── */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 py-3 mb-6 flex items-center gap-3 shadow-sm -mx-4 md:-mx-6 px-4 md:px-6">
-          <div className="flex-1 min-w-0">
+        {/* ── Top bar (Kính mờ, thả nổi) ── */}
+        <div className="sticky top-14 lg:top-0 z-30 bg-white/70 backdrop-blur-[32px] saturate-150 border-b border-black/5 px-4 md:px-6 py-3 mb-6 flex items-center justify-between shadow-[0_4px_16px_rgba(0,0,0,0.02)] -mx-4 md:-mx-6">
+          <div className="flex-1 min-w-0 pr-4">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-gray-900 truncate">
-                {formData.name ||
-                  (product ? "Chỉnh sửa sản phẩm" : "Sản phẩm mới")}
-              </p>
+              <h2 className="text-[16px] font-bold text-gray-900 truncate tracking-tight">
+                {formData.name || (product ? "Sửa sản phẩm" : "Sản phẩm mới")}
+              </h2>
               {syncStatus.isSyncing && (
-                <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-                  <Radio size={12} className="animate-pulse" />
-                  Đang đồng bộ...
+                <span className="flex items-center gap-1.5 px-2.5 py-1 bg-black/5 text-gray-700 text-[11px] font-bold rounded-full border border-black/5">
+                  <Radio size={12} className="animate-pulse" /> Sync
                 </span>
               )}
             </div>
             {formData.sku && (
-              <p className="text-xs text-gray-400 font-mono mt-0.5">
+              <p className="text-[12px] font-medium text-gray-500 mt-0.5">
                 {formData.sku}
               </p>
             )}
           </div>
+
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 shrink-0">
             {product?.id && (
               <a
-                href={`/products/${product.id}`}
+                href={`/p/${product.sku}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-500 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-black/5 text-gray-700 text-[13px] font-bold rounded-full hover:bg-black/10 transition-colors active:scale-95"
               >
-                <Eye size={13} /> Xem
+                <Eye size={16} strokeWidth={2.5} /> Xem
               </a>
             )}
             {product?.id && onClone && (
               <button
                 type="button"
                 onClick={() => onClone(product.id)}
-                className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 text-gray-500 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-black/5 text-gray-700 text-[13px] font-bold rounded-full hover:bg-black/10 transition-colors active:scale-95"
               >
-                <Copy size={13} /> Nhân bản
+                <Copy size={16} strokeWidth={2.5} /> Copy
               </button>
             )}
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-blue-500/20"
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-gray-900 text-white text-[14px] font-bold rounded-full hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95"
             >
               {saving ? (
-                <svg
-                  className="w-4 h-4 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
-                </svg>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Save size={14} />
+                <Save size={16} strokeWidth={2.5} />
               )}
-              {saving ? "Đang lưu..." : "Lưu"}
+              {saving ? "Lưu..." : "Lưu"}
             </button>
           </div>
         </div>
 
         {/* ── 2-column layout ── */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
           {/* ── LEFT COLUMN ── */}
-          <div className="space-y-5">
-            {/* Basic info */}
-            <Card title="Thông tin sản phẩm">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_160px] gap-4">
+          <div className="space-y-6">
+            <Card title="Thông tin cơ bản">
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-5">
                   <Field label="Tên sản phẩm" required error={errors.name}>
                     <Input
                       ref={nameRef}
                       value={formData.name}
-                      placeholder="VD: Gạch Porcelain 600x1200 Vân Đá"
+                      placeholder="VD: Gạch 60x120"
                       className={
                         errors.name
                           ? "border-red-400 bg-red-50 focus:border-red-400 focus:ring-red-500/20"
@@ -879,44 +490,43 @@ export function ProductForm({
                       }}
                     />
                   </Field>
-                  <Field label="SKU" required error={errors.sku}>
+                  <Field label="Mã SKU" required error={errors.sku}>
                     <Input
                       ref={skuRef}
                       value={formData.sku}
                       placeholder="GCH-001"
-                      className={`font-mono ${errors.sku ? "border-red-400 bg-red-50" : ""}`}
+                      className={`font-mono uppercase ${errors.sku ? "border-red-400 bg-red-50" : ""}`}
                       onChange={(e) => setField("sku", e.target.value)}
                     />
                   </Field>
                 </div>
 
-                <Field label="Mô tả ngắn">
+                <Field label="Mô tả">
                   <Textarea
                     value={formData.description}
                     rows={3}
-                    placeholder="Mô tả ngắn về sản phẩm, phong cách, không gian ứng dụng..."
+                    placeholder="Mô tả chất liệu, ứng dụng..."
                     onChange={(e) => setField("description", e.target.value)}
                   />
                 </Field>
 
-                <Field label="URL slug" hint="Tự động tạo từ tên sản phẩm">
-                  <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-400 transition-colors">
-                    <span className="px-3 py-2.5 text-xs text-gray-400 bg-gray-50 border-r border-gray-200 whitespace-nowrap select-none">
+                <Field label="Đường dẫn (URL)">
+                  <div className="flex items-center bg-black/5 rounded-[12px] overflow-hidden border border-transparent focus-within:bg-white focus-within:border-black/10 focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all">
+                    <span className="px-3 py-2.5 text-[13px] text-gray-500 whitespace-nowrap select-none font-medium">
                       /products/
                     </span>
                     <input
                       type="text"
                       value={formData.slug}
                       onChange={(e) => setField("slug", e.target.value)}
-                      className="flex-1 px-3 py-2.5 text-sm bg-transparent focus:outline-none text-gray-600 font-mono"
+                      className="flex-1 pr-3 py-2.5 text-[14px] bg-transparent focus:outline-none text-gray-900 font-mono"
                     />
                   </div>
                 </Field>
               </div>
             </Card>
 
-            {/* Media */}
-            <Card title="Hình ảnh & Media">
+            <Card title="Hình ảnh & Video">
               <MediaUploader
                 productId={product?.id}
                 existingMedia={formData.pendingMedia}
@@ -925,7 +535,6 @@ export function ProductForm({
               />
             </Card>
 
-            {/* Specs */}
             <Card title="Thông số kỹ thuật">
               <SpecTable
                 categoryId={formData.category_id}
@@ -945,8 +554,7 @@ export function ProductForm({
               />
             </Card>
 
-            {/* Internal info */}
-            <Card title="Thông tin nội bộ 🔒">
+            <Card title="Dữ liệu nội bộ (Kho & Giá)">
               <InternalInfoSection
                 value={internalData}
                 onChange={setInternalData}
@@ -955,12 +563,15 @@ export function ProductForm({
           </div>
 
           {/* ── RIGHT COLUMN ── */}
-          <div className="space-y-5">
-            {/* Status & Category */}
+          <div className="space-y-6">
             <Card title="Phân loại">
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div ref={categoryRef}>
-                  <Field label="Danh mục" required error={errors.category_id}>
+                  <Field
+                    label="Danh mục chính"
+                    required
+                    error={errors.category_id}
+                  >
                     <CategoryPicker
                       categories={categories}
                       value={formData.category_id}
@@ -969,9 +580,8 @@ export function ProductForm({
                   </Field>
                 </div>
 
-                {/* Badges */}
-                <Field label="Nhãn">
-                  <div className="flex flex-wrap gap-1.5 mt-1">
+                <Field label="Nhãn nổi bật (Badges)">
+                  <div className="flex flex-wrap gap-2 mt-1">
                     {BADGES.map((badge) => {
                       const active = formData.badges.includes(badge);
                       return (
@@ -986,7 +596,7 @@ export function ProductForm({
                                 : [...formData.badges, badge],
                             )
                           }
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${active ? "bg-orange-500 text-white border-orange-500 shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-500"}`}
+                          className={`px-3 py-1.5 rounded-full text-[12px] font-bold border transition-all active:scale-95 ${active ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:text-gray-900"}`}
                         >
                           {badge}
                         </button>
@@ -997,16 +607,15 @@ export function ProductForm({
               </div>
             </Card>
 
-            {/* Tags */}
             {(styles.length > 0 || spaces.length > 0) && (
-              <Card title="Thẻ & Phong cách">
-                <div className="space-y-4">
+              <Card title="Bộ lọc & Khám phá">
+                <div className="space-y-5">
                   {styles.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
                         Phong cách
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {styles.map((s) => {
                           const active = formData.style_ids.includes(s.id);
                           return (
@@ -1023,7 +632,7 @@ export function ProductForm({
                                     : [...formData.style_ids, s.id],
                                 )
                               }
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${active ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}
+                              className={`px-3 py-1.5 rounded-full text-[12px] font-bold transition-all active:scale-95 border ${active ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-black/5 text-gray-700 border-transparent hover:bg-black/10 hover:text-gray-900"}`}
                             >
                               {s.name}
                             </button>
@@ -1033,11 +642,11 @@ export function ProductForm({
                     </div>
                   )}
                   {spaces.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    <div className="pt-2">
+                      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
                         Không gian
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {spaces.map((s) => {
                           const active = formData.space_ids.includes(s.id);
                           return (
@@ -1054,7 +663,7 @@ export function ProductForm({
                                     : [...formData.space_ids, s.id],
                                 )
                               }
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${active ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-600 border-gray-200 hover:border-emerald-300"}`}
+                              className={`px-3 py-1.5 rounded-full text-[12px] font-bold transition-all active:scale-95 border ${active ? "bg-gray-900 text-white border-gray-900 shadow-sm" : "bg-black/5 text-gray-700 border-transparent hover:bg-black/10 hover:text-gray-900"}`}
                             >
                               {s.name}
                             </button>
@@ -1067,43 +676,42 @@ export function ProductForm({
               </Card>
             )}
 
-            {/* SEO */}
             <Card
-              title="SEO"
+              title="SEO On-page"
               action={
                 <button
                   type="button"
                   onClick={() => setSeoOpen((o) => !o)}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                  className="p-1 text-gray-400 hover:text-gray-900 bg-black/5 rounded-full transition-colors active:scale-90"
                 >
-                  {seoOpen ? "Thu gọn" : "Mở rộng"}
                   <ChevronDown
-                    size={12}
-                    className={`transition-transform ${seoOpen ? "rotate-180" : ""}`}
+                    size={18}
+                    strokeWidth={2.5}
+                    className={`transition-transform duration-300 ${seoOpen ? "rotate-180" : ""}`}
                   />
                 </button>
               }
             >
               {seoOpen ? (
-                <div className="space-y-3">
+                <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                   <Field
-                    label="Meta Title"
+                    label="Tiêu đề (Meta Title)"
                     hint={`${(formData.meta_title || formData.name).length}/65 ký tự`}
                   >
                     <Input
                       value={formData.meta_title}
-                      placeholder={formData.name || "Tự động từ tên SP"}
+                      placeholder={formData.name || "Auto"}
                       onChange={(e) => setField("meta_title", e.target.value)}
                     />
                   </Field>
                   <Field
-                    label="Meta Description"
+                    label="Mô tả (Meta Desc)"
                     hint={`${(formData.meta_description || formData.description).length}/160 ký tự`}
                   >
                     <Textarea
                       value={formData.meta_description}
-                      rows={2}
-                      placeholder={formData.description || "Tự động từ mô tả"}
+                      rows={3}
+                      placeholder={formData.description || "Auto"}
                       onChange={(e) =>
                         setField("meta_description", e.target.value)
                       }
@@ -1111,8 +719,8 @@ export function ProductForm({
                   </Field>
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 italic">
-                  {formData.meta_title || formData.name || "Chưa có meta title"}
+                <p className="text-[13px] text-gray-500 font-medium truncate pt-1">
+                  {formData.meta_title || formData.name || "Chưa thiết lập"}
                 </p>
               )}
             </Card>

@@ -1,11 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@repo/shared-utils";
-import { motion } from "framer-motion";
 import {
-  FileText,
   Warehouse,
   ShieldCheck,
   ArrowRight,
@@ -16,7 +9,9 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
-import { productService } from "@/lib/product-service";
+import Image from "next/image";
+import { BOQLeadMagnet } from "@/components/BOQLeadMagnet";
+import { HomeClient } from "./HomeClient";
 
 // Bảng màu đồng bộ thương hiệu
 const palette = {
@@ -101,25 +96,25 @@ const PUBLIC_CATEGORIES = [
   {
     name: "Gạch Khổ Lớn (Big Slab)",
     desc: "Xóa nhòa ranh giới thiết kế với kích thước vượt trội.",
-    img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80",
+    img: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c",
     link: "/products?category=gach-kho-lon",
   },
   {
     name: "Gạch Trang Trí Cao Cấp",
     desc: "Tạo điểm nhấn nghệ thuật cho mọi không gian.",
-    img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80",
+    img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2",
     link: "/products?category=gach-trang-tri",
   },
   {
     name: "Thiết Bị Vệ Sinh",
     desc: "Tinh hoa công nghệ nước và thẩm mỹ đương đại.",
-    img: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&q=80",
+    img: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14",
     link: "/products?category=thiet-bi-ve-sinh",
   },
   {
     name: "Phụ Kiện Hoàn Thiện",
     desc: "Giải pháp thi công đồng bộ và bền vững.",
-    img: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=600&q=80",
+    img: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d",
     link: "/products?category=phu-kien",
   },
 ];
@@ -168,11 +163,14 @@ function CategoryFunnel() {
               href={cat.link}
               className="group block relative rounded-[32px] overflow-hidden bg-white shadow-sm hover:shadow-[0_20px_40px_rgba(128,64,0,0.08)] transition-all duration-500"
             >
-              <div className="aspect-[4/5] overflow-hidden">
-                <img
+              <div className="aspect-[4/5] overflow-hidden relative">
+                <Image
                   src={cat.img}
                   alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  priority={idx < 2}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
               </div>
@@ -275,72 +273,17 @@ function USPSection() {
   );
 }
 
-function BOQLeadMagnet() {
-  const [phone, setPhone] = useState("");
-  return (
-    <section
-      style={{ backgroundColor: palette.brown }}
-      className="py-32 px-6 lg:px-12 relative overflow-hidden rounded-t-[60px] mt-10"
-    >
-      <div
-        style={{ backgroundColor: palette.lightBrown }}
-        className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-[800px] h-[800px] rounded-full blur-[120px] opacity-20 pointer-events-none"
-      />
-      <div
-        style={{ backgroundColor: palette.be }}
-        className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/3 w-[600px] h-[600px] rounded-full blur-[100px] opacity-10 pointer-events-none"
-      />
-
-      <div className="max-w-4xl mx-auto text-center relative z-10">
-        <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white/10 backdrop-blur-sm text-[#FDF5E6] font-bold text-sm mb-8 border border-white/20">
-          <FileText size={16} /> Nhận bảng tính BOQ hoàn toàn miễn phí
-        </div>
-        <h2 className="text-4xl md:text-6xl font-black text-[#FDF5E6] mb-8 leading-tight tracking-tight">
-          Bạn Đã Có Bản Vẽ <br className="hidden md:block" /> Thiết Kế?
-        </h2>
-        <p className="text-[#FDF5E6]/80 text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-          Gửi bản vẽ cho Phú Cường Thịnh, chuyên gia của chúng tôi sẽ phản hồi
-          kèm <strong className="text-white">Bảng dự toán chi tiết</strong> chỉ
-          trong vòng 30 phút.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto bg-white/5 p-2 rounded-full backdrop-blur-md border border-white/10">
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Nhập số Zalo của bạn..."
-            className="flex-1 px-6 py-4 rounded-full bg-transparent text-white placeholder-white/50 text-base font-medium outline-none focus:bg-white/10 transition-colors"
-          />
-          <button
-            style={{ backgroundColor: palette.be, color: palette.brown }}
-            className="font-black px-8 py-4 rounded-full transition-transform hover:scale-105 shadow-xl text-base whitespace-nowrap"
-          >
-            Gửi yêu cầu
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── ROOT PAGE COMPONENT ──────────────────────────────────────────────────────
+// ─── ROOT PAGE COMPONENT (SERVER COMPONENT) ───────────────────────────────────
 export default function Home() {
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/admin/dashboard");
-    }
-  }, [isAuthenticated, router]);
-
-  // Nếu chưa login thì render Trang Landing Page
+  // Server Component với Client wrapper để xử lý authentication
   return (
-    <main className="min-h-screen bg-white selection:bg-[#804000]/20 selection:text-[#804000]">
-      <HeroSection />
-      <CategoryFunnel />
-      <USPSection />
-      <BOQLeadMagnet />
-    </main>
+    <HomeClient>
+      <main className="min-h-screen bg-white selection:bg-[#804000]/20 selection:text-[#804000]">
+        <HeroSection />
+        <CategoryFunnel />
+        <USPSection />
+        <BOQLeadMagnet />
+      </main>
+    </HomeClient>
   );
 }

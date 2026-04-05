@@ -266,7 +266,7 @@ function EditProductForm({
   const { data: internalData } = useQuery<InternalInfo | null>({
     queryKey: ["internal-product", product.id],
     queryFn: () =>
-      apiClient.get<InternalInfo | null>(`/products/${product.id}/internal`),
+      apiClient.get<InternalInfo | null>(`/p/${product.sku}/internal`),
   });
 
   useEffect(() => {

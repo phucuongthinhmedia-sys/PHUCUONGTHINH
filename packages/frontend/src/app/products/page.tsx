@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
-  ChevronRight,
-  ChevronLeft,
-  SlidersHorizontal,
-  Package,
   Search,
   X,
   List,
@@ -18,6 +13,7 @@ import {
   Copy,
   Trash2,
   Pencil,
+  SlidersHorizontal
 } from "lucide-react";
 import { FilterTabs } from "@/components/FilterTabs";
 import { InspirationFilters } from "@/components/InspirationFilters";
@@ -26,60 +22,10 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { Pagination } from "@/components/Pagination";
 import { productService } from "@/lib/product-service";
 import { Product, Style, Space, FilterState } from "@/types";
-// import { useProductEvents } from "@/hooks/useProductEvents"; // DISABLED: Causing infinite reload loop
 import { useAuth } from "@repo/shared-utils";
 
-// ─── VISUAL CATEGORIES ────────────────────────────────
-const VISUAL_CATEGORIES = [
-  {
-    id: "Big Slab",
-    label: "Gạch Khổ Lớn",
-    image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=200&q=80",
-  },
-  {
-    id: "60x120",
-    label: "Gạch 60x120",
-    image:
-      "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=200&q=80",
-  },
-  {
-    id: "Giả Gỗ",
-    label: "Gạch Giả Gỗ",
-    image:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&q=80",
-  },
-  {
-    id: "Bồn Cầu",
-    label: "Bồn Cầu",
-    image:
-      "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=200&q=80",
-  },
-  {
-    id: "Lavabo",
-    label: "Lavabo",
-    image:
-      "https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=200&q=80",
-  },
-  {
-    id: "Sen Tắm",
-    label: "Sen Tắm",
-    image:
-      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=200&q=80",
-  },
-  {
-    id: "Bồn Tắm",
-    label: "Bồn Tắm",
-    image:
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=200&q=80",
-  },
-  {
-    id: "Keo Dán",
-    label: "Phụ Trợ",
-    image:
-      "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200&q=80",
-  },
-];
+// Định nghĩa mở rộng FilterState để sử dụng type checking an toàn cho property 'published'
+type ExtendedFilterState = FilterState & { published?: "all" | "true" | "false" };
 
 // ─── ADMIN TABLE (inline) ────────────────────────────────────────────────────
 function AdminProductRow({
@@ -122,7 +68,7 @@ function AdminProductRow({
       <td className="px-5 py-3.5">
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <a
-            href={`/admin/products/${product.id}`}
+            href={`/admin/p/${product.sku}`}
             className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
             title="Sửa"
           >
@@ -157,7 +103,8 @@ export default function ProductsPage() {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [filters, setFilters] = useState<FilterState>({ page: 1, limit: 20 });
+  // Áp dụng kiểu ExtendedFilterState
+  const [filters, setFilters] = useState<ExtendedFilterState>({ page: 1, limit: 20 });
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedSpaces, setSelectedSpaces] = useState<string[]>([]);
   const [technicalSpecs, setTechnicalSpecs] = useState<Record<string, any>>({});
@@ -165,32 +112,27 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  
+  // FIX: Thêm totalItems state cho logic phân trang đúng chuẩn
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const sliderRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useAuth();
+  const canUseAdminMode = isAuthenticated;
   const [viewMode, setViewMode] = useState<"customer" | "admin">("customer");
 
   const switchToAdmin = () => {
+    if (!canUseAdminMode) return;
     setViewMode("admin");
-    setFilters((prev) => ({ ...prev, published: "all" as any, page: 1 }));
+    setFilters((prev) => ({ ...prev, published: "all", page: 1 }));
   };
 
   const switchToCustomer = () => {
     setViewMode("customer");
     setFilters((prev) => {
-      const { published, ...rest } = prev as any;
+      const { published, ...rest } = prev;
       return { ...rest, page: 1 };
     });
-  };
-  const scrollSlider = (direction: "left" | "right") => {
-    if (sliderRef.current) {
-      const scrollAmount = 350;
-      sliderRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
-    }
   };
 
   const fetchProducts = useCallback(async () => {
@@ -207,6 +149,9 @@ export default function ProductsPage() {
       setStyles(response.available_filters?.inspiration?.styles || []);
       setSpaces(response.available_filters?.inspiration?.spaces || []);
       setTotalPages(response.pagination?.total_pages || 1);
+      
+      // FIX: Cập nhật tổng items từ API trả về
+      setTotalItems(response.pagination?.total_items || 0);
     } catch (err) {
       console.error(err);
     } finally {
@@ -217,8 +162,6 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-  // DISABLED: SSE causing infinite reload loop - users can manually refresh (F5) to see updates
-  // useProductEvents(fetchProducts);
 
   const handleToggleStyle = (id: string) => {
     setSelectedStyles((prev) =>
@@ -258,14 +201,12 @@ export default function ProductsPage() {
   const handleAdminDelete = async (id: string) => {
     if (!confirm("Xóa sản phẩm này?")) return;
 
-    // Optimistic update - remove from UI immediately
     const deletedProduct = products.find((p) => p.id === id);
     setProducts((p) => p.filter((x) => x.id !== id));
 
     try {
       await productService.deleteProduct(id);
     } catch (err) {
-      // Rollback on error
       if (deletedProduct) {
         setProducts((p) => [...p, deletedProduct]);
       }
@@ -276,7 +217,6 @@ export default function ProductsPage() {
   const handleAdminClone = async (id: string) => {
     try {
       const cloned = await productService.cloneProduct(id);
-      // Add to top of list
       setProducts((p) => [cloned, ...p]);
     } catch (err) {
       alert("Nhân bản sản phẩm thất bại");
@@ -284,7 +224,6 @@ export default function ProductsPage() {
   };
 
   const handleAdminPublish = async (id: string, isPublished: boolean) => {
-    // Optimistic update - toggle immediately
     setProducts((p) =>
       p.map((x) => (x.id === id ? { ...x, is_published: !isPublished } : x)),
     );
@@ -293,10 +232,8 @@ export default function ProductsPage() {
       const updated = isPublished
         ? await productService.unpublishProduct(id)
         : await productService.publishProduct(id);
-      // Update with server response
       setProducts((p) => p.map((x) => (x.id === id ? updated : x)));
     } catch (err) {
-      // Rollback on error
       setProducts((p) =>
         p.map((x) => (x.id === id ? { ...x, is_published: isPublished } : x)),
       );
@@ -304,11 +241,9 @@ export default function ProductsPage() {
     }
   };
 
-  // ── Admin mode: layout riêng, gọn nhẹ ──────────────────────────────────────
   if (isAuthenticated && viewMode === "admin") {
     return (
       <main className="min-h-screen bg-[#f8f9fb] pb-24 lg:pb-0">
-        {/* Admin toolbar */}
         <div className="bg-white border-b border-gray-100 px-4 md:px-6 py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 max-w-full sm:max-w-sm">
             <Search
@@ -334,7 +269,7 @@ export default function ProductsPage() {
 
           <div className="flex items-center gap-2">
             <select
-              value={(filters as any).published || "all"}
+              value={filters.published || "all"}
               onChange={(e) =>
                 setFilters((prev) => ({
                   ...prev,
@@ -351,7 +286,7 @@ export default function ProductsPage() {
 
             <div className="flex items-center gap-2 ml-auto">
               <span className="hidden sm:inline text-xs text-gray-400 whitespace-nowrap">
-                {products.length} SP
+                {totalItems} SP
               </span>
               <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
                 <button
@@ -377,7 +312,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Table - Mobile Cards / Desktop Table */}
         <div className="px-4 md:px-6 py-4 md:py-5">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {isLoading ? (
@@ -390,7 +324,6 @@ export default function ProductsPage() {
               </div>
             ) : (
               <>
-                {/* Mobile: Card view */}
                 <div className="block lg:hidden divide-y divide-gray-100">
                   {products.map((p) => (
                     <div
@@ -449,7 +382,6 @@ export default function ProductsPage() {
                   ))}
                 </div>
 
-                {/* Desktop: Table view */}
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -502,185 +434,178 @@ export default function ProductsPage() {
     );
   }
 
-  // Customer mode: layout day du
+  // Customer mode
   return (
     <main className="min-h-screen bg-[#F8F9FA] pt-0 pb-20">
-      {/* Unified Header - giong nhau cho ca Admin va Khach */}
-      <div className="bg-white border-b border-gray-100 px-4 md:px-6 py-3">
-        <div className="flex items-center gap-3">
-          {/* Search - flex-1 để chiếm hết không gian */}
-          <div className="relative flex-1">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Tìm tên, SKU..."
-              value={searchQuery}
-              onChange={(e) => executeSearch(e.target.value)}
-              className="w-full pl-8 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => executeSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Các nút còn lại dính sát bên phải */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Filter Button - cho customer mode */}
-            {viewMode === "customer" && (
-              <div className="relative">
+      {canUseAdminMode && (
+        <div className="bg-white border-b border-gray-100 px-4 md:px-6 py-3">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Tìm tên, SKU..."
+                value={searchQuery}
+                onChange={(e) => executeSearch(e.target.value)}
+                className="w-full pl-8 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50"
+              />
+              {searchQuery && (
                 <button
-                  onClick={() => setShowMobileFilters(!showMobileFilters)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap ${
-                    showMobileFilters ||
-                    selectedStyles.length > 0 ||
-                    selectedSpaces.length > 0 ||
-                    Object.keys(technicalSpecs).length > 0
-                      ? "bg-emerald-600 text-white"
-                      : "bg-white text-gray-700 border border-gray-200 hover:border-emerald-500"
-                  }`}
+                  onClick={() => executeSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  <SlidersHorizontal size={16} />
-                  <span className="hidden sm:inline">Lọc</span>
-                  {(selectedStyles.length > 0 ||
-                    selectedSpaces.length > 0 ||
-                    Object.keys(technicalSpecs).length > 0) && (
-                    <span className="flex items-center justify-center min-w-[20px] h-5 bg-white text-emerald-600 rounded-full text-xs font-black px-1.5">
-                      {selectedStyles.length +
-                        selectedSpaces.length +
-                        Object.keys(technicalSpecs).length}
-                    </span>
-                  )}
+                  <X size={13} />
                 </button>
+              )}
+            </div>
 
-                {showMobileFilters && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowMobileFilters(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-2 w-[90vw] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 max-h-[80vh] overflow-y-auto">
-                      <div className="p-5">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-black text-gray-900">
-                            Bộ lọc sản phẩm
-                          </h3>
-                          <button
-                            onClick={() => setShowMobileFilters(false)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <X size={18} />
-                          </button>
-                        </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {viewMode === "customer" && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap ${
+                      showMobileFilters ||
+                      selectedStyles.length > 0 ||
+                      selectedSpaces.length > 0 ||
+                      Object.keys(technicalSpecs).length > 0
+                        ? "bg-emerald-600 text-white"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-emerald-500"
+                    }`}
+                  >
+                    <SlidersHorizontal size={16} />
+                    <span className="hidden sm:inline">Lọc</span>
+                    {(selectedStyles.length > 0 ||
+                      selectedSpaces.length > 0 ||
+                      Object.keys(technicalSpecs).length > 0) && (
+                      <span className="flex items-center justify-center min-w-[20px] h-5 bg-white text-emerald-600 rounded-full text-xs font-black px-1.5">
+                        {selectedStyles.length +
+                          selectedSpaces.length +
+                          Object.keys(technicalSpecs).length}
+                      </span>
+                    )}
+                  </button>
 
-                        <FilterTabs
-                          activeTab={activeTab}
-                          onTabChange={setActiveTab}
-                        />
+                  {showMobileFilters && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowMobileFilters(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-2 w-[90vw] sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 max-h-[80vh] overflow-y-auto">
+                        <div className="p-5">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-black text-gray-900">
+                              Bộ lọc sản phẩm
+                            </h3>
+                            <button
+                              onClick={() => setShowMobileFilters(false)}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
 
-                        <div className="mt-5">
-                          {activeTab === "inspiration" ? (
-                            <InspirationFilters
-                              styles={styles}
-                              spaces={spaces}
-                              selectedStyles={selectedStyles}
-                              selectedSpaces={selectedSpaces}
-                              onStyleChange={handleToggleStyle}
-                              onSpaceChange={handleToggleSpace}
-                            />
-                          ) : (
-                            <TechnicalFilters
-                              onFilterChange={handleTechnicalSpecChange}
-                            />
+                          <FilterTabs
+                            activeTab={activeTab}
+                            onTabChange={setActiveTab}
+                          />
+
+                          <div className="mt-5">
+                            {activeTab === "inspiration" ? (
+                              <InspirationFilters
+                                styles={styles}
+                                spaces={spaces}
+                                selectedStyles={selectedStyles}
+                                selectedSpaces={selectedSpaces}
+                                onStyleChange={handleToggleStyle}
+                                onSpaceChange={handleToggleSpace}
+                              />
+                            ) : (
+                              <TechnicalFilters
+                                onFilterChange={handleTechnicalSpecChange}
+                              />
+                            )}
+                          </div>
+
+                          {(selectedStyles.length > 0 ||
+                            selectedSpaces.length > 0 ||
+                            Object.keys(technicalSpecs).length > 0) && (
+                            <button
+                              onClick={clearAllFilters}
+                              className="w-full mt-5 px-4 py-2.5 bg-red-50 text-red-600 text-sm font-bold rounded-xl hover:bg-red-100 transition-colors"
+                            >
+                              Xóa tất cả bộ lọc
+                            </button>
                           )}
                         </div>
-
-                        {(selectedStyles.length > 0 ||
-                          selectedSpaces.length > 0 ||
-                          Object.keys(technicalSpecs).length > 0) && (
-                          <button
-                            onClick={clearAllFilters}
-                            className="w-full mt-5 px-4 py-2.5 bg-red-50 text-red-600 text-sm font-bold rounded-xl hover:bg-red-100 transition-colors"
-                          >
-                            Xóa tất cả bộ lọc
-                          </button>
-                        )}
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {viewMode === "admin" && (
+              <select
+                value={filters.published || "all"}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    published: e.target.value as any,
+                    page: 1,
+                  }))
+                }
+                className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-600"
+              >
+                <option value="all">Tất cả</option>
+                <option value="true">Đã đăng</option>
+                <option value="false">Nháp</option>
+              </select>
+            )}
+
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+              <button
+                onClick={switchToCustomer}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  viewMode === "customer"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <LayoutGrid size={12} />
+                <span className="hidden sm:inline">Khách</span>
+              </button>
+              <button
+                onClick={switchToAdmin}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                  viewMode === "admin"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <List size={12} />
+                <span className="hidden sm:inline">Admin</span>
+              </button>
+            </div>
+
+            {viewMode === "admin" && (
+              <Link
+                href="/admin/products/new"
+                className="flex items-center gap-1.5 px-3 py-2.5 bg-[#0a192f] text-white rounded-lg text-xs font-semibold hover:bg-[#0d2137] transition-colors whitespace-nowrap hidden sm:flex"
+              >
+                <Plus size={13} /> Thêm
+              </Link>
             )}
           </div>
-
-          {/* Published Filter - cho admin mode */}
-          {viewMode === "admin" && (
-            <select
-              value={(filters as any).published || "all"}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  published: e.target.value as any,
-                  page: 1,
-                }))
-              }
-              className="px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-600"
-            >
-              <option value="all">Tất cả</option>
-              <option value="true">Đã đăng</option>
-              <option value="false">Nháp</option>
-            </select>
-          )}
-
-          {/* Toggle Buttons */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
-            <button
-              onClick={switchToCustomer}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                viewMode === "customer"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <LayoutGrid size={12} />
-              <span className="hidden sm:inline">Khách</span>
-            </button>
-            <button
-              onClick={switchToAdmin}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                viewMode === "admin"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <List size={12} />
-              <span className="hidden sm:inline">Admin</span>
-            </button>
-          </div>
-
-          {/* Add Button - chỉ hiện ở admin mode */}
-          {viewMode === "admin" && (
-            <Link
-              href="/admin/products/new"
-              className="flex items-center gap-1.5 px-3 py-2.5 bg-[#0a192f] text-white rounded-lg text-xs font-semibold hover:bg-[#0d2137] transition-colors whitespace-nowrap hidden sm:flex"
-            >
-              <Plus size={13} /> Thêm
-            </Link>
-          )}
         </div>
-      </div>
+      )}
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8 md:py-10">
-        {/* Search + Filter bar */}
-        {!isAuthenticated && (
+        {!canUseAdminMode && (
           <div className="mb-6 flex gap-3">
             <div className="relative flex-1">
               <input
@@ -707,7 +632,6 @@ export default function ProductsPage() {
               )}
             </div>
 
-            {/* Filter Popover Button */}
             <div className="relative">
               <button
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
@@ -733,7 +657,6 @@ export default function ProductsPage() {
                 )}
               </button>
 
-              {/* Filter Dropdown */}
               {showMobileFilters && (
                 <>
                   <div
@@ -794,21 +717,20 @@ export default function ProductsPage() {
           </div>
         )}
 
-        {/* Products Grid */}
-        {/* Toolbar count */}
+        {/* FIX: Hiển thị phân trang dựa trên totalItems chính xác */}
         <div className="mb-4 flex items-center justify-between bg-white px-4 py-3 md:px-5 md:py-4 rounded-2xl shadow-sm border border-gray-100">
           <p className="text-xs md:text-sm font-medium text-gray-600">
             Hiển thị{" "}
             <span className="font-bold text-gray-900">
-              {products.length > 0 ? (filters.page! - 1) * 20 + 1 : 0}
+              {totalItems > 0 ? (filters.page! - 1) * (filters.limit || 20) + 1 : 0}
             </span>{" "}
             -{" "}
             <span className="font-bold text-gray-900">
-              {Math.min(filters.page! * 20, products?.length || 0)}
+              {Math.min(filters.page! * (filters.limit || 20), totalItems)}
             </span>{" "}
             trên tổng số{" "}
             <span className="text-emerald-600 font-black">
-              {products?.length || 0}
+              {totalItems}
             </span>{" "}
             mã hàng
           </p>

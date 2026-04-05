@@ -216,8 +216,9 @@ describe('Feature: digital-showroom-cms, Style Management Properties', () => {
               style.products.forEach((productRelation) => {
                 // Each product relationship should reference valid IDs
                 expect(productRelation.style_id).toBe(style.id);
-                expect(products.some((p) => p.id === productRelation.product_id))
-                  .toBe(true);
+                expect(
+                  products.some((p) => p.id === productRelation.product_id),
+                ).toBe(true);
                 expect(productRelation.product).toBeDefined();
               });
             });

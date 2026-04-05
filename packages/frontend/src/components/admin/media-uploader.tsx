@@ -10,7 +10,14 @@ import {
 } from "react";
 import { validateFile, validateSocialUrl } from "@/lib/media-service";
 import { realtimeService } from "@/lib/realtime-service";
-import { Image as ImageIcon, Video, X, Star, Wifi, WifiOff } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Video,
+  X,
+  Star,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 
 export type MediaType =
   | "lifestyle"
@@ -49,7 +56,7 @@ export function setCover(list: PendingMedia[], index: number): PendingMedia[] {
   return list.map((item, i) => ({ ...item, is_cover: i === index }));
 }
 
-// ── Toast Component ──────────────────────────────────────────────────────────
+// ── Toast Component (Apple Pill Style) ──────────────────────────────────────
 function Toast({
   message,
   type,
@@ -64,29 +71,29 @@ function Toast({
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const colors = {
-    success: "bg-emerald-600",
-    error: "bg-red-600",
-    info: "bg-blue-600",
-  };
+  const isError = type === "error";
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${colors[type]} animate-in slide-in-from-bottom-2 fade-in`}
+      className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.15)] text-[14px] font-bold animate-in slide-in-from-bottom-6 fade-in duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        isError
+          ? "bg-red-50 text-red-600 border border-red-100"
+          : "bg-gray-900 text-white backdrop-blur-xl saturate-150"
+      }`}
     >
       <span>{message}</span>
       <button
         type="button"
         onClick={onClose}
-        className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+        className="ml-2 opacity-60 hover:opacity-100 transition-opacity p-1 active:scale-90"
       >
-        ✕
+        <X size={16} strokeWidth={3} />
       </button>
     </div>
   );
 }
 
-// ── Thumbnail item ────────────────────────────────────────────────────────────
+// ── Thumbnail item (Bo góc 16px, nút kính) ────────────────────────────────────
 function MediaThumb({
   item,
   index,
@@ -125,15 +132,15 @@ function MediaThumb({
       onDragStart={() => onDragStart(globalIdx)}
       onDragOver={(e) => onDragOver(e, globalIdx)}
       onDragEnd={onDragEnd}
-      className={`relative group rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all duration-300 ${
+      className={`relative group rounded-[16px] overflow-hidden bg-black/5 cursor-grab active:cursor-grabbing transition-all duration-300 border-2 ${
         item.is_cover
-          ? "border-blue-500 shadow-md"
-          : "border-transparent hover:border-gray-300"
+          ? "border-gray-900 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
+          : "border-transparent hover:border-black/10"
       } ${draggedIndex === globalIdx ? "opacity-40 scale-95" : ""} ${
         isNew ? "animate-in zoom-in-95 fade-in duration-300" : ""
-      } ${isRemoving ? "animate-out zoom-out-95 fade-out duration-300" : ""}`}
+      } ${isRemoving ? "animate-out zoom-out-95 fade-out scale-95 duration-300" : ""}`}
     >
-      <div className="aspect-square bg-gray-100">
+      <div className="aspect-square bg-transparent">
         {item.preview_url && !isVideo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -152,34 +159,36 @@ function MediaThumb({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
-            {isVideo ? "🎬" : "🖼️"}
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            {isVideo ? <Video size={24} /> : <ImageIcon size={24} />}
           </div>
         )}
       </div>
 
       {item.status === "uploading" && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/10">
           <div
-            className="h-full bg-blue-500 transition-all"
+            className="h-full bg-gray-900 transition-all"
             style={{ width: `${item.progress ?? 0}%` }}
           />
         </div>
       )}
+
       {item.status === "error" && (
-        <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center p-1">
-          <p className="text-white text-xs text-center leading-tight">
+        <div className="absolute inset-0 bg-red-500/90 backdrop-blur-sm flex items-center justify-center p-2">
+          <p className="text-white text-[11px] font-bold text-center leading-tight">
             {item.error}
           </p>
         </div>
       )}
+
       {item.is_cover && (
-        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
-          <Star size={9} className="fill-white" /> Bìa
+        <div className="absolute top-2 left-2 bg-gray-900/90 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+          <Star size={10} strokeWidth={3} className="fill-white" /> Bìa
         </div>
       )}
 
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
         {!item.is_cover && !isVideo && (
           <button
             type="button"
@@ -187,27 +196,27 @@ function MediaThumb({
               e.stopPropagation();
               onSetCover(globalIdx);
             }}
-            className="bg-white text-gray-800 text-xs px-2 py-1 rounded shadow hover:bg-blue-50"
+            className="bg-white/90 text-gray-900 font-bold text-[11px] px-3 py-1.5 rounded-full shadow-md hover:bg-white active:scale-95 transition-all"
           >
-            Bìa
+            Đặt Bìa
           </button>
         )}
         <button
           type="button"
           onClick={handleRemove}
-          className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow hover:bg-red-600 transition-colors"
+          className="bg-red-500/90 text-white font-bold text-[11px] px-3 py-1.5 rounded-full shadow-md hover:bg-red-500 active:scale-95 transition-all"
         >
           Xóa
         </button>
       </div>
-      <div className="absolute bottom-1 right-1 bg-black/50 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+      <div className="absolute bottom-2 right-2 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
         {index + 1}
       </div>
     </div>
   );
 }
 
-// ── Drop zone ─────────────────────────────────────────────────────────────────
+// ── Drop zone (Bo góc cực lớn, nền xám trong) ──────────────────────────────────
 function DropZone({
   label,
   hint,
@@ -220,7 +229,6 @@ function DropZone({
   inputRef,
   onFileChange,
   icon,
-  accentColor,
 }: {
   label: string;
   hint: string;
@@ -233,7 +241,6 @@ function DropZone({
   inputRef: React.RefObject<HTMLInputElement>;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   icon: React.ReactNode;
-  accentColor: string;
 }) {
   return (
     <div
@@ -241,10 +248,10 @@ function DropZone({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onClick={onClick}
-      className={`flex-1 border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 min-h-[110px] ${
+      className={`flex-1 rounded-[24px] p-5 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-2 min-h-[120px] border-2 border-dashed ${
         isDragging
-          ? `${accentColor} border-opacity-100`
-          : "border-gray-200 hover:border-gray-300 bg-gray-50/60 hover:bg-gray-50"
+          ? "border-gray-900 bg-black/10 scale-[0.98]"
+          : "border-black/10 bg-black/5 hover:bg-black/10 hover:border-black/20"
       }`}
     >
       <input
@@ -257,8 +264,8 @@ function DropZone({
       />
       <div className="pointer-events-none flex flex-col items-center gap-1.5">
         {icon}
-        <p className="text-xs font-semibold text-gray-600">{label}</p>
-        <p className="text-[10px] text-gray-400">{hint}</p>
+        <p className="text-[14px] font-bold text-gray-900">{label}</p>
+        <p className="text-[11px] font-medium text-gray-500">{hint}</p>
       </div>
     </div>
   );
@@ -280,54 +287,32 @@ export function MediaUploader({
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(true);
   const [uploadingCount, setUploadingCount] = useState(0);
 
-  // Sync khi existingMedia thay đổi (edit mode: product load async)
   const prevMediaKey = useRef<string>("");
   const isInitialMount = useRef(true);
-  
-  // Check BroadcastChannel support
+
   useEffect(() => {
-    setIsRealtimeConnected('BroadcastChannel' in window);
+    setIsRealtimeConnected("BroadcastChannel" in window);
   }, []);
 
   useEffect(() => {
-    // Create a key from media IDs to detect real changes
     const key = existingMedia.map((m) => m.clientId).join(",");
     if (key !== prevMediaKey.current) {
       prevMediaKey.current = key;
-      if (existingMedia.length > 0) {
-        setItems(existingMedia);
-      }
+      if (existingMedia.length > 0) setItems(existingMedia);
     }
   }, [existingMedia]);
 
-  // Notify parent sau mỗi thay đổi do user
   useEffect(() => {
-    // Skip notification on initial mount
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      console.log("⏭️ [MediaUploader] Skipping onChange on initial mount");
       return;
     }
-
-    // Skip notification if this is a sync from existingMedia (same IDs in same order)
     const existingKey = existingMedia.map((m) => m.clientId).join(",");
     const currentKey = items.map((m) => m.clientId).join(",");
-
-    if (existingKey === currentKey && existingMedia.length === items.length) {
-      // This is likely a sync from existingMedia, not a user action
-      console.log(
-        "⏭️ [MediaUploader] Skipping onChange - sync from existingMedia",
-      );
+    if (existingKey === currentKey && existingMedia.length === items.length)
       return;
-    }
-
-    // Always notify parent when items change (user action)
-    console.log(
-      "📢 [MediaUploader] Calling onChange with items:",
-      items.map((m) => ({ id: m.clientId, status: m.status })),
-    );
     onChange(items);
-  }, [items, onChange]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [items, onChange]);
 
   const [dragging1, setDragging1] = useState(false);
   const [dragging2, setDragging2] = useState(false);
@@ -337,9 +322,7 @@ export function MediaUploader({
   const inputRef1 = useRef<HTMLInputElement>(null);
   const inputRef2 = useRef<HTMLInputElement>(null);
 
-  // Zone 1: ảnh sản phẩm (lifestyle/cutout)
   const PRODUCT_TYPES: MediaType[] = ["lifestyle", "cutout"];
-  // Zone 2: video + ảnh showcase
   const SHOWCASE_TYPES: MediaType[] = ["video", "showcase"];
 
   const addFilesAs = useCallback(
@@ -353,14 +336,8 @@ export function MediaUploader({
         const isVideo =
           file.type.startsWith("video/") ||
           ["mp4", "mov", "webm"].includes(ext);
-
-        let mediaType: MediaType;
-        if (zone === 1) {
-          mediaType = "lifestyle";
-        } else {
-          mediaType = isVideo ? "video" : "showcase";
-        }
-
+        let mediaType: MediaType =
+          zone === 1 ? "lifestyle" : isVideo ? "video" : "showcase";
         const result = validateFile(file, mediaType);
         const clientId = nextId();
 
@@ -374,10 +351,7 @@ export function MediaUploader({
           status: result.valid ? "pending" : "error",
           error: result.valid ? undefined : result.error,
         });
-
-        if (result.valid) {
-          newIds.push(clientId);
-        }
+        if (result.valid) newIds.push(clientId);
       }
 
       setItems((prev) => {
@@ -387,7 +361,6 @@ export function MediaUploader({
           sort_order: base + i,
         }));
         const next = [...prev, ...withOrder];
-        // Auto-set cover nếu chưa có
         if (!next.some((i) => i.is_cover)) {
           const first = next.find((i) => PRODUCT_TYPES.includes(i.media_type));
           if (first) first.is_cover = true;
@@ -396,14 +369,12 @@ export function MediaUploader({
         return next;
       });
 
-      // Mark as new for animation
       setNewItemIds(new Set(newIds));
       setTimeout(() => setNewItemIds(new Set()), 500);
 
-      // Broadcast to other tabs/devices
       if (productId) {
-        newIds.forEach(id => {
-          const item = newItems.find(i => i.clientId === id);
+        newIds.forEach((id) => {
+          const item = newItems.find((i) => i.clientId === id);
           if (item?.file) {
             realtimeService?.broadcastMediaUploadStart(productId, {
               clientId: id,
@@ -414,56 +385,30 @@ export function MediaUploader({
         });
       }
 
-      // Show toast
       const validCount = newItems.filter((i) => i.status === "pending").length;
       const errorCount = newItems.filter((i) => i.status === "error").length;
 
-      if (validCount > 0) {
+      if (validCount > 0)
         setToast({
-          message: `✅ Đã thêm ${validCount} file${errorCount > 0 ? ` (${errorCount} lỗi)` : ""}`,
-          type: validCount > 0 && errorCount === 0 ? "success" : "info",
+          message: `Đã thêm ${validCount} file${errorCount > 0 ? ` (${errorCount} lỗi)` : ""}`,
+          type: "success",
         });
-      } else if (errorCount > 0) {
-        setToast({
-          message: `❌ ${errorCount} file không hợp lệ`,
-          type: "error",
-        });
-      }
+      else if (errorCount > 0)
+        setToast({ message: `${errorCount} file không hợp lệ`, type: "error" });
     },
     [onChange],
   );
 
   const removeItem = (clientId: string) => {
-    console.log("🗑️ [MediaUploader] Removing media:", clientId);
-    setItems((prev) => {
-      const next = prev
+    setItems((prev) =>
+      prev
         .filter((i) => i.clientId !== clientId)
-        .map((item, idx) => ({ ...item, sort_order: idx }));
-      console.log("📋 [MediaUploader] Items after removal:", {
-        before: prev.length,
-        after: next.length,
-        removed: clientId,
-        remaining: next.map((m) => m.clientId),
-      });
-      return next;
-    });
-
-    setToast({
-      message: "🗑️ Đã xóa",
-      type: "info",
-    });
+        .map((item, idx) => ({ ...item, sort_order: idx })),
+    );
   };
 
   const handleSetCover = (globalIdx: number) => {
-    setItems((prev) => {
-      const next = setCover(prev, globalIdx);
-      return next;
-    });
-
-    setToast({
-      message: "⭐ Đã đặt làm ảnh bìa",
-      type: "success",
-    });
+    setItems((prev) => setCover(prev, globalIdx));
   };
 
   const handleItemDragStart = (index: number) => setDraggedIndex(index);
@@ -475,9 +420,7 @@ export function MediaUploader({
       const next = [...prev];
       const [moved] = next.splice(draggedIndex, 1);
       next.splice(index, 0, moved);
-      const reordered = next.map((item, i) => ({ ...item, sort_order: i }));
-      setDraggedIndex(index);
-      return reordered;
+      return next.map((item, i) => ({ ...item, sort_order: i }));
     });
   };
 
@@ -486,31 +429,21 @@ export function MediaUploader({
     const trimmed = socialUrl.trim();
     if (!trimmed) return;
     if (!validateSocialUrl(trimmed)) {
-      setSocialError(
-        "Chỉ chấp nhận: pinterest.com, instagram.com, houzz.com, facebook.com",
-      );
+      setSocialError("Chỉ hỗ trợ: pinterest, instagram, houzz, facebook");
       return;
     }
-    setItems((prev) => {
-      const next = [
-        ...prev,
-        {
-          clientId: nextId(),
-          url: trimmed,
-          media_type: "social_link" as MediaType,
-          is_cover: false,
-          sort_order: prev.length,
-          status: "pending" as const,
-        },
-      ];
-      return next;
-    });
+    setItems((prev) => [
+      ...prev,
+      {
+        clientId: nextId(),
+        url: trimmed,
+        media_type: "social_link",
+        is_cover: false,
+        sort_order: prev.length,
+        status: "pending",
+      },
+    ]);
     setSocialUrl("");
-
-    setToast({
-      message: "🔗 Đã thêm link",
-      type: "success",
-    });
   };
 
   const productItems = items.filter((i) =>
@@ -534,39 +467,36 @@ export function MediaUploader({
     isNew: newItemIds.has(item.clientId),
   });
 
-  // Calculate uploading count
-  const uploadingItems = items.filter(i => i.status === "uploading").length;
-  
-  // Update uploading count for display
   useEffect(() => {
-    setUploadingCount(uploadingItems);
-  }, [uploadingItems]);
+    setUploadingCount(items.filter((i) => i.status === "uploading").length);
+  }, [items]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Real-time status bar */}
-      <div className="flex items-center justify-between px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-black/5 rounded-[14px]">
         <div className="flex items-center gap-2">
           {isRealtimeConnected ? (
-            <Wifi size={14} className="text-emerald-500" />
+            <Wifi size={14} className="text-gray-900" />
           ) : (
             <WifiOff size={14} className="text-gray-400" />
           )}
-          <span className={`text-xs ${isRealtimeConnected ? 'text-emerald-600' : 'text-gray-500'}`}>
-            {isRealtimeConnected ? 'Realtime sync' : 'Offline mode'}
+          <span
+            className={`text-[12px] font-bold ${isRealtimeConnected ? "text-gray-900" : "text-gray-500"}`}
+          >
+            {isRealtimeConnected ? "Trạng thái: Online" : "Trạng thái: Offline"}
           </span>
         </div>
         {uploadingCount > 0 && (
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs text-blue-600 font-medium">
-              Đang upload {uploadingCount} file...
+            <div className="w-3.5 h-3.5 border-[2px] border-gray-900 border-t-transparent rounded-full animate-spin" />
+            <span className="text-[12px] font-bold text-gray-900">
+              Đang tải {uploadingCount}...
             </span>
           </div>
         )}
       </div>
 
-      {/* Toast notification */}
       {toast && (
         <Toast
           message={toast.message}
@@ -575,13 +505,12 @@ export function MediaUploader({
         />
       )}
 
-      {/* ── 2 Drop zones ── */}
-      <div className="flex gap-3">
-        {/* Zone 1: Ảnh sản phẩm — 70% */}
-        <div className="flex flex-col gap-2" style={{ flex: "7" }}>
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Zone 1 */}
+        <div className="flex flex-col gap-3" style={{ flex: "7" }}>
           <DropZone
-            label="Ảnh sản phẩm"
-            hint="JPG, PNG, WEBP · Hiện trong gallery chính"
+            label="Ảnh chính sản phẩm"
+            hint="JPG, PNG, WEBP"
             accept=".jpg,.jpeg,.png,.webp"
             isDragging={dragging1}
             onDragOver={(e) => {
@@ -603,11 +532,16 @@ export function MediaUploader({
                 e.target.value = "";
               }
             }}
-            icon={<ImageIcon size={22} className="text-blue-400" />}
-            accentColor="border-blue-400 bg-blue-50/60"
+            icon={
+              <ImageIcon
+                size={26}
+                strokeWidth={2.5}
+                className="text-gray-400 mb-1"
+              />
+            }
           />
           {productItems.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2.5">
               {productItems.map((item) => (
                 <MediaThumb
                   key={item.clientId}
@@ -618,11 +552,11 @@ export function MediaUploader({
           )}
         </div>
 
-        {/* Zone 2: Video & Showcase — 30% */}
-        <div className="flex flex-col gap-2" style={{ flex: "3" }}>
+        {/* Zone 2 */}
+        <div className="flex flex-col gap-3" style={{ flex: "3" }}>
           <DropZone
-            label="Video & Thư viện"
-            hint="MP4, MOV, JPG · Hiện trong showcase"
+            label="Video & Banner"
+            hint="MP4, MOV, WEBP"
             accept=".jpg,.jpeg,.png,.webp,.mp4,.mov"
             isDragging={dragging2}
             onDragOver={(e) => {
@@ -644,11 +578,16 @@ export function MediaUploader({
                 e.target.value = "";
               }
             }}
-            icon={<Video size={22} className="text-purple-400" />}
-            accentColor="border-purple-400 bg-purple-50/60"
+            icon={
+              <Video
+                size={26}
+                strokeWidth={2.5}
+                className="text-gray-400 mb-1"
+              />
+            }
           />
           {showcaseItems.length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {showcaseItems.map((item) => (
                 <MediaThumb
                   key={item.clientId}
@@ -660,119 +599,127 @@ export function MediaUploader({
         </div>
       </div>
 
-      {/* ── Alt text ── */}
-      {productItems.filter((i) => i.status !== "error").length > 0 && (
-        <div className="space-y-1.5">
+      {/* Alt text & Social */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-black/5">
+        {/* Alt text */}
+        <div className="bg-black/5 p-4 rounded-[20px] space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-gray-500">
-              Alt text ảnh sản phẩm
+            <p className="text-[13px] font-bold text-gray-900">
+              Mô tả ảnh (Alt text SEO)
             </p>
             {productName && (
               <button
                 type="button"
-                onClick={() => {
+                onClick={() =>
                   setItems((prev) =>
                     prev.map((item) =>
                       PRODUCT_TYPES.includes(item.media_type)
                         ? { ...item, alt_text: productName }
                         : item,
                     ),
-                  );
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 underline underline-offset-2"
+                  )
+                }
+                className="text-[11px] font-bold text-gray-500 hover:text-gray-900 transition-colors"
               >
-                Copy tên SP vào tất cả
+                Dùng tên SP
               </button>
             )}
           </div>
-          {productItems
-            .filter((i) => i.status !== "error")
-            .map((item) => (
-              <div
-                key={`alt-${item.clientId}`}
-                className="flex items-center gap-2"
-              >
-                <div className="w-7 h-7 rounded overflow-hidden shrink-0 bg-gray-100">
-                  {item.preview_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.preview_url}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={item.alt_text ?? ""}
-                  onChange={(e) => {
-                    setItems((prev) =>
-                      prev.map((m) =>
-                        m.clientId === item.clientId
-                          ? { ...m, alt_text: e.target.value }
-                          : m,
-                      ),
-                    );
-                  }}
-                  placeholder={`Alt text ảnh ${item.sort_order + 1}...`}
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-                />
-              </div>
-            ))}
-        </div>
-      )}
-
-      {/* ── Social links ── */}
-      <div className="border border-gray-200 rounded-xl p-3 space-y-2">
-        <p className="text-xs font-semibold text-gray-600">Link mạng xã hội</p>
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={socialUrl}
-            onChange={(e) => {
-              setSocialUrl(e.target.value);
-              setSocialError("");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddSocialLink();
-              }
-            }}
-            placeholder="https://www.pinterest.com/pin/..."
-            className={`flex-1 border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${socialError ? "border-red-400" : "border-gray-200"}`}
-          />
-          <button
-            type="button"
-            onClick={handleAddSocialLink}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-          >
-            Thêm
-          </button>
-        </div>
-        {socialError && <p className="text-xs text-red-500">{socialError}</p>}
-        {socialItems.length > 0 && (
-          <ul className="space-y-1.5">
-            {socialItems.map((item) => (
-              <li
-                key={item.clientId}
-                className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg text-xs"
-              >
-                <span className="text-base">🔗</span>
-                <span className="flex-1 truncate text-gray-500">
-                  {item.url}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.clientId)}
-                  className="text-gray-400 hover:text-red-500"
+          <div className="space-y-2 max-h-[160px] overflow-y-auto no-scrollbar pr-1">
+            {productItems
+              .filter((i) => i.status !== "error")
+              .map((item) => (
+                <div
+                  key={`alt-${item.clientId}`}
+                  className="flex items-center gap-2"
                 >
-                  <X size={13} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <div className="w-8 h-8 rounded-[8px] overflow-hidden shrink-0 bg-white">
+                    {item.preview_url && (
+                      <img
+                        src={item.preview_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={item.alt_text ?? ""}
+                    onChange={(e) =>
+                      setItems((prev) =>
+                        prev.map((m) =>
+                          m.clientId === item.clientId
+                            ? { ...m, alt_text: e.target.value }
+                            : m,
+                        ),
+                      )
+                    }
+                    placeholder={`Mô tả ảnh ${item.sort_order + 1}...`}
+                    className="flex-1 bg-white border border-transparent rounded-[10px] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                  />
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* Social Links */}
+        <div className="bg-black/5 p-4 rounded-[20px] space-y-3">
+          <p className="text-[13px] font-bold text-gray-900">
+            Nguồn MXH (Instagram, Pinterest...)
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={socialUrl}
+              onChange={(e) => {
+                setSocialUrl(e.target.value);
+                setSocialError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddSocialLink();
+                }
+              }}
+              placeholder="https://..."
+              className={`flex-1 bg-white border rounded-[12px] px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-gray-900 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.02)] ${socialError ? "border-red-400" : "border-transparent"}`}
+            />
+            <button
+              type="button"
+              onClick={handleAddSocialLink}
+              className="px-4 py-2 bg-gray-900 text-white font-bold text-[13px] rounded-[12px] hover:bg-black active:scale-95 transition-all"
+            >
+              Thêm
+            </button>
+          </div>
+          {socialError && (
+            <p className="text-[11px] font-semibold text-red-500">
+              {socialError}
+            </p>
+          )}
+          {socialItems.length > 0 && (
+            <ul className="space-y-1.5 mt-2">
+              {socialItems.map((item) => (
+                <li
+                  key={item.clientId}
+                  className="flex items-center gap-2 p-2.5 bg-white rounded-[12px] text-[12px] font-medium shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+                >
+                  <span className="text-[14px]">🔗</span>
+                  <span className="flex-1 truncate text-gray-600">
+                    {item.url}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.clientId)}
+                    className="text-gray-400 hover:text-red-500 p-1"
+                  >
+                    <X size={14} strokeWidth={3} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

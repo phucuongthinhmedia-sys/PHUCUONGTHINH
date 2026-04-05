@@ -73,6 +73,20 @@ export class CombinedFilterService {
       limit = 20,
     } = filters;
 
+    // Use search service if search query is provided
+    if (search && search.trim().length > 0) {
+      const searchResult = await this.searchService.searchWithFilters(
+        search,
+        inspiration,
+        technical,
+        { categories, published },
+        { page, limit },
+      );
+
+      const availableFilters = await this.getAvailableFiltersCached();
+      return { ...searchResult, available_filters: availableFilters };
+    }
+
     const skip = (page - 1) * limit;
 
     // Build base where clause
@@ -85,40 +99,16 @@ export class CombinedFilterService {
       baseWhere.is_published = false;
     }
 
-    // Category filter (including hierarchy)
+    // Category filter (including hierarchy) - Optimized with findMultipleHierarchies
     if (categories && categories.length > 0) {
-      const categoryIds = new Set<string>();
-
-      for (const categoryId of categories) {
-        try {
-          const hierarchy =
-            await this.categoriesService.findHierarchy(categoryId);
-          hierarchy.forEach((cat) => categoryIds.add(cat.id));
-        } catch {
-          // If category not found, just add the original ID
-          categoryIds.add(categoryId);
-        }
-      }
-
-      baseWhere.category_id = { in: Array.from(categoryIds) };
-    }
-
-    // Search filter
-    if (search) {
-      baseWhere.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
+      const categoryHierarchy =
+        await this.categoriesService.findMultipleHierarchies(categories);
+      baseWhere.category_id = { in: categoryHierarchy.map((c) => c.id) };
     }
 
     // Combine all where conditions
     const whereConditions: any[] = [];
-
-    // Add base conditions
-    if (Object.keys(baseWhere).length > 0) {
-      whereConditions.push(baseWhere);
-    }
+    if (Object.keys(baseWhere).length > 0) whereConditions.push(baseWhere);
 
     // Add inspiration filters
     if (inspiration) {
@@ -131,11 +121,9 @@ export class CombinedFilterService {
 
     // Add technical filters
     if (technical) {
-      // Validate technical filters first
       if (!this.technicalFilterService.validateTechnicalFilters(technical)) {
         throw new Error('Invalid technical filters');
       }
-
       const technicalWhere =
         this.technicalFilterService.buildTechnicalWhere(technical);
       if (Object.keys(technicalWhere).length > 0) {
@@ -143,7 +131,6 @@ export class CombinedFilterService {
       }
     }
 
-    // Final where clause
     const finalWhere =
       whereConditions.length > 0
         ? whereConditions.length === 1
@@ -151,13 +138,10 @@ export class CombinedFilterService {
           : { AND: whereConditions }
         : {};
 
-    // Try cache first
-    const cacheKey = `products:${JSON.stringify(finalWhere)}:${page}:${limit}`;
-
+    // Try cache
+    const cacheKey = this.cacheService.generateFilterCacheKey(filters);
     const cached = await this.cacheService.get(cacheKey);
-    if (cached) {
-      return cached as FilterResponse;
-    }
+    if (cached) return cached as FilterResponse;
 
     // Execute queries with optimized select
     const [products, total, availableFilters] = await Promise.all([
@@ -173,32 +157,12 @@ export class CombinedFilterService {
           is_published: true,
           created_at: true,
           updated_at: true,
-          category: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
+          category: { select: { id: true, name: true, slug: true } },
           style_tags: {
-            select: {
-              style: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
+            select: { style: { select: { id: true, name: true } } },
           },
           space_tags: {
-            select: {
-              space: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
+            select: { space: { select: { id: true, name: true } } },
           },
           media: {
             select: {
@@ -210,9 +174,7 @@ export class CombinedFilterService {
               is_cover: true,
               alt_text: true,
             },
-            orderBy: {
-              sort_order: 'asc',
-            },
+            orderBy: { sort_order: 'asc' },
           },
         },
         orderBy: [{ is_published: 'desc' }, { created_at: 'desc' }],
@@ -220,20 +182,14 @@ export class CombinedFilterService {
         take: limit,
       }),
       this.prisma.product.count({ where: finalWhere }),
-      this.getAvailableFilters(baseWhere),
+      this.getAvailableFiltersCached(),
     ]);
 
-    // Parse technical_specs back to objects
+    // Parse technical_specs back to objects (optimized)
     const productsWithParsedSpecs = products.map((product) => ({
       ...product,
       technical_specs: this.parseJsonSafely(product.technical_specs),
-      // Add cache-busting timestamp to media URLs
-      media: product.media?.map((m) => ({
-        ...m,
-        file_url: m.file_url.includes('?')
-          ? m.file_url
-          : `${m.file_url}?v=${Date.now()}`,
-      })),
+      // Removed redundant cache-busting timestamp from media URLs
     }));
 
     const result = {
@@ -247,9 +203,7 @@ export class CombinedFilterService {
       available_filters: availableFilters,
     };
 
-    // Cache for 5 minutes
     await this.cacheService.set(cacheKey, result, { ttl: 300 });
-
     return result;
   }
 
@@ -258,9 +212,7 @@ export class CombinedFilterService {
       await Promise.all([
         this.inspirationFilterService.getAvailableFilters(),
         this.technicalFilterService.getAvailableTechnicalFilters(baseWhere),
-        this.prisma.category.findMany({
-          orderBy: { name: 'asc' },
-        }),
+        this.categoriesService.findAll(),
       ]);
 
     return {
@@ -275,101 +227,10 @@ export class CombinedFilterService {
 
   private async getAvailableFiltersCached() {
     return this.cacheService.cached(
-      'available_filters',
+      'available_filters_all',
       () => this.getAvailableFilters({}),
-      { ttl: 600 }, // 10 minutes cache
+      { ttl: 600 },
     );
-  }
-
-  /**
-   * Enhanced filtering with caching and performance optimization
-   */
-  async filterProductsOptimized(
-    filters: CombinedFilters,
-  ): Promise<FilterResponse> {
-    const {
-      categories,
-      search,
-      published = 'true',
-      inspiration,
-      technical,
-      page = 1,
-      limit = 20,
-    } = filters;
-
-    // Validate pagination parameters
-    const paginationValidation =
-      this.paginationService.validatePaginationOptions({ page, limit });
-    if (!paginationValidation.isValid) {
-      throw new Error(
-        `Invalid pagination: ${paginationValidation.errors.join(', ')}`,
-      );
-    }
-
-    // Generate cache key
-    const cacheKey = this.cacheService.generateFilterCacheKey(filters);
-
-    // Try to get from cache first
-    const cachedResult = this.cacheService.get<FilterResponse>(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
-    }
-
-    // Build optimized query
-    const queryConfig =
-      this.performanceService.buildOptimizedProductQuery(filters);
-    const pagination = this.paginationService.calculatePagination(0, {
-      page,
-      limit,
-    });
-
-    // Execute query with performance monitoring
-    const result = await this.performanceService.monitorQuery(
-      'filterProducts',
-      async () => {
-        const [products, total] = await Promise.all([
-          this.prisma.product.findMany({
-            where: queryConfig.where,
-            include: queryConfig.include,
-            orderBy: queryConfig.orderBy,
-            skip: pagination.offset,
-            take: pagination.limit,
-          }),
-          this.prisma.product.count({ where: queryConfig.where }),
-        ]);
-
-        return { products, total };
-      },
-    );
-
-    // Calculate final pagination with actual total
-    const finalPagination = this.paginationService.calculatePagination(
-      result.total,
-      { page, limit },
-    );
-
-    // Get available filters (cached separately)
-    const availableFilters = await this.getAvailableFiltersCached();
-
-    // Parse technical_specs and optimize serialization
-    const optimizedProducts =
-      this.performanceService.optimizeResultSerialization(
-        result.products.map((product) => ({
-          ...product,
-          technical_specs: this.parseJsonSafely(product.technical_specs),
-        })),
-      );
-
-    const response: FilterResponse = {
-      products: optimizedProducts,
-      pagination: finalPagination,
-      available_filters: availableFilters,
-    };
-
-    // Cache the result (5 minutes TTL)
-    this.cacheService.set(cacheKey, response, { ttl: 300 });
-
-    return response;
   }
 
   /**
@@ -387,6 +248,7 @@ export class CombinedFilterService {
   }
 
   private parseJsonSafely(jsonString: string): any {
+    if (!jsonString) return {};
     try {
       return JSON.parse(jsonString);
     } catch {
@@ -394,76 +256,26 @@ export class CombinedFilterService {
     }
   }
 
-  /**
-   * Enhanced filtering with search integration
-   */
-  async filterProductsWithSearch(
-    filters: CombinedFilters,
-  ): Promise<FilterResponse> {
-    const { search, ...otherFilters } = filters;
-
-    // If search query is provided, use search service
-    if (search && search.trim().length > 0) {
-      const result = await this.searchService.searchWithFilters(
-        search,
-        otherFilters.inspiration,
-        otherFilters.technical,
-        {
-          categories: otherFilters.categories,
-          published: otherFilters.published,
-        },
-        {
-          page: otherFilters.page || 1,
-          limit: otherFilters.limit || 20,
-        },
-      );
-
-      const availableFilters = await this.getAvailableFilters({});
-
-      return {
-        ...result,
-        available_filters: availableFilters,
-      };
-    }
-
-    // Otherwise, use regular filtering
-    return this.filterProducts(filters);
-  }
-
-  /**
-   * Get search suggestions
-   */
   async getSearchSuggestions(query: string, limit: number = 10) {
     return this.searchService.getSearchSuggestions(query, limit);
   }
 
-  /**
-   * Get popular search terms
-   */
   async getPopularSearchTerms(limit: number = 10) {
     return this.searchService.getPopularSearchTerms(limit);
   }
+
   async getFilterStatistics() {
-    const [totalProducts, publishedProducts, categoryCounts] =
-      await Promise.all([
-        this.prisma.product.count(),
-        this.prisma.product.count({ where: { is_published: true } }),
-        this.prisma.category.findMany({
-          include: {
-            _count: {
-              select: {
-                products: true,
-              },
-            },
-          },
-        }),
-      ]);
+    const [totalProducts, publishedProducts, categories] = await Promise.all([
+      this.prisma.product.count(),
+      this.prisma.product.count({ where: { is_published: true } }),
+      this.categoriesService.findAll(),
+    ]);
 
     return {
       total_products: totalProducts,
       published_products: publishedProducts,
       unpublished_products: totalProducts - publishedProducts,
-      category_distribution: categoryCounts.map((cat) => ({
+      category_distribution: categories.map((cat: any) => ({
         category: cat.name,
         count: cat._count.products,
       })),

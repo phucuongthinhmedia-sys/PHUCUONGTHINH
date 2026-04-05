@@ -20,62 +20,54 @@ export class LeadsService {
   async create(createLeadDto: CreateLeadDto): Promise<Lead> {
     const { product_ids, preferred_date, ...leadData } = createLeadDto;
 
-    // Validate that at least one contact method is provided
     if (!leadData.email && !leadData.phone) {
       throw new BadRequestException('Either email or phone must be provided');
     }
 
-    // Validate products exist if provided
-    if (product_ids && product_ids.length > 0) {
+    // Parallel validation
+    if (product_ids?.length) {
       const existingProducts = await this.prisma.product.findMany({
         where: { id: { in: product_ids } },
         select: { id: true },
       });
-
       if (existingProducts.length !== product_ids.length) {
         throw new BadRequestException('One or more product IDs are invalid');
       }
     }
 
-    // Create lead with default status "new"
-    const lead = await this.prisma.lead.create({
-      data: {
-        ...leadData,
-        preferred_date: preferred_date ? new Date(preferred_date) : null,
-        status: 'new', // Default status as per requirements
-      },
-      include: {
-        products: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
+    // Create lead with relationships in a single transaction if possible
+    // Note: createMany for relations is not supported in SQLite for nested creates
+    // so we use a transaction
+    const lead = await this.prisma.$transaction(async (tx) => {
+      const newLead = await tx.lead.create({
+        data: {
+          ...leadData,
+          preferred_date: preferred_date ? new Date(preferred_date) : null,
+          status: 'new',
+          products: product_ids?.length
+            ? {
+                create: product_ids.map((id) => ({ product_id: id })),
+              }
+            : undefined,
+        },
+        include: {
+          products: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  category: { select: { name: true } },
+                },
               },
             },
           },
         },
-      },
+      });
+      return newLead;
     });
 
-    // Associate products if provided
-    if (product_ids && product_ids.length > 0) {
-      await this.prisma.leadProduct.createMany({
-        data: product_ids.map((product_id) => ({
-          lead_id: lead.id,
-          product_id,
-        })),
-      });
-
-      // Fetch the lead again with products
-      const finalLead = await this.findOne(lead.id);
-      // Fire-and-forget notification
-      void this.notificationService.sendLeadNotification(finalLead);
-      return finalLead;
-    }
-
-    // Fire-and-forget notification
     void this.notificationService.sendLeadNotification(lead);
     return lead;
   }
@@ -157,114 +149,82 @@ export class LeadsService {
   }
 
   async update(id: string, updateLeadDto: UpdateLeadDto): Promise<Lead> {
-    const existingLead = await this.findOne(id);
     const { product_ids, preferred_date, ...updateData } = updateLeadDto;
 
-    // Validate contact information if being updated
-    const newEmail =
-      updateData.email !== undefined ? updateData.email : existingLead.email;
-    const newPhone =
-      updateData.phone !== undefined ? updateData.phone : existingLead.phone;
+    const lead = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.lead.findUnique({ where: { id } });
+      if (!existing) throw new NotFoundException('Lead not found');
 
-    if (!newEmail && !newPhone) {
-      throw new BadRequestException('Either email or phone must be provided');
-    }
+      // Contact validation
+      const email =
+        updateData.email !== undefined ? updateData.email : existing.email;
+      const phone =
+        updateData.phone !== undefined ? updateData.phone : existing.phone;
+      if (!email && !phone) throw new BadRequestException('Contact required');
 
-    // Validate products exist if provided
-    if (product_ids && product_ids.length > 0) {
-      const existingProducts = await this.prisma.product.findMany({
-        where: { id: { in: product_ids } },
-        select: { id: true },
-      });
-
-      if (existingProducts.length !== product_ids.length) {
-        throw new BadRequestException('One or more product IDs are invalid');
+      // Product updates (sequential for SQLite)
+      if (product_ids !== undefined) {
+        await tx.leadProduct.deleteMany({ where: { lead_id: id } });
+        if (product_ids.length > 0) {
+          await tx.leadProduct.createMany({
+            data: product_ids.map((pid) => ({ lead_id: id, product_id: pid })),
+          });
+        }
       }
-    }
 
-    // Update lead
-    const updatedLead = await this.prisma.lead.update({
-      where: { id },
-      data: {
-        ...updateData,
-        preferred_date: preferred_date ? new Date(preferred_date) : undefined,
-        updated_at: new Date(), // Track status change timestamp
-      },
+      return tx.lead.update({
+        where: { id },
+        data: {
+          ...updateData,
+          preferred_date: preferred_date ? new Date(preferred_date) : undefined,
+          updated_at: new Date(),
+        },
+        include: {
+          products: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  category: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+      });
     });
 
-    // Update product associations if provided
-    if (product_ids !== undefined) {
-      // Remove existing associations
-      await this.prisma.leadProduct.deleteMany({
-        where: { lead_id: id },
-      });
-
-      // Add new associations
-      if (product_ids.length > 0) {
-        await this.prisma.leadProduct.createMany({
-          data: product_ids.map((product_id) => ({
-            lead_id: id,
-            product_id,
-          })),
-        });
-      }
-    }
-
-    return this.findOne(id);
+    return lead;
   }
 
   async remove(id: string): Promise<void> {
-    const lead = await this.findOne(id);
-
-    await this.prisma.lead.delete({
-      where: { id },
-    });
+    await this.prisma.lead.delete({ where: { id } });
   }
 
-  /**
-   * Get leads filtered by status for CMS
-   */
   async findByStatus(status: string) {
     return this.prisma.lead.findMany({
       where: { status },
       include: {
         products: {
           include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-              },
-            },
+            product: { select: { id: true, name: true, sku: true } },
           },
         },
       },
-      orderBy: {
-        created_at: 'desc',
-      },
+      orderBy: { created_at: 'desc' },
     });
   }
 
-  /**
-   * Update lead status with timestamp tracking
-   */
   async updateStatus(id: string, status: string): Promise<Lead> {
-    const validStatuses = ['new', 'contacted', 'converted'];
-    if (!validStatuses.includes(status)) {
-      throw new BadRequestException(
-        `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-      );
-    }
-
-    const existingLead = await this.findOne(id);
+    const valid = ['new', 'contacted', 'converted'];
+    if (!valid.includes(status))
+      throw new BadRequestException('Invalid status');
 
     return this.prisma.lead.update({
       where: { id },
-      data: {
-        status,
-        updated_at: new Date(), // Track status change timestamp
-      },
+      data: { status, updated_at: new Date() },
       include: {
         products: {
           include: {
@@ -273,6 +233,7 @@ export class LeadsService {
                 id: true,
                 name: true,
                 sku: true,
+                category: { select: { name: true } },
               },
             },
           },

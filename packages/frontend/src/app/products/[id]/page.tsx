@@ -1,30 +1,9 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Product } from "@/types";
 import ProductDetailClient from "./ProductDetailClient";
 
-// Types matching product-service.ts
-interface ProductTag {
-  id: string;
-  name: string;
-}
-
-interface ProductMedia {
-  id: string;
-  file_url: string;
-  file_type?: string;
-  media_type?: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  description?: string;
-  media?: ProductMedia[];
-  style_tags?: ProductTag[];
-  space_tags?: ProductTag[];
-}
-
-// Server-side API URL (must use BACKEND_URL, not NEXT_PUBLIC_API_URL)
+// Server-side API URL
 const API_URL =
   process.env.BACKEND_URL ||
   (process.env.NEXT_PUBLIC_API_URL
@@ -32,13 +11,12 @@ const API_URL =
     : null) ||
   "http://localhost:3001/api/v1";
 
-// Site URL for metadata
 const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.VERCEL_URL ||
   "https://phucuongthinh.net";
 
-// Helper to normalize tags from backend
+// Helper
 function normalizeTags(product: any): Product {
   return {
     ...product,
@@ -51,27 +29,34 @@ function normalizeTags(product: any): Product {
   };
 }
 
-// Fetch product on server
+// Fetch product on server strictly for Metadata
 async function getProduct(id: string): Promise<Product | null> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    // Vẫn dùng revalidate để tối ưu cache SEO
     const response = await fetch(`${API_URL}/products/${id}`, {
-      cache: "no-store",
+      next: { revalidate: 60 },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       if (response.status === 404) return null;
-      throw new Error(`Failed to fetch product: ${response.status}`);
+      return null;
     }
 
     const raw = await response.json();
-    return normalizeTags(raw);
-  } catch (error) {
-    console.error("Error fetching product for metadata:", error);
+    // Đề phòng trường hợp API bọc data
+    const productData = raw.data || raw; 
+    return normalizeTags(productData);
+  } catch (error: any) {
     return null;
   }
 }
 
-// Get first image URL from product media
 function getFirstProductImage(product: Product): string | null {
   if (!product.media?.length) return null;
 
@@ -88,13 +73,11 @@ function getFirstProductImage(product: Product): string | null {
   return images[0]?.file_url || null;
 }
 
-// Generate dynamic metadata for each product
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }> | { id: string };
 }): Promise<Metadata> {
-  // Next.js 14+ params can be a Promise
   const { id } = await params;
   const product = await getProduct(id);
 
@@ -113,15 +96,14 @@ export async function generateMetadata({
     product.description ||
     `Sản phẩm ${productName}${productSku ? ` (SKU: ${productSku})` : ""} - Đơn vị tiên phong trong ngành VLXD hoàn thiện về gạch khổ lớn và thiết bị vệ sinh/bếp kháng khuẩn.`;
 
-  // Ensure images have absolute URLs
-  const ogImage = productImage
-    ? productImage
-    : `${SITE_URL}/dacuon.png`;
+  const ogImage = productImage || `${SITE_URL}/dacuon.png`;
 
   return {
-    metadataBase: new URL(SITE_URL),
     title,
     description,
+    alternates: {
+      canonical: `/products/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -135,21 +117,20 @@ export async function generateMetadata({
         },
       ],
     },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
   };
 }
 
-// Page component (Server Component)
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ id: string }> | { id: string };
 }) {
   const { id } = await params;
-  return <ProductDetailClient productId={id} />;
+  const product = await getProduct(id);
+
+  if (!product) {
+    notFound();
+  }
+
+  return <ProductDetailClient productId={id} initialProduct={product} />;
 }

@@ -35,7 +35,7 @@ describe('Feature: digital-showroom-cms, Authentication Properties', () => {
     authService = module.get<AuthService>(AuthService);
     prisma = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
-    
+
     await prisma.$connect();
   });
 
@@ -113,7 +113,10 @@ describe('Feature: digital-showroom-cms, Authentication Properties', () => {
             fc.pre(userData.correctPassword !== userData.wrongPassword);
 
             // Create user with correct password
-            const hashedPassword = await bcrypt.hash(userData.correctPassword, 10);
+            const hashedPassword = await bcrypt.hash(
+              userData.correctPassword,
+              10,
+            );
             await prisma.user.create({
               data: {
                 email: userData.email,

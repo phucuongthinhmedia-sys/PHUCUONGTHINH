@@ -33,43 +33,16 @@ export class CloudinaryService {
   }
 
   // StorageService interface implementation
-  async uploadFile(file: Buffer, folder: string = 'products'): Promise<string> {
-    if (!this.enabled) {
-      this.logger.error('❌ Cloudinary upload failed: not configured');
-      this.logger.error(
-        '   Required env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET',
-      );
-      throw new Error('Cloudinary is not configured');
-    }
-
-    this.logger.log(
-      `⬆️ Uploading to Cloudinary: folder=${folder}, size=${file.length} bytes`,
-    );
-
-    try {
-      const result: UploadApiResponse = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder, resource_type: 'auto', overwrite: true },
-          (error, res) => {
-            if (error) {
-              this.logger.error('❌ Cloudinary upload error:', error);
-              reject(error);
-            } else if (res) {
-              resolve(res);
-            } else {
-              reject(new Error('Upload failed: no result'));
-            }
-          },
-        );
-        stream.end(file);
-      });
-
-      this.logger.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
-      return result.secure_url;
-    } catch (error) {
-      this.logger.error('❌ Cloudinary upload failed:', error);
-      throw error;
-    }
+  async uploadFile(
+    file: Buffer,
+    folder: string = 'products',
+    resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto',
+  ): Promise<string> {
+    const result = await this.uploadFileWithMetadata(file, {
+      folder,
+      resource_type: resourceType,
+    });
+    return result.secure_url;
   }
 
   async deleteFile(publicId: string): Promise<void> {
@@ -87,27 +60,47 @@ export class CloudinaryService {
     } = {},
   ): Promise<UploadApiResponse> {
     if (!this.enabled) {
+      this.logger.error('❌ Cloudinary upload failed: not configured');
       throw new Error('Cloudinary is not configured');
     }
 
-    const result: UploadApiResponse = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: options.folder || 'uploads',
-          resource_type: options.resource_type || 'auto',
-          public_id: options.public_id,
-          overwrite: true,
-        },
-        (error, res) => {
-          if (error) reject(error);
-          else if (res) resolve(res);
-          else reject(new Error('Upload failed: no result'));
-        },
-      );
-      stream.end(file);
-    });
+    const folder = options.folder || 'uploads';
+    this.logger.log(
+      `⬆️ Uploading to Cloudinary: folder=${folder}, size=${file.length} bytes`,
+    );
 
-    return result;
+    try {
+      const result: UploadApiResponse = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: options.resource_type || 'auto',
+            public_id: options.public_id,
+            overwrite: true,
+            // Optimization during upload
+            quality: 'auto:good',
+            fetch_format: 'auto',
+          },
+          (error, res) => {
+            if (error) {
+              this.logger.error('❌ Cloudinary upload error:', error);
+              reject(error);
+            } else if (res) {
+              resolve(res);
+            } else {
+              reject(new Error('Upload failed: no result'));
+            }
+          },
+        );
+        stream.end(file);
+      });
+
+      this.logger.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
+      return result;
+    } catch (error) {
+      this.logger.error('❌ Cloudinary upload failed:', error);
+      throw error;
+    }
   }
 
   extractPublicId(url: string): string | null {

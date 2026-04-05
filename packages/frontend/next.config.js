@@ -11,6 +11,16 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
+
+  // Fix webpack cache warning on Windows
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      config.cache = {
+        type: "memory", // Use memory cache instead of filesystem
+      };
+    }
+    return config;
+  },
   // Giảm overhead
   productionBrowserSourceMaps: false,
 

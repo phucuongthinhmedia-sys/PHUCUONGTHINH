@@ -280,11 +280,11 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
             });
 
             expect(retrievedProduct).toBeDefined();
-            expect(retrievedProduct!.technical_specs).toBeDefined();
+            expect(retrievedProduct.technical_specs).toBeDefined();
 
             // Parse the JSON and verify structure matches
             const parsedTechnicalData = JSON.parse(
-              retrievedProduct!.technical_specs,
+              retrievedProduct.technical_specs,
             );
             expect(parsedTechnicalData).toEqual(technicalData);
 
@@ -347,11 +347,11 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
             });
 
             expect(retrievedProduct).toBeDefined();
-            expect(retrievedProduct!.description).toBeDefined();
+            expect(retrievedProduct.description).toBeDefined();
 
             // Parse the JSON and verify structure matches
             const parsedMarketingContent = JSON.parse(
-              retrievedProduct!.description!,
+              retrievedProduct.description,
             );
             expect(parsedMarketingContent).toEqual(marketingContent);
 
@@ -365,7 +365,7 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
               Object.keys(marketingContent.short_description).forEach(
                 (lang) => {
                   expect(parsedMarketingContent.short_description[lang]).toBe(
-                    marketingContent.short_description![lang],
+                    marketingContent.short_description[lang],
                   );
                 },
               );
@@ -379,7 +379,7 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
               // Verify multi-language arrays are preserved
               Object.keys(marketingContent.key_features).forEach((lang) => {
                 expect(parsedMarketingContent.key_features[lang]).toEqual(
-                  marketingContent.key_features![lang],
+                  marketingContent.key_features[lang],
                 );
               });
             }
@@ -447,10 +447,10 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
             });
 
             expect(retrievedProduct).toBeDefined();
-            expect(retrievedProduct!.technical_specs).toBeDefined();
+            expect(retrievedProduct.technical_specs).toBeDefined();
 
             const parsedFlexibleData = JSON.parse(
-              retrievedProduct!.technical_specs,
+              retrievedProduct.technical_specs,
             );
             expect(parsedFlexibleData).toEqual(combinedFlexibleData);
             expect(parsedFlexibleData.technical_data).toEqual(technicalData);
@@ -521,17 +521,17 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
             expect(retrievedProduct).toBeDefined();
 
             if (flexibleData === null) {
-              expect(retrievedProduct!.description).toBeNull();
-              expect(JSON.parse(retrievedProduct!.technical_specs)).toEqual({});
+              expect(retrievedProduct.description).toBeNull();
+              expect(JSON.parse(retrievedProduct.technical_specs)).toEqual({});
             } else {
               const parsedTechnicalSpecs = JSON.parse(
-                retrievedProduct!.technical_specs,
+                retrievedProduct.technical_specs,
               );
               expect(parsedTechnicalSpecs).toEqual(flexibleData);
 
-              if (retrievedProduct!.description) {
+              if (retrievedProduct.description) {
                 const parsedDescription = JSON.parse(
-                  retrievedProduct!.description,
+                  retrievedProduct.description,
                 );
                 expect(parsedDescription).toEqual(flexibleData);
               }
@@ -596,10 +596,10 @@ describe('Feature: optimized-pim-schema, JSONB Flexibility Properties', () => {
             });
 
             expect(retrievedProduct).toBeDefined();
-            expect(retrievedProduct!.technical_specs).toBeDefined();
+            expect(retrievedProduct.technical_specs).toBeDefined();
 
             const parsedStructure = JSON.parse(
-              retrievedProduct!.technical_specs,
+              retrievedProduct.technical_specs,
             );
             expect(parsedStructure).toEqual(complexStructure);
 

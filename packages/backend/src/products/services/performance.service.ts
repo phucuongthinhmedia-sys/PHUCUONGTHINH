@@ -121,9 +121,9 @@ export class PerformanceService {
 
       searchTerms.forEach((term) => {
         searchConditions.push(
-          { name: { contains: term, mode: 'insensitive' } },
-          { sku: { contains: term, mode: 'insensitive' } },
-          { description: { contains: term, mode: 'insensitive' } },
+          { name: { contains: term } },
+          { sku: { contains: term } },
+          { description: { contains: term } },
         );
       });
 

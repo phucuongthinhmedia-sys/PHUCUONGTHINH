@@ -65,10 +65,10 @@ export class QueryPerformanceService {
       // Get query execution plan if enabled
       if (enableAnalyze) {
         const explainQuery = `EXPLAIN (ANALYZE true, BUFFERS ${enableBuffers}, FORMAT JSON) ${query}`;
-        const planResult = (await this.prisma.$queryRawUnsafe(
+        const planResult = await this.prisma.$queryRawUnsafe(
           explainQuery,
           ...params,
-        )) as any[];
+        );
         queryPlan = planResult[0]?.['QUERY PLAN']?.[0];
 
         if (queryPlan) {

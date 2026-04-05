@@ -10,7 +10,19 @@ import type { Category } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
+  private categoryCache: Category[] | null = null;
+  private cacheTimestamp = 0;
+  private readonly CACHE_TTL = 300000; // 5 minutes
+
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * Clear local category cache
+   */
+  private clearCache() {
+    this.categoryCache = null;
+    this.cacheTimestamp = 0;
+  }
 
   /**
    * Generate a URL-friendly slug from category name
@@ -68,7 +80,7 @@ export class CategoriesService {
     const baseSlug = providedSlug || this.generateSlug(name);
     const slug = await this.ensureUniqueSlug(baseSlug);
 
-    return this.prisma.category.create({
+    const result = await this.prisma.category.create({
       data: {
         name,
         slug,
@@ -79,10 +91,18 @@ export class CategoriesService {
         children: true,
       },
     });
+
+    this.clearCache();
+    return result;
   }
 
   async findAll(): Promise<Category[]> {
-    return this.prisma.category.findMany({
+    const now = Date.now();
+    if (this.categoryCache && now - this.cacheTimestamp < this.CACHE_TTL) {
+      return this.categoryCache;
+    }
+
+    const categories = await this.prisma.category.findMany({
       include: {
         parent: true,
         children: true,
@@ -96,6 +116,10 @@ export class CategoriesService {
         name: 'asc',
       },
     });
+
+    this.categoryCache = categories;
+    this.cacheTimestamp = now;
+    return categories;
   }
 
   async findOne(id: string): Promise<Category> {
@@ -139,25 +163,53 @@ export class CategoriesService {
 
   /**
    * Get all categories in a hierarchy (category and all its subcategories)
+   * Optimized to fetch all categories once and build tree in memory
    */
   async findHierarchy(id: string): Promise<Category[]> {
-    const category = await this.findOne(id);
     const allCategories = await this.findAll();
+    const category = allCategories.find((cat) => cat.id === id);
+    if (!category) throw new NotFoundException('Category not found');
 
-    const getDescendants = (categoryId: string): Category[] => {
+    const result: Category[] = [category];
+    const queue = [id];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
       const children = allCategories.filter(
-        (cat) => cat.parent_id === categoryId,
+        (cat) => cat.parent_id === currentId,
       );
-      const descendants = [...children];
-
       for (const child of children) {
-        descendants.push(...getDescendants(child.id));
+        result.push(child);
+        queue.push(child.id);
       }
+    }
 
-      return descendants;
-    };
+    return result;
+  }
 
-    return [category, ...getDescendants(id)];
+  /**
+   * Get multiple hierarchies in one go
+   */
+  async findMultipleHierarchies(ids: string[]): Promise<Category[]> {
+    const allCategories = await this.findAll();
+    const resultIds = new Set<string>();
+    const queue = [...ids];
+
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      if (resultIds.has(currentId)) continue;
+
+      const category = allCategories.find((cat) => cat.id === currentId);
+      if (category) {
+        resultIds.add(currentId);
+        const children = allCategories.filter(
+          (cat) => cat.parent_id === currentId,
+        );
+        queue.push(...children.map((c) => c.id));
+      }
+    }
+
+    return allCategories.filter((cat) => resultIds.has(cat.id));
   }
 
   async update(

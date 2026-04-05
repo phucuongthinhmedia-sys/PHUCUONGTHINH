@@ -27,7 +27,13 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+    // Tự động thêm domain nếu không có @
+    let email = loginDto.email;
+    if (!email.includes('@')) {
+      email = `${email}@phucuongthinh.com`;
+    }
+
+    const user = await this.validateUser(email, loginDto.password);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');

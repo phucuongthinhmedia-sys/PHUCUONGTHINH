@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService } from './cache.service';
 
 export interface TechnicalFilters {
   format?: string[];
@@ -16,7 +17,10 @@ export interface TechnicalFilters {
 
 @Injectable()
 export class TechnicalFilterService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cacheService: CacheService,
+  ) {}
 
   /**
    * Build where clause for technical specification filtering
@@ -31,6 +35,7 @@ export class TechnicalFilterService {
 
       if (Array.isArray(value) && value.length > 0) {
         // Array filters - match any of the values
+        // Use a more robust regex-like approach if supported, or multiple ORs
         const orConditions = value.map((val) => ({
           technical_specs: {
             contains: `"${key}":"${val}"`,
@@ -38,26 +43,17 @@ export class TechnicalFilterService {
         }));
         conditions.push({ OR: orConditions });
       } else if (
-        (typeof value === 'object' && value.min !== undefined) ||
-        value.max !== undefined
+        typeof value === 'object' &&
+        (value.min !== undefined || value.max !== undefined)
       ) {
-        // Range filters for numeric values
-        if (value.min !== undefined) {
-          conditions.push({
-            technical_specs: {
-              contains: `"${key}":`,
-            },
-          });
-          // Note: For proper numeric range filtering in production,
-          // consider using PostgreSQL with proper JSONB operators
-        }
-        if (value.max !== undefined) {
-          conditions.push({
-            technical_specs: {
-              contains: `"${key}":`,
-            },
-          });
-        }
+        // For range filters in SQLite string-based JSON, we can only check for existence
+        // and then filter in memory if needed, or use a more complex SQL fragment.
+        // For now, we keep it simple but acknowledge the limitation.
+        conditions.push({
+          technical_specs: {
+            contains: `"${key}":`,
+          },
+        });
       } else if (
         typeof value === 'string' ||
         typeof value === 'number' ||
@@ -77,45 +73,74 @@ export class TechnicalFilterService {
 
   /**
    * Extract available technical specification options from existing products
+   * Optimized with caching to avoid full table scans on every request
    */
   async getAvailableTechnicalFilters(baseWhere: any = {}) {
-    // Get all products to analyze their technical specs
-    const products = await this.prisma.product.findMany({
-      where: baseWhere,
-      select: {
-        technical_specs: true,
-      },
-    });
+    const cacheKey = `available_technical_filters:${JSON.stringify(baseWhere)}`;
 
-    const technicalOptions: Record<string, Set<any>> = {};
+    return this.cacheService.cached(
+      cacheKey,
+      async () => {
+        // Get all products to analyze their technical specs
+        // Only fetch technical_specs to minimize I/O
+        const products = await this.prisma.product.findMany({
+          where: baseWhere,
+          select: {
+            technical_specs: true,
+          },
+        });
 
-    // Parse and aggregate technical specifications
-    products.forEach((product) => {
-      try {
-        const specs = JSON.parse(product.technical_specs);
-        Object.entries(specs).forEach(([key, value]) => {
-          if (!technicalOptions[key]) {
-            technicalOptions[key] = new Set();
-          }
+        const technicalOptions: Record<string, Set<any>> = {};
 
-          if (Array.isArray(value)) {
-            value.forEach((v) => technicalOptions[key].add(v));
-          } else {
-            technicalOptions[key].add(value);
+        // Parse and aggregate technical specifications
+        products.forEach((product) => {
+          try {
+            if (!product.technical_specs) return;
+            const specs = JSON.parse(product.technical_specs);
+            Object.entries(specs).forEach(([key, value]) => {
+              // Skip internal/system keys
+              if (
+                [
+                  'slug',
+                  'meta_title',
+                  'meta_description',
+                  'product_type',
+                  'badges',
+                ].includes(key)
+              )
+                return;
+
+              if (!technicalOptions[key]) {
+                technicalOptions[key] = new Set();
+              }
+
+              if (Array.isArray(value)) {
+                value.forEach((v) => {
+                  if (v !== null && v !== undefined)
+                    technicalOptions[key].add(v);
+                });
+              } else if (value !== null && value !== undefined) {
+                technicalOptions[key].add(value);
+              }
+            });
+          } catch (error) {
+            // Skip invalid JSON
           }
         });
-      } catch (error) {
-        // Skip invalid JSON
-      }
-    });
 
-    // Convert sets to arrays and sort
-    const result: Record<string, any[]> = {};
-    Object.entries(technicalOptions).forEach(([key, valueSet]) => {
-      result[key] = Array.from(valueSet).sort();
-    });
+        // Convert sets to arrays and sort
+        const result: Record<string, any[]> = {};
+        Object.entries(technicalOptions).forEach(([key, valueSet]) => {
+          result[key] = Array.from(valueSet).sort((a, b) => {
+            if (typeof a === 'number' && typeof b === 'number') return a - b;
+            return String(a).localeCompare(String(b));
+          });
+        });
 
-    return result;
+        return result;
+      },
+      { ttl: 600 }, // 10 minutes cache
+    );
   }
 
   /**

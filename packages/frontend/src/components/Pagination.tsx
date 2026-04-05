@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationProps {
   currentPage: number;
@@ -39,15 +40,16 @@ export function Pagination({
   }
 
   return (
-    <div className="flex justify-center items-center gap-2 mt-12">
+    <div className="flex justify-center items-center gap-1.5 sm:gap-2 mt-12">
       <motion.button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 transition-colors"
+        whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
+        whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
+        aria-label="Trang trước"
       >
-        Trước
+        <ChevronLeft size={20} strokeWidth={2.5} />
       </motion.button>
 
       {pages.map((page, index) => (
@@ -55,12 +57,12 @@ export function Pagination({
           key={index}
           onClick={() => typeof page === "number" && onPageChange(page)}
           disabled={page === "..."}
-          className={`px-3 py-2 rounded-lg transition-colors ${
+          className={`flex items-center justify-center min-w-[40px] h-[40px] sm:min-w-[44px] sm:h-[44px] px-2 text-[14px] sm:text-[15px] rounded-full transition-all duration-300 ${
             page === currentPage
-              ? "bg-accent text-primary font-semibold"
+              ? "bg-gray-900 text-white font-bold shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
               : page === "..."
-                ? "cursor-default"
-                : "border border-gray-300 hover:bg-gray-50"
+                ? "cursor-default text-gray-400 font-medium"
+                : "text-gray-700 font-semibold hover:bg-black/5"
           }`}
           whileHover={page !== "..." ? { scale: 1.05 } : {}}
           whileTap={page !== "..." ? { scale: 0.95 } : {}}
@@ -72,11 +74,12 @@ export function Pagination({
       <motion.button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black/5 transition-colors"
+        whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
+        whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
+        aria-label="Trang sau"
       >
-        Sau
+        <ChevronRight size={20} strokeWidth={2.5} />
       </motion.button>
     </div>
   );

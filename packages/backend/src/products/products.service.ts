@@ -32,35 +32,41 @@ export class ProductsService {
       space_ids,
     } = createProductDto;
 
-    // Validate category exists
-    await this.categoriesService.findOne(category_id);
+    // Run all validations in parallel for better performance
+    const validationPromises: Promise<any>[] = [
+      this.categoriesService.findOne(category_id),
+      this.prisma.product.findUnique({ where: { sku } }).then((existingSku) => {
+        if (existingSku) throw new BadRequestException('SKU already exists');
+      }),
+    ];
 
-    // Check SKU uniqueness
-    const existingSku = await this.prisma.product.findUnique({
-      where: { sku },
-    });
-    if (existingSku) {
-      throw new BadRequestException('SKU already exists');
+    if (style_ids?.length) {
+      validationPromises.push(
+        this.prisma.style
+          .findMany({ where: { id: { in: style_ids } } })
+          .then((styles) => {
+            if (styles.length !== style_ids.length)
+              throw new BadRequestException(
+                'One or more style IDs are invalid',
+              );
+          }),
+      );
     }
 
-    // Validate style and space IDs if provided
-    if (style_ids && style_ids.length > 0) {
-      const styles = await this.prisma.style.findMany({
-        where: { id: { in: style_ids } },
-      });
-      if (styles.length !== style_ids.length) {
-        throw new BadRequestException('One or more style IDs are invalid');
-      }
+    if (space_ids?.length) {
+      validationPromises.push(
+        this.prisma.space
+          .findMany({ where: { id: { in: space_ids } } })
+          .then((spaces) => {
+            if (spaces.length !== space_ids.length)
+              throw new BadRequestException(
+                'One or more space IDs are invalid',
+              );
+          }),
+      );
     }
 
-    if (space_ids && space_ids.length > 0) {
-      const spaces = await this.prisma.space.findMany({
-        where: { id: { in: space_ids } },
-      });
-      if (spaces.length !== space_ids.length) {
-        throw new BadRequestException('One or more space IDs are invalid');
-      }
-    }
+    await Promise.all(validationPromises);
 
     // Create product with relationships
     const product = await this.prisma.product.create({
@@ -69,32 +75,18 @@ export class ProductsService {
         sku,
         description,
         category_id,
-        technical_specs: JSON.stringify(technical_specs ?? {}), // Always a valid JSON string
-        style_tags:
-          style_ids && style_ids.length > 0
-            ? {
-                create: style_ids.map((style_id) => ({ style_id })),
-              }
-            : undefined,
-        space_tags:
-          space_ids && space_ids.length > 0
-            ? {
-                create: space_ids.map((space_id) => ({ space_id })),
-              }
-            : undefined,
+        technical_specs: JSON.stringify(technical_specs ?? {}),
+        style_tags: style_ids?.length
+          ? { create: style_ids.map((style_id) => ({ style_id })) }
+          : undefined,
+        space_tags: space_ids?.length
+          ? { create: space_ids.map((space_id) => ({ space_id })) }
+          : undefined,
       },
       include: {
         category: true,
-        style_tags: {
-          include: {
-            style: true,
-          },
-        },
-        space_tags: {
-          include: {
-            space: true,
-          },
-        },
+        style_tags: { include: { style: true } },
+        space_tags: { include: { space: true } },
         media: true,
       },
     });
@@ -164,19 +156,10 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
-    // Add cache-busting timestamp to media URLs to force browser reload
-    const mediaWithTimestamp = product.media?.map((m) => ({
-      ...m,
-      file_url: m.file_url.includes('?')
-        ? m.file_url
-        : `${m.file_url}?v=${m.updated_at?.getTime() || Date.now()}`,
-    }));
-
     // Parse technical_specs back to object
     return {
       ...product,
-      technical_specs: JSON.parse(product.technical_specs),
-      media: mediaWithTimestamp,
+      technical_specs: JSON.parse(product.technical_specs || '{}'),
     } as any;
   }
 

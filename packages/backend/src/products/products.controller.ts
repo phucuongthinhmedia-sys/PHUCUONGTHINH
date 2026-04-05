@@ -69,32 +69,14 @@ export class ProductsController {
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   @Header('Pragma', 'no-cache')
   @Header('Expires', '0')
-  async findAllWithFilters(@Query() filters: ProductFiltersDto) {
-    const result = await this.combinedFilterService.filterProducts({
-      categories: filters.categories ? [filters.categories].flat() : undefined,
-      search: filters.search,
-      published: filters.published || 'true',
-      page: filters.page || 1,
-      limit: filters.limit || 20,
-      inspiration: {
-        styles: filters.styles ? [filters.styles].flat() : undefined,
-        spaces: filters.spaces ? [filters.spaces].flat() : undefined,
-      },
-      technical: filters.technical_specs,
-    });
-
-    return result;
-  }
-
-  @Get('filters/enhanced')
-  async findAllWithEnhancedFilters(@Query() query: any) {
+  async findAllWithFilters(@Query() query: any) {
     const filters = {
       categories: query.categories
         ? Array.isArray(query.categories)
           ? query.categories
           : [query.categories]
         : undefined,
-      search: query.search,
+      search: query.search || query.q || query.query,
       published: query.published || 'true',
       page: safeParseInt(query.page, 1),
       limit: safeParseInt(query.limit, 20),
@@ -110,7 +92,7 @@ export class ProductsController {
             : [query.spaces]
           : undefined,
       },
-      technical: safeParseJson(query.technical),
+      technical: safeParseJson(query.technical || query.technical_specs),
     };
 
     return this.combinedFilterService.filterProducts(filters);
@@ -119,7 +101,7 @@ export class ProductsController {
   @Get('search')
   async searchProducts(@Query() query: any) {
     const searchQuery = query.q || query.query || '';
-    const limit = safeParseInt(query.limit, 20);
+    const limit = safeParseInt(query.limit, 10);
     return this.combinedFilterService.getSearchSuggestions(searchQuery, limit);
   }
 
@@ -136,66 +118,6 @@ export class ProductsController {
   getPopularSearchTerms(@Query('limit') limit?: string) {
     const limitNum = safeParseInt(limit, 10);
     return this.combinedFilterService.getPopularSearchTerms(limitNum);
-  }
-
-  @Get('filters/search')
-  async searchWithFilters(@Query() query: any) {
-    const filters = {
-      search: query.q || query.query,
-      categories: query.categories
-        ? Array.isArray(query.categories)
-          ? query.categories
-          : [query.categories]
-        : undefined,
-      published: query.published || 'true',
-      page: safeParseInt(query.page, 1),
-      limit: safeParseInt(query.limit, 20),
-      inspiration: {
-        styles: query.styles
-          ? Array.isArray(query.styles)
-            ? query.styles
-            : [query.styles]
-          : undefined,
-        spaces: query.spaces
-          ? Array.isArray(query.spaces)
-            ? query.spaces
-            : [query.spaces]
-          : undefined,
-      },
-      technical: safeParseJson(query.technical),
-    };
-
-    return this.combinedFilterService.filterProductsWithSearch(filters);
-  }
-
-  @Get('filters/optimized')
-  async findAllWithOptimizedFilters(@Query() query: any) {
-    const filters = {
-      categories: query.categories
-        ? Array.isArray(query.categories)
-          ? query.categories
-          : [query.categories]
-        : undefined,
-      search: query.search,
-      published: query.published || 'true',
-      page: safeParseInt(query.page, 1),
-      limit: safeParseInt(query.limit, 20),
-      inspiration: {
-        styles: query.styles
-          ? Array.isArray(query.styles)
-            ? query.styles
-            : [query.styles]
-          : undefined,
-        spaces: query.spaces
-          ? Array.isArray(query.spaces)
-            ? query.spaces
-            : [query.spaces]
-          : undefined,
-      },
-      technical: safeParseJson(query.technical),
-    };
-
-    return this.combinedFilterService.filterProductsOptimized(filters);
   }
 
   @Get('cache/stats')

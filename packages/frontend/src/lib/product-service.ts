@@ -104,63 +104,90 @@ interface BackendProductsResponse {
 }
 
 class ProductService {
+  /**
+   * Fetch products with caching and normalization
+   */
   async getProducts(
     pageOrFilters: number | ProductFilters = 1,
     limit: number = 10,
     search?: string,
     bustCache: boolean = false,
   ): Promise<ProductFiltersResponse> {
-    let params: URLSearchParams;
+    const isPublic = typeof pageOrFilters === "object";
+    const params = new URLSearchParams();
 
-    if (typeof pageOrFilters === "object") {
-      // Called with filters object (public pages)
-      const f = pageOrFilters;
-      params = new URLSearchParams();
+    if (isPublic) {
+      const f = pageOrFilters as ProductFilters;
       if (f.page) params.set("page", f.page.toString());
       if (f.limit) params.set("limit", f.limit.toString());
       if (f.search) params.set("search", f.search);
       if (f.category) params.set("category", f.category);
       if (f.published !== undefined)
-        params.set(
-          "published",
-          f.published === "all" ? "all" : f.published ? "true" : "false",
-        );
+        params.set("published", f.published === "all" ? "all" : f.published ? "true" : "false");
       if (f.styles?.length) f.styles.forEach((s) => params.append("styles", s));
       if (f.spaces?.length) f.spaces.forEach((s) => params.append("spaces", s));
-      if (f.technical_specs)
-        params.set("technical_specs", JSON.stringify(f.technical_specs));
+      if (f.technical_specs) params.set("technical", JSON.stringify(f.technical_specs));
     } else {
-      // Called with (page, limit, search) — admin pages
-      params = new URLSearchParams({
-        page: pageOrFilters.toString(),
-        limit: limit.toString(),
-        published: "all",
-      });
-      if (search) params.append("search", search);
-
-      // Admin pages always bust cache - add timestamp to bypass backend cache
-      params.set("_t", Date.now().toString());
+      params.set("page", pageOrFilters.toString());
+      params.set("limit", limit.toString());
+      params.set("published", "all");
+      if (search) params.set("search", search);
     }
 
+    const cacheKey = `products:list:${params.toString()}`;
+    if (!bustCache && !isPublic) { // Admin pages usually want fresh data but we can cache public ones
+       const cached = clientCache.get<ProductFiltersResponse>(cacheKey);
+       if (cached) return cached;
+    }
+
+    // Use /filters endpoint for everything as it's optimized
     const raw = await rawApiClient.getRaw<BackendProductsResponse>(
-      `/products?${params.toString()}`,
+      `/products/filters?${params.toString()}`,
     );
 
-    return {
-      products: (raw.data ?? []).map(normalizeTags),
+    const result = {
+      products: (raw.data ?? (raw as any).products ?? []).map(normalizeTags),
       pagination: raw.pagination,
       available_filters: (raw as any).available_filters,
     };
+
+    if (isPublic) {
+      clientCache.set(cacheKey, result, 300_000); // 5 minutes cache for public lists
+    }
+
+    return result;
   }
 
   async getProductById(id: string, bustCache = false): Promise<Product> {
-    // Add cache buster to URL if requested
-    const url = bustCache 
-      ? `/products/${id}?_t=${Date.now()}` 
-      : `/products/${id}`;
-    const raw = await apiClient.get<any>(url);
+    const cacheKey = `products:detail:${id}`;
+    if (!bustCache) {
+      const cached = clientCache.get<Product>(cacheKey);
+      if (cached) return cached;
+    }
+
+    const raw = await apiClient.get<any>(`/products/${id}`);
     const product = normalizeTags(raw);
+    
+    clientCache.set(cacheKey, product, 600_000); // 10 minutes cache for details
     return product;
+  }
+
+  async getProductBySku(sku: string, bustCache = false): Promise<Product | null> {
+    const cacheKey = `products:sku:${sku}`;
+    if (!bustCache) {
+      const cached = clientCache.get<Product>(cacheKey);
+      if (cached) return cached;
+    }
+
+    try {
+      const raw = await apiClient.get<any>(`/products/sku/${encodeURIComponent(sku)}`);
+      if (!raw || !raw.id) return null;
+      const product = normalizeTags(raw);
+      clientCache.set(cacheKey, product, 600_000);
+      return product;
+    } catch {
+      return null;
+    }
   }
 
   async createProduct(data: CreateProductRequest): Promise<Product> {

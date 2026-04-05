@@ -165,8 +165,8 @@ export class DocumentsService {
 
     if (filters.search) {
       where.OR = [
-        { original_name: { contains: filters.search, mode: 'insensitive' } },
-        { file_name: { contains: filters.search, mode: 'insensitive' } },
+        { original_name: { contains: filters.search } },
+        { file_name: { contains: filters.search } },
       ];
     }
 

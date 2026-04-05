@@ -4,24 +4,8 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@repo/shared-utils";
 import { authService } from "@/lib/auth-service";
-import {
-  Mail,
-  Lock,
-  ArrowRight,
-  ShieldCheck,
-  Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { ShieldCheck, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-
-// Bảng màu đồng bộ
-const palette = {
-  be: "#FDF5E6",
-  brown: "#804000",
-  lightBrown: "#D2B48C",
-};
 
 function LoginForm() {
   const router = useRouter();
@@ -30,8 +14,8 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State ẩn/hiện mật khẩu
-  const [rememberMe, setRememberMe] = useState(false); // State ghi nhớ đăng nhập
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +26,6 @@ function LoginForm() {
 
     try {
       const response = await authService.login({ email, password });
-      // Giả sử hàm login có thể nhận thêm tuỳ chọn rememberMe
       login({ email, password, rememberMe }, response);
       const returnTo = searchParams.get("returnTo") || "/";
       router.push(returnTo);
@@ -57,195 +40,120 @@ function LoginForm() {
   };
 
   return (
-    <div
-      style={{ backgroundColor: palette.be }}
-      className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans selection:bg-[#804000] selection:text-white"
-    >
-      {/* ─── Background Elements (Soft Blobs) ─── */}
-      <div
-        style={{ backgroundColor: palette.lightBrown }}
-        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[100px] opacity-30 pointer-events-none"
-      />
-      <div
-        style={{ backgroundColor: palette.brown }}
-        className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] rounded-full blur-[100px] opacity-10 pointer-events-none"
-      />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#F2F2F7] font-sans selection:bg-[#007AFF] selection:text-white">
+      {/* Apple Mesh Gradient Background */}
+      <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-gradient-to-br from-[#007AFF]/15 to-[#5856D6]/15 blur-[100px] pointer-events-none mix-blend-multiply" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-br from-[#34C759]/15 to-[#32ADE6]/15 blur-[100px] pointer-events-none mix-blend-multiply" />
 
-      <div className="max-w-md w-full px-6 relative z-10">
-        {/* Nút quay lại trang chủ */}
+      <div className="w-full max-w-[420px] px-6 relative z-10">
         <div className="flex justify-center mb-8">
           <Link
             href="/"
-            style={{ color: palette.brown }}
-            className="text-sm font-semibold opacity-60 hover:opacity-100 transition-opacity flex items-center gap-1"
+            className="text-[15px] font-medium text-[#8E8E93] hover:text-black transition-colors flex items-center gap-1"
           >
             ← Quay lại trang chủ
           </Link>
         </div>
 
-        {/* ─── Glassmorphism Card ─── */}
-        <div className="bg-white/60 backdrop-blur-xl rounded-[40px] shadow-[0_20px_60px_rgba(128,64,0,0.05)] border border-white/80 p-8 sm:p-10">
-          {/* Header Form */}
+        {/* Apple Glass Card */}
+        <div className="bg-white/70 backdrop-blur-3xl rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white p-8 sm:p-10">
           <div className="flex flex-col items-center mb-8">
-            <div
-              style={{ backgroundColor: palette.brown }}
-              className="size-16 rounded-[20px] flex items-center justify-center mb-6 shadow-lg shadow-[#804000]/20"
-            >
-              <ShieldCheck size={32} className="text-white" />
+            <div className="w-16 h-16 rounded-[18px] bg-gradient-to-b from-gray-800 to-black flex items-center justify-center mb-5 shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+              <ShieldCheck size={32} className="text-white" strokeWidth={1.5} />
             </div>
-            <h2
-              style={{ color: palette.brown }}
-              className="text-2xl font-black tracking-tight uppercase"
-            >
-              Hệ Thống Quản Trị
+            <h2 className="text-[24px] font-semibold text-black tracking-tight">
+              Phú Cường Thịnh
             </h2>
-            <p
-              style={{ color: palette.brown }}
-              className="mt-2 text-sm font-medium opacity-70"
-            >
-              Phú Cường Thịnh CMS
+            <p className="mt-1 text-[15px] font-medium text-[#8E8E93]">
+              Hệ thống quản trị nội dung
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Cảnh báo lỗi */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div className="rounded-2xl bg-red-50 border border-red-100 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+              <div className="rounded-[14px] bg-[#FF3B30]/10 p-4 flex items-start gap-3">
                 <AlertCircle
-                  className="text-red-500 shrink-0 mt-0.5"
+                  className="text-[#FF3B30] shrink-0 mt-0.5"
                   size={18}
                 />
-                <p className="text-sm text-red-700 font-medium leading-relaxed">
+                <p className="text-[14px] text-[#FF3B30] font-medium leading-relaxed">
                   {error}
                 </p>
               </div>
             )}
 
-            <div className="space-y-4">
-              {/* Input Email */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="email"
-                  style={{ color: palette.brown }}
-                  className="block text-sm font-bold pl-4 opacity-80"
-                >
-                  Email đăng nhập
-                </label>
-                <div className="relative group">
-                  <Mail
-                    className="absolute left-5 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:opacity-100 transition-opacity"
-                    style={{ color: palette.brown }}
-                    size={18}
-                  />
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    style={{
-                      color: palette.brown,
-                      borderColor: "rgba(210, 180, 140, 0.4)",
-                    }}
-                    className="block w-full bg-white/50 border rounded-full py-3.5 pl-12 pr-6 text-[15px] font-medium placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#804000]/20 focus:bg-white transition-all shadow-sm"
-                    placeholder="admin@phucuongthinh.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+            <div className="space-y-3">
+              {/* Apple Inputs */}
+              <div className="relative">
+                <input
+                  id="email"
+                  name="email"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  className="w-full bg-black/[0.04] border-2 border-transparent rounded-[14px] py-3.5 px-4 text-[17px] text-black placeholder-[#8E8E93] focus:bg-white focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/10 transition-all outline-none"
+                  placeholder="Tên đăng nhập"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
 
-              {/* Input Password */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="password"
-                  style={{ color: palette.brown }}
-                  className="block text-sm font-bold pl-4 opacity-80"
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="w-full bg-black/[0.04] border-2 border-transparent rounded-[14px] py-3.5 pl-4 pr-12 text-[17px] text-black placeholder-[#8E8E93] focus:bg-white focus:border-[#007AFF] focus:ring-4 focus:ring-[#007AFF]/10 transition-all outline-none"
+                  placeholder="Mật khẩu"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#8E8E93] hover:text-black transition-colors outline-none"
                 >
-                  Mật khẩu
-                </label>
-                <div className="relative group">
-                  <Lock
-                    className="absolute left-5 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:opacity-100 transition-opacity"
-                    style={{ color: palette.brown }}
-                    size={18}
-                  />
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    required
-                    style={{
-                      color: palette.brown,
-                      borderColor: "rgba(210, 180, 140, 0.4)",
-                    }}
-                    className="block w-full bg-white/50 border rounded-full py-3.5 pl-12 pr-12 text-[15px] font-medium placeholder:opacity-40 focus:outline-none focus:ring-2 focus:ring-[#804000]/20 focus:bg-white transition-all shadow-sm"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  {/* Nút Toggle Password */}
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 opacity-40 hover:opacity-100 focus:opacity-100 transition-opacity outline-none rounded-full"
-                    style={{ color: palette.brown }}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+                  {showPassword ? (
+                    <EyeOff size={20} strokeWidth={1.5} />
+                  ) : (
+                    <Eye size={20} strokeWidth={1.5} />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between px-1">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-[#804000] focus:ring-[#804000] transition-colors cursor-pointer"
-                  style={{ accentColor: palette.brown }}
+                  className="w-[18px] h-[18px] rounded-[6px] border-gray-300 text-[#007AFF] focus:ring-[#007AFF] transition-colors cursor-pointer"
                 />
-                <span
-                  style={{ color: palette.brown }}
-                  className="text-sm font-semibold opacity-80 group-hover:opacity-100 transition-opacity"
-                >
+                <span className="text-[15px] font-medium text-[#8E8E93] group-hover:text-black transition-colors">
                   Ghi nhớ tôi
                 </span>
               </label>
 
               <Link
-                href="/forgot-password" // Cập nhật đường dẫn thực tế của bạn
-                style={{ color: palette.brown }}
-                className="text-sm font-bold opacity-80 hover:opacity-100 hover:underline transition-all"
+                href="/forgot-password"
+                className="text-[15px] font-medium text-[#007AFF] hover:opacity-80 transition-opacity"
               >
                 Quên mật khẩu?
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading || !email || !password}
-              style={{ backgroundColor: palette.brown }}
-              className="w-full mt-2 py-4 px-6 text-white text-[15px] font-bold rounded-full transition-all flex items-center justify-center gap-2 hover:bg-[#6e2411] hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:pointer-events-none group"
+              className="w-full mt-2 py-3.5 bg-[#007AFF] text-white text-[17px] font-semibold rounded-[14px] active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isLoading ? (
-                <>
-                  <Loader2 size={20} className="animate-spin" />
-                  Đang xác thực...
-                </>
+                <Loader2 size={20} className="animate-spin" />
               ) : (
-                <>
-                  Đăng Nhập
-                  <ArrowRight
-                    size={18}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
-                </>
+                "Đăng Nhập"
               )}
             </button>
           </form>
@@ -259,11 +167,8 @@ export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
-        <div
-          style={{ backgroundColor: palette.be, color: palette.brown }}
-          className="min-h-screen flex items-center justify-center font-bold"
-        >
-          <Loader2 size={32} className="animate-spin opacity-50" />
+        <div className="min-h-screen flex items-center justify-center bg-[#F2F2F7]">
+          <Loader2 size={32} className="animate-spin text-[#8E8E93]" />
         </div>
       }
     >

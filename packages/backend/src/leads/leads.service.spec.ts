@@ -73,7 +73,7 @@ describe('Feature: digital-showroom-cms, Lead Management Properties', () => {
             );
 
             if (leadData.preferred_date) {
-              expect(new Date(createdLead.preferred_date!)).toEqual(
+              expect(new Date(createdLead.preferred_date)).toEqual(
                 leadData.preferred_date,
               );
             } else {

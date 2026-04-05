@@ -36,7 +36,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       className="group"
     >
       <div className="relative overflow-hidden rounded-xl bg-gray-100 aspect-square mb-2 md:mb-3">
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/p/${product.sku}`}>
           <Image
             src={imageUrl}
             alt={product.name}
@@ -90,7 +90,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       </div>
 
       <div className="space-y-1 md:space-y-1.5">
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/p/${product.sku}`}>
           <h3 className="text-xs md:text-sm lg:text-base font-semibold text-primary hover:text-accent transition-colors line-clamp-2 leading-snug">
             {product.name}
           </h3>

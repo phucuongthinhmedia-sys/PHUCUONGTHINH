@@ -1,0 +1,305 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password_hash String
+  role         String   @default("admin")
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Category {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  parent_id  String?
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([parent_id])
+  @@map("categories")
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  name            String
+  sku             String   @unique
+  description     String?
+  category_id     String
+  technical_specs String   // JSON as string for SQLite
+  is_published    Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  category         Category            @relation(fields: [category_id], references: [id])
+  media            Media[]
+  style_tags       ProductStyleTag[]
+  space_tags       ProductSpaceTag[]
+  lead_products    LeadProduct[]
+  productInternal  ProductInternal?
+
+  @@index([category_id])
+  @@index([is_published])
+  @@index([created_at])
+  @@index([is_published, category_id])
+  @@index([is_published, created_at])
+  @@map("products")
+}
+
+model Style {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  products ProductStyleTag[]
+
+  @@map("styles")
+}
+
+model Space {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  products ProductSpaceTag[]
+
+  @@map("spaces")
+}
+
+model ProductStyleTag {
+  product_id String
+  style_id   String
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  style   Style   @relation(fields: [style_id], references: [id], onDelete: Cascade)
+
+  @@id([product_id, style_id])
+  @@index([product_id])
+  @@index([style_id])
+  @@map("product_style_tags")
+}
+
+model ProductSpaceTag {
+  product_id String
+  space_id   String
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  space   Space   @relation(fields: [space_id], references: [id], onDelete: Cascade)
+
+  @@id([product_id, space_id])
+  @@index([product_id])
+  @@index([space_id])
+  @@map("product_space_tags")
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  product_id String
+  file_url   String
+  file_type  String
+  media_type String
+  sort_order Int      @default(0)
+  is_cover   Boolean  @default(false)
+  file_size  Int?
+  alt_text   String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+  @@index([media_type])
+  @@index([sort_order])
+  @@index([is_cover])
+  @@index([product_id, is_cover])
+  @@map("media")
+}
+
+model Lead {
+  id              String   @id @default(cuid())
+  name            String
+  email           String?
+  phone           String?
+  inquiry_type    String
+  project_details String?
+  status          String   @default("new")
+  preferred_date  DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  products LeadProduct[]
+
+  @@index([status])
+  @@index([created_at])
+  @@map("leads")
+}
+
+model LeadProduct {
+  lead_id    String
+  product_id String
+
+  lead    Lead    @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([lead_id, product_id])
+  @@map("lead_products")
+}
+
+model ProductInternal {
+  id                       String   @id @default(cuid())
+  product_id               String   @unique
+  cost_price               Float?
+  price_retail             Float?
+  price_wholesale          Float?
+  wholesale_discount_tiers String?
+  price_dealer             Float?
+  price_promo              Float?
+  promo_start_date         String?
+  promo_end_date           String?
+  promo_note               String?
+  warehouse_location       String?
+  stock_status             String?
+  stock_quantity           Int?
+  supplier_name            String?
+  supplier_phone           String?
+  internal_notes           String?
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  product      Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  stock_levels StockLevel[]
+
+  @@map("product_internals")
+}
+
+model Warehouse {
+  id         String   @id @default(cuid())
+  name       String
+  location   String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  stock_levels      StockLevel[]
+  inventory_records InventoryRecord[]
+
+  @@map("warehouses")
+}
+
+model StockLevel {
+  id           String   @id @default(cuid())
+  product_id   String
+  warehouse_id String
+  quantity     Int      @default(0)
+  updated_at   DateTime @updatedAt
+
+  product_internal ProductInternal @relation(fields: [product_id], references: [product_id])
+  warehouse        Warehouse       @relation(fields: [warehouse_id], references: [id])
+
+  @@unique([product_id, warehouse_id])
+  @@index([product_id])
+  @@index([warehouse_id])
+  @@map("stock_levels")
+}
+
+model InventoryRecord {
+  id           String   @id @default(cuid())
+  product_id   String
+  warehouse_id String
+  type         String   // "in" | "out" | "adjustment"
+  quantity     Int
+  note         String?
+  created_by   String
+  created_at   DateTime @default(now())
+
+  warehouse Warehouse @relation(fields: [warehouse_id], references: [id])
+
+  @@index([product_id])
+  @@index([warehouse_id])
+  @@index([created_at])
+  @@map("inventory_records")
+}
+
+model ContentItem {
+  id           String   @id @default(cuid())
+  title        String
+  type         String   // "design" | "project" | "construction"
+  description  String?
+  is_published Boolean  @default(false)
+  images       String   @default("[]") // JSON array of media URLs
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([type])
+  @@index([is_published])
+  @@map("content_items")
+}
+
+// ============================================
+// DOCUMENT MANAGEMENT MODULE
+// ============================================
+
+model DocumentCategory {
+  id         String   @id @default(cuid())
+  name       String   
+  code       String   @unique 
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  documents Document[]
+
+  @@map("document_categories")
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  file_name     String   
+  original_name String   
+  file_url      String   
+  file_size     Int      
+  mime_type     String   
+  category_id   String
+  uploaded_by   String   
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  category DocumentCategory @relation(fields: [category_id], references: [id], onDelete: Restrict)
+  tags     DocumentTag[]
+
+  @@index([category_id])
+  @@index([uploaded_by])
+  @@index([created_at])
+  @@map("documents")
+}
+
+model DocumentTag {
+  id          String   @id @default(cuid())
+  document_id String
+  entity_type String   
+  entity_id   String   
+  created_at  DateTime @default(now())
+
+  document Document @relation(fields: [document_id], references: [id], onDelete: Cascade)
+
+  @@unique([document_id, entity_type, entity_id])
+  @@index([document_id])
+  @@index([entity_type, entity_id])
+  @@index([entity_id])
+  @@map("document_tags")
+}

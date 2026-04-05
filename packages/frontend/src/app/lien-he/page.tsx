@@ -87,27 +87,11 @@ function ContactContent() {
                 </div>
                 <div>
                   <h3 className="text-[#0a192f] font-bold text-lg mb-2">
-                    Hệ thống của chúng tôi
+                    Địa chỉ
                   </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        Showroom Trung Tâm:
-                      </p>
-                      <p className="text-gray-500 text-sm leading-relaxed">
-                        123 Đường Lê Lợi, P. Phú Cường, TP. Thủ Dầu Một, Bình
-                        Dương
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        Tổng Kho B2B (10.000m²):
-                      </p>
-                      <p className="text-gray-500 text-sm leading-relaxed">
-                        Khu Công Nghiệp Sóng Thần 2, Dĩ An, Bình Dương
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-gray-500 text-sm leading-relaxed">
+                    123 Đường Lê Lợi, P. Phú Cường, TP. Thủ Dầu Một, Bình Dương
+                  </p>
                 </div>
               </div>
 
@@ -127,7 +111,7 @@ function ContactContent() {
                       href="tel:0901234567"
                       className="group flex items-center gap-2 text-2xl font-black text-emerald-600 hover:text-emerald-700 transition-colors"
                     >
-                      0901 234 567
+                      0901.234.567
                       <ArrowUpRight
                         size={20}
                         className="text-emerald-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
@@ -170,6 +154,20 @@ function ContactContent() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Google Maps Embed */}
+            <div className="w-full h-[400px] rounded-[2rem] overflow-hidden shadow-sm border border-gray-100">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125422.32634!2d106.6!3d10.98!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zVGjhu6cgROG6p3UgTeG7mXQsIELDrG5oIETGsMahbmc!5e0!3m2!1svi!2s!4v1234567890"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Bản đồ Phú Cường Thịnh - TP. Thủ Dầu Một, Bình Dương"
+              />
             </div>
           </div>
 

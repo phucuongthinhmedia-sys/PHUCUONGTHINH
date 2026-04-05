@@ -216,8 +216,9 @@ describe('Feature: digital-showroom-cms, Space Management Properties', () => {
               space.products.forEach((productRelation) => {
                 // Each product relationship should reference valid IDs
                 expect(productRelation.space_id).toBe(space.id);
-                expect(products.some((p) => p.id === productRelation.product_id))
-                  .toBe(true);
+                expect(
+                  products.some((p) => p.id === productRelation.product_id),
+                ).toBe(true);
                 expect(productRelation.product).toBeDefined();
               });
             });

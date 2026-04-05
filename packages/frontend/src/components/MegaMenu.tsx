@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Zap, Sparkles } from "lucide-react";
 
-// ─── Data với Hình ảnh Trực quan ──────────────────────────────────────────────
 const menuData = [
   {
     id: "big-slab",
@@ -59,7 +58,7 @@ const menuData = [
     id: "phu-tro",
     title: "Gia Công & Phụ Trợ",
     image:
-      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&q=80", // Có thể thay bằng ảnh máy cắt CNC hoặc keo chà ron
+      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=400&q=80",
     links: [
       { href: "/products/keo-dan-ron", label: "Keo dán gạch & Ron sứ Epoxy" },
       { href: "/products/nep-trang-tri", label: "Nẹp trang trí Inox / Đồng" },
@@ -81,16 +80,16 @@ export function MegaMenu() {
       className="
         absolute top-full left-1/2 -translate-x-1/2
         w-[1100px] max-w-[calc(100vw-2rem)] z-50
-        opacity-0 translate-y-3 pointer-events-none
-        group-hover/products:opacity-100 group-hover/products:translate-y-0 group-hover/products:pointer-events-auto
-        transition-all duration-300 ease-out mt-1
+        opacity-0 translate-y-4 pointer-events-none scale-95
+        group-hover/products:opacity-100 group-hover/products:translate-y-0 group-hover/products:scale-100 group-hover/products:pointer-events-auto
+        transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)] mt-2
       "
     >
-      {/* Cầu nối vô hình (Invisible hover bridge) giúp chuột không bị trượt khỏi menu */}
-      <div className="h-4 w-full absolute -top-4 left-0" />
+      {/* Cầu nối vô hình giúp chuột không bị trượt */}
+      <div className="h-6 w-full absolute -top-6 left-0" />
 
-      {/* Card MegaMenu */}
-      <div className="bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] overflow-hidden border border-gray-100">
+      {/* APPLE FROSTED GLASSMORPHISM: Đã tăng bg-white/90 để đảm bảo độ tương phản */}
+      <div className="bg-white/90 backdrop-blur-[40px] saturate-150 rounded-[32px] shadow-[0_32px_64px_rgba(0,0,0,0.15),0_0_0_1px_rgba(255,255,255,0.8)_inset] overflow-hidden border border-white">
         {/* Phần lưới chính */}
         <div className="p-6 md:p-8">
           <div className="grid grid-cols-4 gap-8">
@@ -99,7 +98,7 @@ export function MegaMenu() {
                 {/* Header Cột: Hình ảnh + Tiêu đề */}
                 <Link
                   href={`/products/${col.id}`}
-                  className="block relative rounded-xl overflow-hidden aspect-[4/3] mb-5"
+                  className="block relative rounded-[20px] overflow-hidden aspect-[4/3] mb-5 shadow-sm"
                 >
                   <Image
                     src={col.image}
@@ -108,9 +107,8 @@ export function MegaMenu() {
                     className="object-cover transition-transform duration-700 group-hover/col:scale-110"
                     sizes="(max-width: 768px) 100vw, 25vw"
                   />
-                  {/* Lớp phủ Gradient để chữ nổi bật */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover/col:opacity-90 transition-opacity" />
-                  <h3 className="absolute bottom-3 left-4 right-4 text-white font-bold text-sm tracking-wide leading-tight group-hover/col:text-emerald-400 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover/col:opacity-95 transition-opacity" />
+                  <h3 className="absolute bottom-3 left-4 right-4 text-white font-bold text-[14px] tracking-wide leading-tight group-hover/col:text-gray-200 transition-colors">
                     {col.title}
                   </h3>
                 </Link>
@@ -121,20 +119,20 @@ export function MegaMenu() {
                     <li key={idx}>
                       <Link
                         href={link.href}
-                        className="group/link flex items-center justify-between py-2 px-3 rounded-lg hover:bg-emerald-50 transition-colors"
+                        className="group/link flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-gray-100 transition-colors active:scale-95"
                       >
-                        <span className="text-sm font-medium text-gray-600 group-hover/link:text-emerald-700 transition-colors">
+                        <span className="text-[13.5px] font-semibold text-gray-800 group-hover/link:text-black transition-colors">
                           {link.label}
                         </span>
-                        {/* Biểu tượng HOT hoặc Mũi tên */}
+                        {/* Tag Hot hoặc Mũi tên */}
                         {link.hot ? (
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                            <Zap size={10} className="fill-rose-500" /> Hot
+                          <span className="flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md uppercase tracking-wider shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                            <Zap size={10} className="fill-red-600" /> Hot
                           </span>
                         ) : (
                           <ArrowRight
                             size={14}
-                            className="text-emerald-500 opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all"
+                            className="text-black opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-300"
                           />
                         )}
                       </Link>
@@ -146,22 +144,22 @@ export function MegaMenu() {
           </div>
         </div>
 
-        {/* Footer Bar của Mega Menu (Tạo sự tin tưởng và kêu gọi hành động) */}
-        <div className="bg-gradient-to-r from-[#0a192f] to-[#112240] px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-sm text-emerald-50">
-            <span className="flex items-center gap-1.5 font-semibold">
-              <Sparkles size={16} className="text-emerald-400" />
+        {/* Footer Bar: Đổi sang nền xám nhạt để phân tách tinh tế */}
+        <div className="bg-gray-50/80 border-t border-gray-100 px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4 text-sm text-gray-700">
+            <span className="flex items-center gap-1.5 font-bold text-gray-900">
+              <Sparkles size={16} className="text-gray-900" />
               Tổng kho 10.000m² tại Miền Nam
             </span>
-            <span className="w-1 h-1 rounded-full bg-gray-500 hidden md:block" />
-            <span className="hidden md:inline text-gray-400">
+            <span className="w-1 h-1 rounded-full bg-gray-300 hidden md:block" />
+            <span className="hidden md:inline font-medium text-gray-500">
               Giao hàng hỏa tốc trong 2H nội thành
             </span>
           </div>
 
           <Link
             href="/products"
-            className="group/all inline-flex items-center gap-2 text-sm font-bold text-white hover:text-emerald-400 transition-colors bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20"
+            className="group/all inline-flex items-center gap-2 text-[13px] font-bold text-gray-900 transition-colors bg-white px-4 py-2 rounded-full hover:bg-gray-50 shadow-sm border border-gray-200 active:scale-95"
           >
             Khám phá toàn bộ
             <ArrowRight

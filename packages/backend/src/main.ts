@@ -20,21 +20,32 @@ async function bootstrap() {
 
   // Increase body size limit for file uploads
   // IMPORTANT: Skip multipart/form-data so multer can handle file uploads
-  app.use(require('express').json({ 
-    limit: '50mb',
-    type: ['application/json', 'application/*+json']
-  }));
-  app.use(require('express').urlencoded({ 
-    limit: '50mb', 
-    extended: true,
-    type: 'application/x-www-form-urlencoded'
-  }));
+  app.use(
+    require('express').json({
+      limit: '50mb',
+      type: ['application/json', 'application/*+json'],
+    }),
+  );
+  app.use(
+    require('express').urlencoded({
+      limit: '50mb',
+      extended: true,
+      type: 'application/x-www-form-urlencoded',
+    }),
+  );
 
   // CORS phải đặt trước static assets để header được apply cho cả /uploads/
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control', 'Pragma', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'Cache-Control',
+      'Pragma',
+      'X-Requested-With',
+    ],
     exposedHeaders: ['Content-Type', 'Cache-Control'],
     credentials: true,
     preflightContinue: false,
@@ -129,8 +140,16 @@ async function bootstrap() {
   }
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch((error: NodeJS.ErrnoException & { port?: number }) => {
   const logger = new Logger('Bootstrap');
-  logger.error('Failed to start application', error);
+  const configuredPort = Number.parseInt(process.env.PORT || '3001', 10);
+  const occupiedPort =
+    typeof error?.port === 'number' ? error.port : configuredPort;
+  const message =
+    error?.code === 'EADDRINUSE'
+      ? `Failed to start application because port ${occupiedPort} is already in use`
+      : 'Failed to start application';
+
+  logger.error(message, error instanceof Error ? error.stack : undefined);
   process.exit(1);
 });

@@ -39,51 +39,57 @@ export function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="lg:hidden sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/50"
+      className="lg:hidden sticky top-0 z-30 bg-white/70 backdrop-blur-[32px] saturate-[1.8] border-b border-black/5 shadow-[0_4px_16px_rgba(0,0,0,0.02)]"
     >
-      <div className="flex items-center justify-between px-4 h-14">
+      <div className="flex items-center justify-between px-4 h-16">
         {/* Logo + Title */}
         <div className="flex items-center gap-3">
           <Link
             href="/admin/dashboard"
-            className="shrink-0 w-9 h-9 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20"
+            className="shrink-0 w-10 h-10 bg-gray-900 rounded-[14px] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.15)] active:scale-95 transition-transform"
           >
             <img
               src="/logo.png"
               alt="Logo"
-              width="20"
-              height="20"
-              className="object-contain"
+              width="22"
+              height="22"
+              className="object-contain filter grayscale invert"
             />
           </Link>
           <div>
-            <h1 className="text-slate-900 font-bold text-base tracking-tight">
+            <h1 className="text-gray-900 font-bold text-[17px] tracking-tight">
               {title}
             </h1>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          <button className="relative p-2 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all">
-            <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
+        <div className="flex items-center gap-1.5">
+          <button className="relative p-2.5 text-gray-500 hover:text-gray-900 hover:bg-black/5 rounded-full transition-all active:scale-95">
+            <Bell size={20} strokeWidth={2.5} />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
           </button>
           <button
             onClick={onMenuOpen}
-            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition-all active:scale-95"
+            className="p-2.5 bg-black/5 hover:bg-black/10 rounded-full text-gray-900 transition-all active:scale-95"
             aria-label="Mở menu"
           >
-            <Menu size={20} />
+            <Menu size={20} strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
-      {/* Search bar */}
+      {/* Search bar - Safari Style */}
       <div className="px-4 pb-3">
-        <div className="flex items-center gap-3 bg-slate-100 rounded-xl px-3 py-2">
-          <Search size={16} className="text-slate-400 shrink-0" />
-          <span className="text-slate-400 text-sm">Tìm kiếm...</span>
+        <div className="flex items-center gap-2.5 bg-black/5 rounded-full px-4 py-2.5 transition-all focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(0,0,0,0.08)] focus-within:border-black/5 border border-transparent">
+          <Search
+            size={16}
+            strokeWidth={2.5}
+            className="text-gray-500 shrink-0"
+          />
+          <span className="text-gray-500 font-medium text-[15px]">
+            Tìm kiếm...
+          </span>
         </div>
       </div>
     </motion.div>
