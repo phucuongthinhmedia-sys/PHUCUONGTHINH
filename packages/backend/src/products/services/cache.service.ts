@@ -225,16 +225,20 @@ export class CacheService {
    */
   invalidateProductCache(productId?: string): number {
     if (productId) {
-      // Invalidate specific product and all filter caches
+      // Invalidate specific product and all filter caches (including available_filters)
       const productPattern = new RegExp(productId);
-      const filterPattern = new RegExp('^(filters|search|products)');
+      const filterPattern = new RegExp(
+        '^(filters|search|products|available_filters)',
+      );
       let count = this.invalidatePattern(productPattern);
       count += this.invalidatePattern(filterPattern);
       return count;
     } else {
-      // Invalidate all product-related caches
+      // Invalidate all product-related caches (including available_filters)
       return this.invalidatePattern(
-        new RegExp('^(filters|search|products|api:.*product)'),
+        new RegExp(
+          '^(filters|search|products|available_filters|api:.*product)',
+        ),
       );
     }
   }

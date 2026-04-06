@@ -63,6 +63,10 @@ export class CombinedFilterService {
   ) {}
 
   async filterProducts(filters: CombinedFilters): Promise<FilterResponse> {
+    // Extract cache buster parameter from frontend
+    const { _t, ...actualFilters } = filters as any;
+    const bustCache = !!_t; // If _t exists, bypass cache
+
     const {
       categories,
       search,
@@ -71,7 +75,7 @@ export class CombinedFilterService {
       technical,
       page = 1,
       limit = 20,
-    } = filters;
+    } = actualFilters;
 
     // Use search service if search query is provided
     if (search && search.trim().length > 0) {
@@ -138,10 +142,12 @@ export class CombinedFilterService {
           : { AND: whereConditions }
         : {};
 
-    // Try cache
-    const cacheKey = this.cacheService.generateFilterCacheKey(filters);
-    const cached = await this.cacheService.get(cacheKey);
-    if (cached) return cached as FilterResponse;
+    // Try cache only if not busting cache
+    const cacheKey = this.cacheService.generateFilterCacheKey(actualFilters);
+    if (!bustCache) {
+      const cached = await this.cacheService.get(cacheKey);
+      if (cached) return cached as FilterResponse;
+    }
 
     // Execute queries with optimized select
     const [products, total, availableFilters] = await Promise.all([
