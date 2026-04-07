@@ -102,6 +102,8 @@ const GACH_FIELDS: SpecField[] = [
       "Chống trơn (Anti-slip)",
       "Giả đá tự nhiên",
       "Giả gỗ",
+      "Vitinh-khắc mạ vàng",
+      "Glossy",
     ],
   },
   {
