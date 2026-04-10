@@ -17,6 +17,7 @@ const CATEGORIES = [
           { name: 'Porcelain bóng xám', slug: 'porcelain-bong-xam' },
           { name: 'Porcelain bóng vân đá', slug: 'porcelain-bong-van-da' },
           { name: 'Porcelain bóng giả gỗ', slug: 'porcelain-bong-gia-go' },
+          { name: 'Đậm', slug: 'dam-lat-nen' },
         ],
       },
       {

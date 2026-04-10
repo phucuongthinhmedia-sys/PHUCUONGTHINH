@@ -68,9 +68,12 @@ function SpecFieldInput({
       <div className="flex items-center gap-1.5">
         <input
           type="number"
+          step="any"
           value={value ?? ""}
           onChange={(e) =>
-            onChange(e.target.value === "" ? undefined : Number(e.target.value))
+            onChange(
+              e.target.value === "" ? undefined : parseFloat(e.target.value),
+            )
           }
           placeholder={field.placeholder}
           className={base}
