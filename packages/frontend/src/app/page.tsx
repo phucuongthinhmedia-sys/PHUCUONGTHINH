@@ -30,6 +30,7 @@ function HeroSection() {
         muted
         loop
         playsInline
+        poster="/hero1.jpg"
         className="absolute inset-0 w-full h-full object-cover opacity-60"
       >
         <source
