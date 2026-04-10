@@ -54,6 +54,7 @@ const GACH_FIELDS: SpecField[] = [
       "30x120",
       "80x240",
       "100x250",
+      "15.5x80",
       "Tùy chỉnh",
     ],
   },
@@ -86,6 +87,7 @@ const GACH_FIELDS: SpecField[] = [
       "Granite",
       "Nano",
       "Full Body Porcelain",
+      "Bán sứ",
     ],
   },
   {
@@ -102,6 +104,7 @@ const GACH_FIELDS: SpecField[] = [
       "Giả gỗ",
       "Vitinh - khắc mạ vàng",
       "Glossy",
+      "Siêu bóng",
     ],
   },
   {
